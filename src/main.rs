@@ -3,7 +3,11 @@ use warp::hyper::Body;
 use warp::http::Response;
 use warp::http::status::StatusCode;
 
-struct Theme {
+use rusttype::FontCollection;
+use rusttype::Scale;
+use rusttype::PositionedGlyph;
+
+/* struct Theme {
 }
 
 struct SpriteKey {
@@ -77,7 +81,7 @@ impl Iterator for BlockIterator {
             GameResponseState::Postamble => return None,
         };
     }
-}
+} */
 
 fn handle() -> impl warp::Reply {
     let stream = tokio::stream::once(Ok::<_, Box<dyn std::error::Error + Send + Sync>>("bar"));
@@ -100,7 +104,7 @@ fn image() -> impl warp::Reply {
     {
         let palette = &[0xff, 0xff, 0xff, 0, 0, 0];
 
-        let bitmap1 = vec![0; 100 * 100];
+        let mut bitmap1 = vec![0; 100 * 100];
 
         let bitmap2 = [
             1, 0,
@@ -110,6 +114,32 @@ fn image() -> impl warp::Reply {
         let mut encoder = gif::Encoder::new(&mut output, 2, 2, palette).expect("encoder");
         use gif::SetParameter;
         encoder.set(gif::Repeat::Infinite).expect("infinite");
+
+        // https://gitlab.redox-os.org/redox-os/rusttype/blob/master/dev/examples/simple.rs
+        let font_data = include_bytes!("/usr/share/fonts/droid/DroidSans.ttf");
+        let collection = FontCollection::from_bytes(font_data as &[u8]).expect("font collection");
+        let font = collection.into_font().expect("single font");
+        let height = 12.4f32 * 2.0;
+        let pixel_height = height.ceil() as usize;
+        let scale = Scale {
+            x: height,
+            y: height,
+        };
+        let v_metrics = font.v_metrics(scale);
+        let offset = rusttype::point(0.0, v_metrics.ascent);
+        let glyphs: Vec<PositionedGlyph<'_>> = font.layout("Rust", scale, offset).collect();
+
+        let mut base_x = 0;
+        for g in glyphs {
+            if let Some(bb) = g.pixel_bounding_box() {
+                g.draw(|x, y, v| {
+                    if v > 0.5 {
+                        bitmap1[(y + bb.min.y as u32) as usize * 100 + bb.min.x as usize + x as usize] = 1;
+                    }
+                });
+                base_x += bb.max.x;
+            }
+        }
 
         let mut frame = gif::Frame::default();
         frame.width = 100;
