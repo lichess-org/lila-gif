@@ -3,6 +3,8 @@ use rusttype::FontCollection;
 use rusttype::Font;
 use ndarray::Array2;
 
+const SQUARE: usize = 90;
+
 pub struct Theme {
     pub(crate) preamble: Preamble,
     sprites: Array2<u8>,
@@ -33,7 +35,35 @@ impl Theme {
         }
     }
 
-    pub fn background_color(&self) -> u8 {
+    pub fn light_color(&self) -> u8 {
         self.sprites[(0, 0)]
+    }
+
+    pub fn dark_color(&self) -> u8 {
+        self.sprites[(0, SQUARE)]
+    }
+
+    pub fn highlighted_light_color(&self) -> u8 {
+        self.sprites[(0, SQUARE * 2)]
+    }
+
+    pub fn highlighted_dark_color(&self) -> u8 {
+        self.sprites[(0, SQUARE * 3)]
+    }
+
+    pub fn background_color(&self) -> u8 {
+        self.sprites[(0, SQUARE * 4)]
+    }
+
+    pub fn text_color(&self) -> u8 {
+        self.sprites[(0, SQUARE * 5)]
+    }
+
+    pub fn gold_color(&self) -> u8 {
+        self.sprites[(0, SQUARE * 6)]
+    }
+
+    pub fn transparent_color(&self) -> u8 {
+        self.sprites[(0, SQUARE * 7)]
     }
 }
