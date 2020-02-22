@@ -4,7 +4,7 @@ use rusttype::Font;
 use ndarray::Array2;
 
 pub struct Theme {
-    preamble: Preamble,
+    pub(crate) preamble: Preamble,
     sprites: Array2<u8>,
     font: Font<'static>,
 }

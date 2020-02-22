@@ -7,6 +7,8 @@ use rusttype::FontCollection;
 use rusttype::Scale;
 use rusttype::PositionedGlyph;
 
+use gift::{Encoder, block};
+
 mod api;
 mod theme;
 
@@ -108,59 +110,42 @@ fn handle() -> impl warp::Reply {
 }
 
 fn image() -> impl warp::Reply {
+    let theme = Theme::new();
+
     let mut output = Vec::new();
+
     {
-        let palette = &[0xff, 0xff, 0xff, 0, 0, 0];
+        let mut blocks = Encoder::new(&mut output).into_block_enc();
+        blocks.encode(block::Header::with_version(*b"89a")).expect("header");
 
-        let mut bitmap1 = vec![0; SIZE * 8 * (SIZE * 8 + LINE_HEIGHT * 2)];
+        let color_table_cfg = block::ColorTableConfig::new(
+            block::ColorTableExistence::Present,
+            block::ColorTableOrdering::NotSorted,
+            31
+        );
 
-        let bitmap2 = [
-            1, 0,
-            0, 1,
-        ];
+        blocks.encode(
+            block::LogicalScreenDesc::default()
+                .with_screen_width(720)
+                .with_screen_height(720)
+                .with_color_table_config(&color_table_cfg)
+        ).expect("logical screen desc");
 
-        let mut encoder = gif::Encoder::new(&mut output, 2, 2, palette).expect("encoder");
-        use gif::SetParameter;
-        encoder.set(gif::Repeat::Infinite).expect("infinite");
+        blocks.encode(
+            theme.preamble.global_color_table.clone().expect("global color table in theme")
+        ).expect("global color table");
 
-        // https://gitlab.redox-os.org/redox-os/rusttype/blob/master/dev/examples/simple.rs
-        let font_data = include_bytes!("../theme/NotoSans-Regular.ttf");
-        let collection = FontCollection::from_bytes(font_data as &[u8]).expect("font collection");
-        let font = collection.into_font().expect("single font");
-        let height = 12.4f32 * 10.0;
-        let pixel_height = height.ceil() as usize;
-        let scale = Scale {
-            x: LINE_HEIGHT as f32,
-            y: LINE_HEIGHT as f32,
-        };
-        let v_metrics = font.v_metrics(scale);
-        let offset = rusttype::point(0.0, v_metrics.ascent);
-        let glyphs: Vec<PositionedGlyph<'_>> = font.layout("Rust simpl", scale, offset).collect();
+        blocks.encode(
+            block::ImageDesc::default()
+                .with_width(720)
+                .with_height(720)
+        ).expect("image desc");
 
-        let mut base_x = 0;
-        for g in glyphs {
-            if let Some(bb) = g.pixel_bounding_box() {
-                g.draw(|x, y, v| {
-                    if v > 0.2 {
-                        bitmap1[(y + bb.min.y as u32) as usize * SIZE * 8 + bb.min.x as usize + x as usize] = 1;
-                    }
-                });
-                base_x += bb.max.x;
-            }
-        }
-
-        let mut frame = gif::Frame::default();
-        frame.width = (SIZE * 8) as u16;
-        frame.height = (SIZE * 8 + LINE_HEIGHT * 2) as u16;
-        frame.buffer = std::borrow::Cow::Borrowed(&bitmap1);
-        encoder.write_frame(&frame).expect("frame1");
-
-        /* let mut frame = gif::Frame::default();
-        frame.width = 2;
-        frame.height = 2;
-        frame.delay = 0;
-        frame.buffer = std::borrow::Cow::Borrowed(&bitmap2);
-        encoder.write_frame(&frame).expect("frame2"); */
+        let mut bitmap = vec![theme.background_color(); 720 * 720];
+        let mut image_data = block::ImageData::new(720 * 720);
+        image_data.add_data(&bitmap);
+        blocks.encode(image_data).expect("image data");
+        blocks.encode(block::Trailer::default()).expect("trailer");
     }
 
     Response::builder()
@@ -171,7 +156,7 @@ fn image() -> impl warp::Reply {
 
 #[tokio::main]
 async fn main() {
-    let theme = Theme::new();
+    let _theme = Theme::new();
 
     let routes = warp::any().map(image);
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
