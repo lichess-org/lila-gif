@@ -11,3 +11,6 @@ warp = "0.2"
 tokio = { version = "0.2", features = ["macros"] }
 gif = "0.10.3"
 rusttype = "0.8.2"
+serde = { version = "1.0.104", features = ["derive"] }
+shakmaty = "0.16.2"
+serde_with = "1.4.0"

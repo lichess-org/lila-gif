@@ -7,6 +7,11 @@ use rusttype::FontCollection;
 use rusttype::Scale;
 use rusttype::PositionedGlyph;
 
+mod api;
+
+const SIZE: usize = 90;
+const LINE_HEIGHT: usize = 25;
+
 /* struct Theme {
 }
 
@@ -104,7 +109,7 @@ fn image() -> impl warp::Reply {
     {
         let palette = &[0xff, 0xff, 0xff, 0, 0, 0];
 
-        let mut bitmap1 = vec![0; 100 * 100];
+        let mut bitmap1 = vec![0; SIZE * 8 * (SIZE * 8 + LINE_HEIGHT * 2)];
 
         let bitmap2 = [
             1, 0,
@@ -119,22 +124,22 @@ fn image() -> impl warp::Reply {
         let font_data = include_bytes!("/usr/share/fonts/droid/DroidSans.ttf");
         let collection = FontCollection::from_bytes(font_data as &[u8]).expect("font collection");
         let font = collection.into_font().expect("single font");
-        let height = 12.4f32 * 2.0;
+        let height = 12.4f32 * 4.0;
         let pixel_height = height.ceil() as usize;
         let scale = Scale {
-            x: height,
-            y: height,
+            x: LINE_HEIGHT as f32,
+            y: LINE_HEIGHT as f32,
         };
         let v_metrics = font.v_metrics(scale);
         let offset = rusttype::point(0.0, v_metrics.ascent);
-        let glyphs: Vec<PositionedGlyph<'_>> = font.layout("Rust", scale, offset).collect();
+        let glyphs: Vec<PositionedGlyph<'_>> = font.layout("Rust simpl", scale, offset).collect();
 
         let mut base_x = 0;
         for g in glyphs {
             if let Some(bb) = g.pixel_bounding_box() {
                 g.draw(|x, y, v| {
-                    if v > 0.5 {
-                        bitmap1[(y + bb.min.y as u32) as usize * 100 + bb.min.x as usize + x as usize] = 1;
+                    if v > 0.01 {
+                        bitmap1[(y + bb.min.y as u32) as usize * SIZE * 8 + bb.min.x as usize + x as usize] = 1;
                     }
                 });
                 base_x += bb.max.x;
@@ -142,8 +147,8 @@ fn image() -> impl warp::Reply {
         }
 
         let mut frame = gif::Frame::default();
-        frame.width = 100;
-        frame.height = 100;
+        frame.width = (SIZE * 8) as u16;
+        frame.height = (SIZE * 8 + LINE_HEIGHT * 2) as u16;
         frame.buffer = std::borrow::Cow::Borrowed(&bitmap1);
         encoder.write_frame(&frame).expect("frame1");
 
