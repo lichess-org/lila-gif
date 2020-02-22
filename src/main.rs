@@ -10,7 +10,7 @@ use rusttype::PositionedGlyph;
 mod api;
 
 const SIZE: usize = 90;
-const LINE_HEIGHT: usize = 25;
+const LINE_HEIGHT: usize = 50;
 
 /* struct Theme {
 }
@@ -121,10 +121,10 @@ fn image() -> impl warp::Reply {
         encoder.set(gif::Repeat::Infinite).expect("infinite");
 
         // https://gitlab.redox-os.org/redox-os/rusttype/blob/master/dev/examples/simple.rs
-        let font_data = include_bytes!("/usr/share/fonts/droid/DroidSans.ttf");
+        let font_data = include_bytes!("../theme/NotoSans-Regular.ttf");
         let collection = FontCollection::from_bytes(font_data as &[u8]).expect("font collection");
         let font = collection.into_font().expect("single font");
-        let height = 12.4f32 * 4.0;
+        let height = 12.4f32 * 10.0;
         let pixel_height = height.ceil() as usize;
         let scale = Scale {
             x: LINE_HEIGHT as f32,
@@ -138,7 +138,7 @@ fn image() -> impl warp::Reply {
         for g in glyphs {
             if let Some(bb) = g.pixel_bounding_box() {
                 g.draw(|x, y, v| {
-                    if v > 0.01 {
+                    if v > 0.2 {
                         bitmap1[(y + bb.min.y as u32) as usize * SIZE * 8 + bb.min.x as usize + x as usize] = 1;
                     }
                 });

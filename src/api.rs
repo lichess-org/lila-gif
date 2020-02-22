@@ -1,26 +1,27 @@
 use serde::{Deserialize, de};
 use serde_with::rust::display_fromstr;
-use shakmaty::Square;
+use shakmaty::{Color, Square};
 use shakmaty::fen::Fen;
 use shakmaty::uci::Uci;
 
 #[derive(Deserialize)]
 pub struct RequestBody {
-    white: String,
-    black: String,
+    white: Option<String>,
+    black: Option<String>,
     frames: Vec<RequestFrame>,
     #[serde(default)]
     flipped: bool,
+    #[serde(default)]
+    delay: u16,
 }
 
 #[derive(Deserialize)]
 pub struct RequestFrame {
     #[serde(with = "display_fromstr")]
-    f: Fen,
-    #[serde(default)]
-    d: u16,
-    #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null")]
-    m: Uci,
+    fen: Fen,
+    delay: Option<u16>,
+    #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null", alias = "lastMove")]
+    last_move: Uci,
     #[serde(deserialize_with = "maybe_square")]
     check: Option<Square>,
 }
