@@ -7,6 +7,8 @@ use rusttype::FontCollection;
 use rusttype::Scale;
 use rusttype::PositionedGlyph;
 
+use ndarray::{ArrayViewMut2, s};
+
 use gift::{Encoder, block};
 
 mod api;
@@ -145,6 +147,8 @@ fn image() -> impl warp::Reply {
         ).expect("image desc");
 
         let mut bitmap = vec![theme.background_color(); 720 * 720];
+        let mut bitmap_view = ArrayViewMut2::from_shape((720, 720), &mut bitmap).expect("bitmap shape");
+        bitmap_view.slice_mut(s!(0..90, 0..90)).assign(&theme.pawn());
         let mut image_data = block::ImageData::new(720 * 720);
         image_data.add_data(&bitmap);
         blocks.encode(image_data).expect("image data");

@@ -1,7 +1,7 @@
 use gift::block::Preamble;
 use rusttype::FontCollection;
 use rusttype::Font;
-use ndarray::Array2;
+use ndarray::{Array2, ArrayView2, s};
 
 const SQUARE: usize = 90;
 
@@ -65,5 +65,11 @@ impl Theme {
 
     pub fn transparent_color(&self) -> u8 {
         self.sprites[(0, SQUARE * 7)]
+    }
+
+    pub fn pawn(&self) -> ArrayView2<u8> {
+        let y = 1;
+        let x = 0;
+        self.sprites.slice(s!((SQUARE * y)..(SQUARE + SQUARE * y), (SQUARE * x)..(SQUARE + SQUARE * x)))
     }
 }
