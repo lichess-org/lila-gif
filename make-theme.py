@@ -76,14 +76,25 @@ def make_theme(f):
             "transform": f"translate({SQUARE_SIZE}, {SQUARE_SIZE * row}), scale({scale}, {scale})",
         })
 
-    ET.SubElement(svg, "rect", {
-        "x": "0",
-        "y": str(SQUARE_SIZE * 8),
-        "width": str(SQUARE_SIZE),
-        "height": str(SQUARE_SIZE),
-        "stroke": "none",
-        "fill": "#000",
-    })
+    COLORS = [
+        "#ffce9e", # light square
+        "#d18b47", # dark square
+        "#cdd16a", # highlighted light square
+        "#aaa23b", # highlighted dark square
+        "#262421", # dark background
+        "#bababa", # text color
+        "#bf811d", # title color
+    ]
+
+    for i, color in enumerate(COLORS):
+        ET.SubElement(svg, "rect", {
+            "x": str(SQUARE_SIZE * i),
+            "y": str(SQUARE_SIZE * 8),
+            "width": str(SQUARE_SIZE),
+            "height": str(SQUARE_SIZE),
+            "stroke": "none",
+            "fill": color,
+        })
 
     f.write(ET.tostring(svg))
 
