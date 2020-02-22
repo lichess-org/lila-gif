@@ -8,6 +8,9 @@ use rusttype::Scale;
 use rusttype::PositionedGlyph;
 
 mod api;
+mod theme;
+
+use theme::Theme;
 
 const SIZE: usize = 90;
 const LINE_HEIGHT: usize = 50;
@@ -168,6 +171,8 @@ fn image() -> impl warp::Reply {
 
 #[tokio::main]
 async fn main() {
+    let theme = Theme::new();
+
     let routes = warp::any().map(image);
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }

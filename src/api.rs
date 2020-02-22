@@ -1,6 +1,6 @@
 use serde::{Deserialize, de};
 use serde_with::rust::display_fromstr;
-use shakmaty::{Color, Square};
+use shakmaty::Square;
 use shakmaty::fen::Fen;
 use shakmaty::uci::Uci;
 

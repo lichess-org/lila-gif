@@ -277,6 +277,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gift"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae227f2f72997e0d0d376184db4aebf90f3305bfbe18122335eb9fc3c756e6c2"
+dependencies = [
+ "log 0.4.8",
+ "lzw",
+ "pix",
+]
+
+[[package]]
 name = "h2"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -683,6 +694,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5894c618ce612a3fa23881b152b608bafb8c56cfc22f434a3ba3120b40f7b587"
 
 [[package]]
+name = "pix"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "593b912a73dd1a2933952de5fee4452014485385fb7ef8a099fc8e1154c8c670"
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1032,6 +1049,7 @@ name = "streamedresponse"
 version = "0.1.0"
 dependencies = [
  "gif",
+ "gift",
  "rusttype",
  "serde",
  "serde_with",
