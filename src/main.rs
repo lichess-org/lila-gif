@@ -134,7 +134,10 @@ fn image() -> impl warp::Reply {
         blocks.encode(
             theme.preamble.global_color_table.clone().expect("global color table in theme")
         ).expect("global color table");
+    }
 
+    {
+        let mut blocks = Encoder::new(&mut output).into_block_enc();
         blocks.encode(
             block::ImageDesc::default()
                 .with_width(720)
