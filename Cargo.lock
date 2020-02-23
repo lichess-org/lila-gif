@@ -457,6 +457,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d515b1f41455adea1313a4a2ac8a8a477634fbae63cc6100e3aebb207ce61558"
 
 [[package]]
+name = "lila-gif"
+version = "0.1.0"
+dependencies = [
+ "bytes 0.5.4",
+ "gift",
+ "ndarray",
+ "rusttype",
+ "serde",
+ "serde_with",
+ "shakmaty",
+ "tokio",
+ "warp",
+]
+
+[[package]]
 name = "log"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1088,21 +1103,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f77b6b07e862c66a9f3e62a07588fee67cd90a9135a2b942409f195507b4fb51"
 dependencies = [
  "byteorder",
-]
-
-[[package]]
-name = "streamedresponse"
-version = "0.1.0"
-dependencies = [
- "bytes 0.5.4",
- "gift",
- "ndarray",
- "rusttype",
- "serde",
- "serde_with",
- "shakmaty",
- "tokio",
- "warp",
 ]
 
 [[package]]
