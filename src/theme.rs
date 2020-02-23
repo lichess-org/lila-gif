@@ -91,6 +91,22 @@ impl Theme {
         self.sprites[(0, SQUARE * 7)]
     }
 
+    pub fn square(&self) -> usize {
+        90
+    }
+
+    pub fn width(&self) -> usize {
+        self.square() * 8
+    }
+
+    pub fn bar_height(&self) -> usize {
+        60
+    }
+
+    pub fn height(&self) -> usize {
+        self.width() + 2 * self.bar_height()
+    }
+
     pub fn sprite(&self, key: SpriteKey) -> ArrayView2<u8> {
         let y = key.y();
         let x = key.x();
@@ -115,8 +131,10 @@ impl Theme {
         for g in glyphs {
             if let Some(bb) = g.pixel_bounding_box() {
                 g.draw(|x, y, intensity| {
-                    if intensity > 0.1 {
-                        view[((y as i32 + bb.min.y) as usize, (x as i32 + bb.min.x) as usize)] = text_color;
+                    let x = x as i32 + bb.min.x;
+                    let y = y as i32 + bb.min.y;
+                    if intensity > 0.1 && 0 <= x && x < self.width() as i32 && 0 <= y && y < self.bar_height() as i32 {
+                        view[(y as usize, x as usize)] = text_color;
                     }
                 });
             } else {
