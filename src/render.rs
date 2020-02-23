@@ -4,6 +4,7 @@ use shakmaty::{Bitboard, Board};
 use shakmaty::uci::Uci;
 use gift::{Encoder, block};
 use std::convert::Infallible;
+use std::iter::FusedIterator;
 
 use crate::theme::Theme;
 use crate::api::{RequestParams, Orientation};
@@ -89,7 +90,9 @@ impl Iterator for Render {
             RenderState::Preamble => {
                 self.state = RenderState::Frame;
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
+
                 blocks.encode(block::Header::with_version(*b"89a")).expect("enc header");
+
                 let color_table_cfg = block::ColorTableConfig::new( // TODO
                     block::ColorTableExistence::Present,
                     block::ColorTableOrdering::NotSorted,
@@ -101,6 +104,7 @@ impl Iterator for Render {
                         .with_screen_height(self.theme.height() as u16)
                         .with_color_table_config(&color_table_cfg)
                 ).expect("enc logical screen desc");
+
                 blocks.encode(
                     self.theme.preamble.global_color_table.clone().expect("color table present")
                 ).expect("enc global color table");
@@ -121,6 +125,7 @@ impl Iterator for Render {
                             .with_width(self.theme.width() as u16)
                             .with_height(self.theme.height() as u16)
                     ).expect("enc image desc");
+
                     blocks.encode(image_data).expect("enc image data");
                 }
             }
@@ -129,3 +134,5 @@ impl Iterator for Render {
         Some(output.into_inner().freeze())
     }
 }
+
+impl FusedIterator for Render { }

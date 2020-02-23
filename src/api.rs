@@ -26,7 +26,7 @@ pub struct RequestParams {
     pub fen: Fen,
     #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null", rename = "lastMove")]
     pub last_move: Uci,
-    #[serde(deserialize_with = "maybe_square")]
+    #[serde(deserialize_with = "maybe_square", default)]
     pub check: Option<Square>,
     #[serde(default)]
     pub orientation: Orientation,
