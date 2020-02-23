@@ -12,7 +12,6 @@ use crate::api::{RequestParams, Orientation};
 enum RenderState {
     Preamble,
     Frame,
-    Postamble,
     Complete,
 }
 
@@ -87,21 +86,42 @@ impl Iterator for Render {
     fn next(&mut self) -> Option<Result<Bytes, Infallible>> {
         match self.state {
             RenderState::Preamble => {
-                self.state = RenderState::Postamble;
+                self.state = RenderState::Frame;
                 let mut output = BytesMut::new();
                 let mut blocks = Encoder::new(output.clone().writer()).into_block_enc();
                 blocks.encode(block::Header::with_version(*b"89a")).expect("enc header");
+                let color_table_cfg = block::ColorTableConfig::new( // TODO
+                    block::ColorTableExistence::Present,
+                    block::ColorTableOrdering::NotSorted,
+                    31
+                );
+                blocks.encode(
+                    block::LogicalScreenDesc::default()
+                        .with_screen_width(self.theme.width() as u16)
+                        .with_screen_height(self.theme.height() as u16)
+                        .with_color_table_config(&color_table_cfg)
+                ).expect("enc logical screen desc");
+                blocks.encode(
+                    self.theme.preamble.global_color_table.clone().expect("color table present")
+                ).expect("enc global color table");
                 Some(Ok(output.freeze()))
             }
-            RenderState::Postamble => {
-                self.state = RenderState::Complete;
+            RenderState::Frame => {
                 let mut output = BytesMut::new();
                 let mut blocks = Encoder::new(output.clone().writer()).into_block_enc();
-                blocks.encode(block::Trailer::default()).expect("enc trailer");
+                if self.frames.is_empty() {
+                    self.state = RenderState::Complete;
+                    blocks.encode(block::Trailer::default()).expect("enc trailer");
+                } else {
+                    let frame = self.frames.remove(0);
+                    let mut bitmap = vec![0; self.theme.width() * self.theme.height()];
+                    let mut image_data = block::ImageData::new(bitmap.len());
+                    image_data.add_data(&bitmap);
+                    blocks.encode(image_data).expect("enc image data");
+                }
                 Some(Ok(output.freeze()))
             }
             RenderState::Complete => None,
-            _ => None,
         }
     }
 }
