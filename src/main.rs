@@ -7,7 +7,7 @@ use rusttype::FontCollection;
 use rusttype::Scale;
 use rusttype::PositionedGlyph;
 
-use shakmaty::Color;
+use shakmaty::{Board, Bitboard, Color};
 
 use ndarray::{ArrayViewMut2, s};
 
@@ -159,14 +159,25 @@ fn image() -> impl warp::Reply {
             bitmap_view.slice_mut(s!((theme.bar_height() + theme.width()).., ..)),
             "revoof");
 
-        let key = SpriteKey {
-            check: true,
-            last_move: true,
-            dark_square: false,
-            piece: Some(Color::White.king()),
-        };
-        bitmap_view.slice_mut(s!(60..150, 0..90)).assign(&theme.sprite(key));
+        let board = Board::new();
+        for square in Bitboard::ALL {
+            let key = SpriteKey {
+                check: false,
+                last_move: false,
+                dark_square: square.is_dark(),
+                piece: board.piece_at(square),
+            };
 
+            let flipped = true;
+            let size = theme.square();
+            let x = size * if flipped { 7 - usize::from(square.file()) } else { usize::from(square.file()) };
+            let y = theme.bar_height() + size * if flipped {
+                usize::from(square.rank())
+            } else {
+                7 - usize::from(square.rank())
+            };
+            bitmap_view.slice_mut(s!(y..(y + size), x..(x + size))).assign(&theme.sprite(key));
+        }
 
         let mut image_data = block::ImageData::new(theme.width() * theme.height());
         image_data.add_data(&bitmap);
