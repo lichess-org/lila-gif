@@ -1,7 +1,6 @@
 use gift::block::Preamble;
-use rusttype::FontCollection;
-use rusttype::Font;
-use ndarray::{Array2, ArrayView2, s};
+use rusttype::{Font, FontCollection, Scale};
+use ndarray::{Array2, ArrayView2, ArrayViewMut2, s};
 use shakmaty::{Piece, Role};
 
 const SQUARE: usize = 90;
@@ -96,5 +95,33 @@ impl Theme {
         let y = key.y();
         let x = key.x();
         self.sprites.slice(s!((SQUARE * y)..(SQUARE + SQUARE * y), (SQUARE * x)..(SQUARE + SQUARE * x)))
+    }
+
+    pub fn render_name(&self, mut view: ArrayViewMut2<u8>, text: &str) {
+        let mut text_color = if text.contains(' ') {
+            self.gold_color() // title
+        } else {
+            self.text_color()
+        };
+        let gold_color = self.gold_color();
+        let padding = 10;
+        let height = 40.0;
+        let scale = Scale {
+            x: height,
+            y: height,
+        };
+        let v_metrics = self.font.v_metrics(scale);
+        let glyphs = self.font.layout(text, scale, rusttype::point(10.0, 10.0 + v_metrics.ascent));
+        for g in glyphs {
+            if let Some(bb) = g.pixel_bounding_box() {
+                g.draw(|x, y, intensity| {
+                    if intensity > 0.1 {
+                        view[((y as i32 + bb.min.y) as usize, (x as i32 + bb.min.x) as usize)] = text_color;
+                    }
+                });
+            } else {
+                text_color = self.text_color();
+            }
+        }
     }
 }

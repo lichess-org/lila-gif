@@ -156,7 +156,8 @@ fn image() -> impl warp::Reply {
             dark_square: false,
             piece: Some(Color::White.king()),
         };
-        bitmap_view.slice_mut(s!(0..90, 0..90)).assign(&theme.sprite(key));
+        bitmap_view.slice_mut(s!(60..150, 0..90)).assign(&theme.sprite(key));
+        theme.render_name(bitmap_view, "WIM Kingscrusher-YouTube");
         let mut image_data = block::ImageData::new(720 * 720);
         image_data.add_data(&bitmap);
         blocks.encode(image_data).expect("image data");
