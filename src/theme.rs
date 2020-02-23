@@ -41,10 +41,7 @@ impl Theme {
         let mut decoder = gift::Decoder::new(std::io::Cursor::new(theme_data)).into_frames();
         let preamble = decoder.preamble().expect("decode preamble").expect("preamble");
         let frame = decoder.next().expect("frame").expect("decode frame");
-        let sprites = Array2::from_shape_vec((720, 720), frame.image_data.data().to_owned()).expect("from shape");
-
-        dbg!(frame.graphic_control_ext);
-        dbg!(frame.image_data.data().len());
+        let sprites = Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned()).expect("from shape");
 
         let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
         let font = FontCollection::from_bytes(font_data)
@@ -75,7 +72,7 @@ impl Theme {
         self.sprites[(0, SQUARE * 3)]
     }
 
-    pub fn background_color(&self) -> u8 {
+    pub fn bar_color(&self) -> u8 {
         self.sprites[(0, SQUARE * 4)]
     }
 
@@ -92,7 +89,7 @@ impl Theme {
     }
 
     pub fn square(&self) -> usize {
-        90
+        SQUARE
     }
 
     pub fn width(&self) -> usize {
@@ -113,8 +110,10 @@ impl Theme {
         self.sprites.slice(s!((SQUARE * y)..(SQUARE + SQUARE * y), (SQUARE * x)..(SQUARE + SQUARE * x)))
     }
 
-    pub fn render_name(&self, mut view: ArrayViewMut2<u8>, text: &str) {
-        let mut text_color = if text.contains(' ') {
+    pub fn render_bar(&self, mut view: ArrayViewMut2<u8>, player_name: &str) {
+        view.fill(self.bar_color());
+
+        let mut text_color = if player_name.contains(' ') {
             self.gold_color() // title
         } else {
             self.text_color()
@@ -127,7 +126,7 @@ impl Theme {
             y: height,
         };
         let v_metrics = self.font.v_metrics(scale);
-        let glyphs = self.font.layout(text, scale, rusttype::point(10.0, 10.0 + v_metrics.ascent));
+        let glyphs = self.font.layout(player_name, scale, rusttype::point(10.0, 10.0 + v_metrics.ascent));
         for g in glyphs {
             if let Some(bb) = g.pixel_bounding_box() {
                 g.draw(|x, y, intensity| {
