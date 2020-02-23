@@ -13,6 +13,11 @@ WIP
 * [ ] select theme
 * [ ] cleanups
 
+Theme
+-----
+
+![Theme](/theme/theme.gif)
+
 License
 -------
 
