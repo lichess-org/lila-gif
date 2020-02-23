@@ -14,9 +14,9 @@ pub struct SpriteKey {
 
 impl SpriteKey {
     fn x(&self) -> usize {
-        let a = (if self.piece.map_or(false, |p| p.color.is_white()) { 4 } else { 0 });
-        let b = (if self.last_move { 2 } else { 0 });
-        let c = (if self.dark_square { 1 } else { 0 });
+        let a = if self.piece.map_or(false, |p| p.color.is_white()) { 4 } else { 0 };
+        let b = if self.last_move { 2 } else { 0 };
+        let c = if self.dark_square { 1 } else { 0 };
         a + b + c
     }
 

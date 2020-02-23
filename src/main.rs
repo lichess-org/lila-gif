@@ -3,11 +3,7 @@ use warp::hyper::Body;
 use warp::http::Response;
 use warp::http::status::StatusCode;
 
-use rusttype::FontCollection;
-use rusttype::Scale;
-use rusttype::PositionedGlyph;
-
-use shakmaty::{Board, Bitboard, Color};
+use shakmaty::{Board, Bitboard};
 
 use ndarray::{ArrayViewMut2, s};
 
@@ -21,82 +17,6 @@ use theme::{SpriteKey, Theme};
 
 const SIZE: usize = 90;
 const LINE_HEIGHT: usize = 50;
-
-/* struct Theme {
-}
-
-struct SpriteKey {
-    piece: piece,
-    light: bool,
-    check: bool,
-}
-
-impl Theme {
-    fn load() -> Theme {
-    }
-
-    fn sprite(self, key: SpriteKey) -> Spite {
-    }
-
-    fn transparent(self) -> u8 {
-        2
-    }
-
-    fn darkest(self) -> u8 {
-        0
-    }
-
-    fn lightest(self) -> u8 {
-        1
-    }
-}
-
-struct RequestBody {
-    white: String,
-    black: String,
-    frames: Vec<RequestFrame>,
-    outcome: Option<Outcome>,
-}
-
-struct RequestFrame {
-    fen: Fen,
-    duration: Option<u16>,
-    m: Option<Uci>,
-    check: Option<Square>,
-}
-
-#[derive(Copy, Clone)]
-enum BlockIteratorState {
-    Preamble,
-    Frames,
-    Postamble,
-}
-
-struct BlockIterator {
-    board: Board,
-    state: GameResponseState,
-}
-
-impl BlockIterator {
-    fn new(req: GameRequest) -> GameResponse {
-        GameResponse {
-            board: !,
-            state: GameResponseState::Preamble,
-        }
-    }
-}
-
-impl Iterator for BlockIterator {
-    type Item = Vec<u8>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.state = match self.state {
-            GameResponseState::Preamble => GameResponseState::Frames,
-            GameResponseState::Frames => GameResponseState::Postamble,
-            GameResponseState::Postamble => return None,
-        };
-    }
-} */
 
 fn handle() -> impl warp::Reply {
     let stream = tokio::stream::once(Ok::<_, Box<dyn std::error::Error + Send + Sync>>("bar"));

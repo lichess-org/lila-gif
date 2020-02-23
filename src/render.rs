@@ -1,8 +1,9 @@
 use bytes::Bytes;
 use shakmaty::{Bitboard, Board};
+use shakmaty::uci::Uci;
 
 use crate::theme::Theme;
-use crate::api::RequestParams;
+use crate::api::{RequestParams, Orientation};
 
 #[derive(Copy, Clone)]
 enum RenderState {
@@ -49,17 +50,29 @@ struct Render {
 
 impl Render {
     pub fn new_image(theme: &'static Theme, params: RequestParams) -> Render {
+        let bars = params.white.is_some() || params.black.is_some();
         Render {
             theme,
-            buffer: vec![0; theme.width() * theme.height()],
+            buffer: vec![0; theme.width() * if bars { theme.height() } else { theme.width() }],
             state: RenderState::Preamble,
-            bars: None,
+            bars: if bars {
+                Some(RenderBars {
+                    white: params.white.unwrap_or_default(),
+                    black: params.black.unwrap_or_default(),
+                })
+            } else {
+                None
+            },
             frames: vec![RenderFrame {
                 board: params.fen.board,
-                highlighted: Bitboard::EMPTY,
-                checked: Bitboard::EMPTY,
+                highlighted: match params.last_move {
+                    Uci::Normal { from, to, .. } => Bitboard::from(from) | Bitboard::from(to),
+                    Uci::Null => Bitboard::EMPTY,
+                    Uci::Put { to, .. } => Bitboard::from(to),
+                },
+                checked: params.check.into_iter().collect(),
             }],
-            flipped: false,
+            flipped: params.orientation == Orientation::Black,
             frame: None,
         }
     }
