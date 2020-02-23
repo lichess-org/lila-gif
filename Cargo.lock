@@ -269,6 +269,7 @@ dependencies = [
 [[package]]
 name = "gift"
 version = "0.3.1"
+source = "git+https://github.com/niklasf/gift?branch=high-bit#f6cea42be90137f02020e7f035c9abe6f5f7eb37"
 dependencies = [
  "log 0.4.8",
  "lzw",
