@@ -1,6 +1,9 @@
-use bytes::Bytes;
+use bytes::{Bytes, BytesMut};
+use bytes::buf::ext::BufMutExt as _;
 use shakmaty::{Bitboard, Board};
 use shakmaty::uci::Uci;
+use gift::{Encoder, block};
+use std::convert::Infallible;
 
 use crate::theme::Theme;
 use crate::api::{RequestParams, Orientation};
@@ -38,7 +41,7 @@ impl RenderFrame {
     }
 }
 
-struct Render {
+pub struct Render {
     theme: &'static Theme,
     state: RenderState,
     buffer: Vec<u8>,
@@ -79,14 +82,25 @@ impl Render {
 }
 
 impl Iterator for Render {
-    type Item = Bytes;
+    type Item = Result<Bytes, Infallible>;
 
-    fn next(&mut self) -> Option<Bytes> {
+    fn next(&mut self) -> Option<Result<Bytes, Infallible>> {
         match self.state {
             RenderState::Preamble => {
                 self.state = RenderState::Postamble;
-                Some(Bytes::new())
+                let mut output = BytesMut::new();
+                let mut blocks = Encoder::new(output.clone().writer()).into_block_enc();
+                blocks.encode(block::Header::with_version(*b"89a")).expect("enc header");
+                Some(Ok(output.freeze()))
             }
+            RenderState::Postamble => {
+                self.state = RenderState::Complete;
+                let mut output = BytesMut::new();
+                let mut blocks = Encoder::new(output.clone().writer()).into_block_enc();
+                blocks.encode(block::Trailer::default()).expect("enc trailer");
+                Some(Ok(output.freeze()))
+            }
+            RenderState::Complete => None,
             _ => None,
         }
     }

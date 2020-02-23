@@ -2,8 +2,9 @@ use warp::Filter;
 use warp::hyper::Body;
 use warp::http::Response;
 use warp::http::status::StatusCode;
+use std::convert::Infallible;
 
-use shakmaty::{Board, Bitboard};
+use shakmaty::{Board, Bitboard, Square};
 
 use ndarray::{ArrayViewMut2, s};
 
@@ -13,6 +14,8 @@ mod api;
 mod theme;
 mod render;
 
+use api::RequestParams;
+use render::Render;
 use theme::{SpriteKey, Theme};
 
 const SIZE: usize = 90;
@@ -34,8 +37,8 @@ fn handle() -> impl warp::Reply {
         .body(Body::wrap_stream(stream))
 }
 
-fn image() -> impl warp::Reply {
-    let theme = Theme::new();
+fn image(theme: &'static Theme) -> impl warp::Reply {
+    /* let theme = Theme::new();
 
     let mut output = Vec::new();
 
@@ -104,18 +107,27 @@ fn image() -> impl warp::Reply {
         image_data.add_data(&bitmap);
         blocks.encode(image_data).expect("image data");
         blocks.encode(block::Trailer::default()).expect("trailer");
-    }
+    } */
+
+    let params = RequestParams {
+        black: Some("revoof".to_owned()),
+        white: Some("CM KingsCrusher-YouTube".to_owned()),
+        check: None,
+        fen: shakmaty::fen::Fen::default(),
+        last_move: shakmaty::uci::Uci::Normal { from: Square::E2, to: Square::E4, promotion: None },
+        orientation: api::Orientation::White,
+    };
 
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
-        .body(output)
+        .body(Body::wrap_stream(tokio::stream::iter(Render::new_image(theme, params))))
 }
 
 #[tokio::main]
 async fn main() {
-    let _theme = Theme::new();
+    let theme: &'static Theme = Box::leak(Box::new(Theme::new()));
 
-    let routes = warp::any().map(image);
+    let routes = warp::any().map(move || theme).map(image);
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
