@@ -81,9 +81,9 @@ impl Render {
 }
 
 impl Iterator for Render {
-    type Item = Result<Bytes, Infallible>;
+    type Item = Bytes;
 
-    fn next(&mut self) -> Option<Result<Bytes, Infallible>> {
+    fn next(&mut self) -> Option<Bytes> {
         let mut output = BytesMut::new().writer();
         match self.state {
             RenderState::Preamble => {
@@ -126,6 +126,6 @@ impl Iterator for Render {
             }
             RenderState::Complete => return None,
         }
-        Some(Ok(output.into_inner().freeze()))
+        Some(output.into_inner().freeze())
     }
 }

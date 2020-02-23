@@ -31,7 +31,7 @@ fn image(theme: &'static Theme) -> impl warp::Reply {
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
-        .body(Body::wrap_stream(tokio::stream::iter(Render::new_image(theme, params))))
+        .body(Body::wrap_stream(tokio::stream::iter(Render::new_image(theme, params).map(Ok::<_, Infallible>))))
 }
 
 #[tokio::main]
