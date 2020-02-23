@@ -84,54 +84,48 @@ impl Iterator for Render {
     type Item = Result<Bytes, Infallible>;
 
     fn next(&mut self) -> Option<Result<Bytes, Infallible>> {
+        let mut output = BytesMut::new().writer();
         match self.state {
             RenderState::Preamble => {
                 self.state = RenderState::Frame;
-                let mut output = BytesMut::new().writer();
-                {
-                    let mut blocks = Encoder::new(&mut output).into_block_enc();
-                    blocks.encode(block::Header::with_version(*b"89a")).expect("enc header");
-                    let color_table_cfg = block::ColorTableConfig::new( // TODO
-                        block::ColorTableExistence::Present,
-                        block::ColorTableOrdering::NotSorted,
-                        31
-                    );
-                    blocks.encode(
-                        block::LogicalScreenDesc::default()
-                            .with_screen_width(self.theme.width() as u16)
-                            .with_screen_height(self.theme.height() as u16)
-                            .with_color_table_config(&color_table_cfg)
-                    ).expect("enc logical screen desc");
-                    blocks.encode(
-                        self.theme.preamble.global_color_table.clone().expect("color table present")
-                    ).expect("enc global color table");
-                }
-                Some(Ok(output.into_inner().freeze()))
+                let mut blocks = Encoder::new(&mut output).into_block_enc();
+                blocks.encode(block::Header::with_version(*b"89a")).expect("enc header");
+                let color_table_cfg = block::ColorTableConfig::new( // TODO
+                    block::ColorTableExistence::Present,
+                    block::ColorTableOrdering::NotSorted,
+                    31
+                );
+                blocks.encode(
+                    block::LogicalScreenDesc::default()
+                        .with_screen_width(self.theme.width() as u16)
+                        .with_screen_height(self.theme.height() as u16)
+                        .with_color_table_config(&color_table_cfg)
+                ).expect("enc logical screen desc");
+                blocks.encode(
+                    self.theme.preamble.global_color_table.clone().expect("color table present")
+                ).expect("enc global color table");
             }
             RenderState::Frame => {
-                let mut output = BytesMut::new().writer();
-                {
-                    let mut blocks = Encoder::new(&mut output).into_block_enc();
-                    if self.frames.is_empty() {
-                        self.state = RenderState::Complete;
-                        blocks.encode(block::Trailer::default()).expect("enc trailer");
-                    } else {
-                        let frame = self.frames.remove(0);
-                        let mut bitmap = vec![0; self.theme.width() * self.theme.height()];
-                        let mut image_data = block::ImageData::new(bitmap.len());
-                        image_data.add_data(&bitmap);
+                let mut blocks = Encoder::new(&mut output).into_block_enc();
+                if self.frames.is_empty() {
+                    self.state = RenderState::Complete;
+                    blocks.encode(block::Trailer::default()).expect("enc trailer");
+                } else {
+                    let frame = self.frames.remove(0);
+                    let mut bitmap = vec![0; self.theme.width() * self.theme.height()];
+                    let mut image_data = block::ImageData::new(bitmap.len());
+                    image_data.add_data(&bitmap);
 
-                        blocks.encode(
-                            block::ImageDesc::default()
-                                .with_width(self.theme.width() as u16)
-                                .with_height(self.theme.height() as u16)
-                        ).expect("enc image desc");
-                        blocks.encode(image_data).expect("enc image data");
-                    }
+                    blocks.encode(
+                        block::ImageDesc::default()
+                            .with_width(self.theme.width() as u16)
+                            .with_height(self.theme.height() as u16)
+                    ).expect("enc image desc");
+                    blocks.encode(image_data).expect("enc image data");
                 }
-                Some(Ok(output.into_inner().freeze()))
             }
-            RenderState::Complete => None,
+            RenderState::Complete => return None,
         }
+        Some(Ok(output.into_inner().freeze()))
     }
 }
