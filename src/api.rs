@@ -6,7 +6,7 @@ use shakmaty::uci::Uci;
 
 #[derive(Deserialize)]
 pub struct RequestBody {
-    white: Option<String>,
+    white: Option<String>, // TODO: limit length
     black: Option<String>,
     frames: Vec<RequestFrame>,
     #[serde(default)]

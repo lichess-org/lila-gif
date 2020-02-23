@@ -150,6 +150,15 @@ fn image() -> impl warp::Reply {
 
         let mut bitmap = vec![0; theme.width() * theme.height()];
         let mut bitmap_view = ArrayViewMut2::from_shape((theme.height(), theme.width()), &mut bitmap).expect("bitmap shape");
+
+        theme.render_bar(
+            bitmap_view.slice_mut(s!(..theme.bar_height(), ..)),
+            "WIM Kingscrusher-YouTube NaNaNanananannanananan Batman!");
+
+        theme.render_bar(
+            bitmap_view.slice_mut(s!((theme.bar_height() + theme.width()).., ..)),
+            "revoof");
+
         let key = SpriteKey {
             check: true,
             last_move: true,
@@ -157,7 +166,8 @@ fn image() -> impl warp::Reply {
             piece: Some(Color::White.king()),
         };
         bitmap_view.slice_mut(s!(60..150, 0..90)).assign(&theme.sprite(key));
-        theme.render_bar(bitmap_view, "WIM Kingscrusher-YouTube NaNaNanananannanananan Batman!");
+
+
         let mut image_data = block::ImageData::new(theme.width() * theme.height());
         image_data.add_data(&bitmap);
         blocks.encode(image_data).expect("image data");
