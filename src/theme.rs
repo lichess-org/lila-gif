@@ -132,7 +132,7 @@ impl Theme {
                 g.draw(|x, y, intensity| {
                     let x = x as i32 + bb.min.x;
                     let y = y as i32 + bb.min.y;
-                    if intensity > 0.1 && 0 <= x && x < self.width() as i32 && 0 <= y && y < self.bar_height() as i32 {
+                    if intensity > 0.01 && 0 <= x && x < self.width() as i32 && 0 <= y && y < self.bar_height() as i32 {
                         view[(y as usize, x as usize)] = text_color;
                     }
                 });

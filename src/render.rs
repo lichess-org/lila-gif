@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use shakmaty::Bitboard;
+use shakmaty::{Bitboard, Board};
 
 use crate::theme::Theme;
 use crate::api::RequestParams;
@@ -23,11 +23,27 @@ struct RenderFrame {
     checked: Bitboard,
 }
 
+impl RenderFrame {
+    fn diff(&self, prev: RenderFrame) -> Bitboard {
+        (prev.checked ^ self.checked) |
+        (prev.highlighted ^ self.highlighted) |
+        (prev.board.white() ^ self.board.white()) |
+        (prev.board.pawns() ^ self.board.pawns()) |
+        (prev.board.knights() ^ self.board.knights()) |
+        (prev.board.bishops() ^ self.board.bishops()) |
+        (prev.board.rooks() ^ self.board.rooks()) |
+        (prev.board.queens() ^ self.board.queens()) |
+        (prev.board.kings() ^ self.board.kings())
+    }
+}
+
 struct Render {
     theme: &'static Theme,
-    buffer: Vec<u8>,
     state: RenderState,
+    buffer: Vec<u8>,
     bars: Option<RenderBars>,
+    frame: Option<RenderFrame>,
+    flipped: bool,
     frames: Vec<RenderFrame>,
 }
 
@@ -43,6 +59,8 @@ impl Render {
                 highlighted: Bitboard::EMPTY,
                 checked: Bitboard::EMPTY,
             }],
+            flipped: false,
+            frame: None,
         }
     }
 }

@@ -15,3 +15,4 @@ shakmaty = "0.16.2"
 serde_with = "1.4.0"
 gift = { path = "../../Projekte/gift" }
 ndarray = "0.13.0"
+bytes = "0.5.4"

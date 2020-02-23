@@ -1094,6 +1094,7 @@ dependencies = [
 name = "streamedresponse"
 version = "0.1.0"
 dependencies = [
+ "bytes 0.5.4",
  "gift",
  "ndarray",
  "rusttype",

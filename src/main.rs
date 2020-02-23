@@ -15,6 +15,7 @@ use gift::{Encoder, block};
 
 mod api;
 mod theme;
+mod render;
 
 use theme::{SpriteKey, Theme};
 

@@ -5,6 +5,12 @@ use shakmaty::fen::Fen;
 use shakmaty::uci::Uci;
 
 #[derive(Deserialize)]
+pub struct RequestParams {
+    #[serde(with = "display_fromstr", default)]
+    pub fen: Fen,
+}
+
+#[derive(Deserialize)]
 pub struct RequestBody {
     white: Option<String>, // TODO: limit length
     black: Option<String>,
