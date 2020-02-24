@@ -13,15 +13,20 @@ WIP
 * [ ] select theme
 * [ ] cleanups
 
-Theme
------
+Technique
+---------
 
 Instead of rendering vector graphics at runtime, all pieces are prerendered
 on every possible background. This allows preparing a minimal color palette
 ahead of time. (Pieces are not just black and white, but need other colors
-for anti-aliasing on the different backgrounds).
+for anti-aliasing on the different background colors).
 
-![Theme](/theme/theme.gif)
+![Sprite](/theme/sprite.gif)
+
+All thats left to do at runtime, is copying sprites and Gif encoding.
+
+For animated games, frames only contain the changed squares on transparent
+background.
 
 License
 -------

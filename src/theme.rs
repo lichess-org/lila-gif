@@ -30,17 +30,17 @@ impl SpriteKey {
 
 pub struct Theme {
     pub(crate) preamble: Preamble,
-    sprites: Array2<u8>,
+    sprite: Array2<u8>,
     font: Font<'static>,
 }
 
 impl Theme {
     pub fn new() -> Theme {
-        let theme_data = include_bytes!("../theme/theme.gif") as &[u8];
-        let mut decoder = gift::Decoder::new(std::io::Cursor::new(theme_data)).into_frames();
+        let sprite_data = include_bytes!("../theme/sprite.gif") as &[u8];
+        let mut decoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
         let preamble = decoder.preamble().expect("decode preamble").expect("preamble");
         let frame = decoder.next().expect("frame").expect("decode frame");
-        let sprites = Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned()).expect("from shape");
+        let sprite = Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned()).expect("from shape");
 
         let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
         let font = FontCollection::from_bytes(font_data)
@@ -50,41 +50,41 @@ impl Theme {
 
         Theme {
             preamble,
-            sprites,
+            sprite,
             font,
         }
     }
 
     pub fn light_color(&self) -> u8 {
-        self.sprites[(0, 0)]
+        self.sprite[(0, 0)]
     }
 
     pub fn dark_color(&self) -> u8 {
-        self.sprites[(0, SQUARE)]
+        self.sprite[(0, SQUARE)]
     }
 
     pub fn highlighted_light_color(&self) -> u8 {
-        self.sprites[(0, SQUARE * 2)]
+        self.sprite[(0, SQUARE * 2)]
     }
 
     pub fn highlighted_dark_color(&self) -> u8 {
-        self.sprites[(0, SQUARE * 3)]
+        self.sprite[(0, SQUARE * 3)]
     }
 
     pub fn bar_color(&self) -> u8 {
-        self.sprites[(0, SQUARE * 4)]
+        self.sprite[(0, SQUARE * 4)]
     }
 
     pub fn text_color(&self) -> u8 {
-        self.sprites[(0, SQUARE * 5)]
+        self.sprite[(0, SQUARE * 5)]
     }
 
     pub fn gold_color(&self) -> u8 {
-        self.sprites[(0, SQUARE * 6)]
+        self.sprite[(0, SQUARE * 6)]
     }
 
     pub fn transparent_color(&self) -> u8 {
-        self.sprites[(0, SQUARE * 7)]
+        self.sprite[(0, SQUARE * 7)]
     }
 
     pub fn square(&self) -> usize {
@@ -106,7 +106,7 @@ impl Theme {
     pub fn sprite(&self, key: SpriteKey) -> ArrayView2<u8> {
         let y = key.y();
         let x = key.x();
-        self.sprites.slice(s!((SQUARE * y)..(SQUARE + SQUARE * y), (SQUARE * x)..(SQUARE + SQUARE * x)))
+        self.sprite.slice(s!((SQUARE * y)..(SQUARE + SQUARE * y), (SQUARE * x)..(SQUARE + SQUARE * x)))
     }
 
     pub fn render_bar(&self, mut view: ArrayViewMut2<u8>, player_name: &str) {

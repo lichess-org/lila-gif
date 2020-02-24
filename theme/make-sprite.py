@@ -15,7 +15,7 @@ COLORS = [
 ]
 
 
-def make_theme(f):
+def make_sprite(f):
     svg = ET.Element("svg", {
         "xmlns": "http://www.w3.org/2000/svg",
         "version": "1.1",
@@ -71,4 +71,4 @@ def make_theme(f):
 
 
 if __name__ == "__main__":
-    make_theme(open("theme.svg", "wb"))
+    make_sprite(open("sprite.svg", "wb"))
