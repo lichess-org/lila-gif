@@ -68,11 +68,7 @@ impl Render {
             },
             frames: vec![RenderFrame {
                 board: params.fen.board,
-                highlighted: match params.last_move {
-                    Uci::Normal { from, to, .. } => Bitboard::from(from) | Bitboard::from(to),
-                    Uci::Null => Bitboard::EMPTY,
-                    Uci::Put { to, .. } => Bitboard::from(to),
-                },
+                highlighted: highlight_uci(params.last_move),
                 checked: params.check.into_iter().collect(),
                 delay: None,
             }],
@@ -100,7 +96,7 @@ impl Render {
                 let default_delay = params.delay;
                 params.frames.into_iter().map(|frame| RenderFrame {
                     board: frame.fen.board,
-                    highlighted: Bitboard::EMPTY,
+                    highlighted: highlight_uci(frame.last_move),
                     checked: frame.check.into_iter().collect(),
                     delay: Some(frame.delay.unwrap_or(default_delay)),
                 }).collect()
@@ -248,7 +244,7 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
     let width = theme.square() * (x_max - x_min + 1);
     let height = theme.square() * (y_max - y_min + 1);
 
-    let mut view = ArrayViewMut2::from_shape((width, height), buffer).expect("shape");
+    let mut view = ArrayViewMut2::from_shape((height, width), buffer).expect("shape");
 
     if prev.is_some() {
         view.fill(theme.transparent_color());
@@ -262,8 +258,8 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
             piece: frame.board.piece_at(sq),
         };
 
-        let real_x = orientation.x(sq) * theme.square();
-        let real_y = orientation.y(sq) * theme.square();
+        let real_x = (orientation.x(sq) - x_min) * theme.square();
+        let real_y = (orientation.y(sq) - y_min) * theme.square();
 
         view.slice_mut(
             s!(real_y..(real_y + theme.square()), real_x..(real_x + theme.square()))
@@ -271,4 +267,12 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
     }
 
     ((theme.square() * x_min, theme.square() * y_min), (width, height))
+}
+
+fn highlight_uci(uci: Uci) -> Bitboard {
+    match uci {
+        Uci::Normal { from, to, .. } => Bitboard::from(from) | Bitboard::from(to),
+        Uci::Put { to, .. } => Bitboard::from(to),
+        Uci::Null => Bitboard::EMPTY,
+    }
 }
