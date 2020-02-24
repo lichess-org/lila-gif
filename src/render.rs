@@ -7,7 +7,7 @@ use std::convert::Infallible;
 use std::iter::FusedIterator;
 use ndarray::{ArrayViewMut2, s};
 
-use crate::theme::Theme;
+use crate::theme::{Theme, SpriteKey};
 use crate::api::{PlayerName, RequestParams, Orientation};
 
 #[derive(Copy, Clone)]
@@ -29,7 +29,7 @@ struct RenderFrame {
 }
 
 impl RenderFrame {
-    fn diff(&self, prev: RenderFrame) -> Bitboard {
+    fn diff(&self, prev: &RenderFrame) -> Bitboard {
         (prev.checked ^ self.checked) |
         (prev.highlighted ^ self.highlighted) |
         (prev.board.white() ^ self.board.white()) |
@@ -110,7 +110,7 @@ impl Iterator for Render {
                     &mut self.buffer
                 ).expect("shape");
 
-                if let Some(ref bars) = self.bars {
+                let mut board_view = if let Some(ref bars) = self.bars {
                     self.theme.render_bar(
                         view.slice_mut(s!(..self.theme.bar_height(), ..)),
                         self.orientation.fold(&bars.black, &bars.white));
@@ -118,7 +118,18 @@ impl Iterator for Render {
                     self.theme.render_bar(
                         view.slice_mut(s!((self.theme.bar_height() + self.theme.width()).., ..)),
                         self.orientation.fold(&bars.white, &bars.black));
-                }
+
+                    view.slice_mut(s!(self.theme.bar_height()..(self.theme.bar_height() + self.theme.width()), ..))
+                } else {
+                    view
+                };
+
+                render_diff(
+                    board_view.as_slice_mut().expect("continguous"),
+                    self.theme,
+                    self.orientation,
+                    None,
+                    &self.frames.remove(0));
 
                 blocks.encode(
                     block::ImageDesc::default()
@@ -156,3 +167,43 @@ impl Iterator for Render {
 }
 
 impl FusedIterator for Render { }
+
+fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev: Option<&RenderFrame>, frame: &RenderFrame) -> usize {
+    let diff = if let Some(prev) = prev {
+        prev.diff(frame)
+    } else {
+        Bitboard::ALL
+    };
+
+    if diff.is_empty() {
+        return 0;
+    }
+
+    let x_min = diff.into_iter().map(|sq| orientation.x(sq)).min().unwrap();
+    let x_max = diff.into_iter().map(|sq| orientation.x(sq)).max().unwrap();
+    let y_min = diff.into_iter().map(|sq| orientation.y(sq)).min().unwrap();
+    let y_max = diff.into_iter().map(|sq| orientation.y(sq)).max().unwrap();
+
+    let mut view = ArrayViewMut2::from_shape(
+        (theme.square() * (x_max - x_min + 1), (theme.square() * (y_max - y_min + 1))),
+        buffer
+    ).expect("shape");
+
+    for sq in diff {
+        let key = SpriteKey {
+            check: frame.checked.contains(sq),
+            dark_square: sq.is_dark(),
+            last_move: frame.highlighted.contains(sq),
+            piece: frame.board.piece_at(sq),
+        };
+
+        let real_x = orientation.x(sq) * theme.square();
+        let real_y = orientation.y(sq) * theme.square();
+
+        view.slice_mut(
+            s!(real_y..(real_y + theme.square()), real_x..(real_x + theme.square()))
+        ).assign(&theme.sprite(key));
+    }
+
+    view.len()
+}

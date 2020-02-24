@@ -26,6 +26,14 @@ impl Orientation {
             Orientation::Black => black,
         }
     }
+
+    pub fn x(self, square: Square) -> usize {
+        self.fold(usize::from(square.file()), 7 - usize::from(square.file()))
+    }
+
+    pub fn y(self, square: Square) -> usize {
+        self.fold(7 - usize::from(square.rank()), usize::from(square.rank()))
+    }
 }
 
 pub type PlayerName = ArrayString<[u8; 100]>;
