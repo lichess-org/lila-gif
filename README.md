@@ -27,7 +27,9 @@ for anti-aliasing on the different background colors).
 All thats left to do at runtime, is copying sprites and Gif encoding.
 
 For animated games, frames only contain the changed squares on transparent
-background.
+background. The example below is the last frame of the animation.
+
+![Example frame](/example-frame.png)
 
 License
 -------
