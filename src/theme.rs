@@ -55,22 +55,6 @@ impl Theme {
         }
     }
 
-    pub fn light_color(&self) -> u8 {
-        self.sprite[(0, 0)]
-    }
-
-    pub fn dark_color(&self) -> u8 {
-        self.sprite[(0, SQUARE)]
-    }
-
-    pub fn highlighted_light_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 2)]
-    }
-
-    pub fn highlighted_dark_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 3)]
-    }
-
     pub fn bar_color(&self) -> u8 {
         self.sprite[(0, SQUARE * 4)]
     }
@@ -121,8 +105,6 @@ impl Theme {
         } else {
             self.text_color()
         };
-        let gold_color = self.gold_color();
-        let padding = 10;
         let height = 40.0;
         let scale = Scale {
             x: height,

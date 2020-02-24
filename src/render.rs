@@ -3,7 +3,6 @@ use bytes::buf::ext::BufMutExt as _;
 use shakmaty::{Bitboard, Board};
 use shakmaty::uci::Uci;
 use gift::{Encoder, block};
-use std::convert::Infallible;
 use std::iter::FusedIterator;
 use ndarray::{ArrayViewMut2, s};
 
@@ -132,6 +131,10 @@ impl Iterator for Render {
                 blocks.encode(
                     self.theme.preamble.global_color_table.clone().expect("color table present")
                 ).expect("enc global color table");
+
+                blocks.encode(
+                    block::Application::with_loop_count(0)
+                ).expect("enc application");
 
                 let mut view = ArrayViewMut2::from_shape(
                     (self.theme.height(self.bars.is_some()), self.theme.width()),

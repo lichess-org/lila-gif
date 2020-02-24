@@ -4,15 +4,13 @@ use warp::http::Response;
 use warp::http::status::StatusCode;
 use std::convert::Infallible;
 
-use gift::{Encoder, block};
-
 mod api;
 mod theme;
 mod render;
 
 use api::{RequestParams, RequestBody, PlayerName, Orientation, RequestFrame};
 use render::Render;
-use theme::{SpriteKey, Theme};
+use theme::Theme;
 
 fn image(theme: &'static Theme, req: RequestParams) -> impl warp::Reply {
     /* let params = RequestParams {
