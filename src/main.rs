@@ -39,7 +39,7 @@ fn animation(theme: &'static Theme) -> impl warp::Reply {
             RequestFrame {
                 fen: shakmaty::fen::Fen::default(),
                 check: None,
-                delay: None,
+                delay: Some(200),
                 last_move: shakmaty::uci::Uci::Null,
             },
             RequestFrame {

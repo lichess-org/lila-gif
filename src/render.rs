@@ -154,6 +154,12 @@ impl Iterator for Render {
 
                 let frame = self.frames.remove(0);
 
+                if let Some(delay) = frame.delay {
+                    let mut ctrl = block::GraphicControl::default();
+                    ctrl.set_delay_time_cs(delay);
+                    blocks.encode(ctrl).expect("enc graphic control");
+                }
+
                 render_diff(
                     board_view.as_slice_mut().expect("continguous"),
                     self.theme,
@@ -188,7 +194,6 @@ impl Iterator for Render {
                         ctrl.set_delay_time_cs(delay);
                     }
                     ctrl.set_transparent_color_idx(self.theme.transparent_color());
-
                     blocks.encode(ctrl).expect("enc graphic control");
 
                     let ((x, y), (w, h)) = render_diff(
