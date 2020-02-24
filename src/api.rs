@@ -135,7 +135,7 @@ impl RequestBody {
                     check: None,
                 },
                 RequestFrame {
-                    fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P1P3/8/PP1PNPPP/RNBQKB1R b KQkq - 2 3".parse().unwrap(),
+                    fen: "r1bqkb1r/pp1ppppp/2n2n2/2p5/2P1P3/8/PP1PNPPP/RNBQKB1R w KQkq - 3 4".parse().unwrap(),
                     delay: None,
                     last_move: "g8f6".parse().unwrap(),
                     check: None,
