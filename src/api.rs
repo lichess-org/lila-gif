@@ -65,12 +65,13 @@ pub struct RequestBody {
 
 #[derive(Deserialize)]
 pub struct RequestFrame {
-    #[serde(with = "display_fromstr")]
+    #[serde(with = "display_fromstr", default)]
     pub fen: Fen,
+    #[serde(default)]
     pub delay: Option<u16>,
-    #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null", alias = "lastMove")]
+    #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null", rename = "lastMove")]
     pub last_move: Uci,
-    #[serde(deserialize_with = "maybe_square")]
+    #[serde(deserialize_with = "maybe_square", default)]
     pub check: Option<Square>,
 }
 
