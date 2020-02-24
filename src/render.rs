@@ -254,7 +254,7 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
         let key = SpriteKey {
             check: frame.checked.contains(sq),
             dark_square: sq.is_dark(),
-            last_move: frame.highlighted.contains(sq),
+            highlight: frame.highlighted.contains(sq),
             piece: frame.board.piece_at(sq),
         };
 

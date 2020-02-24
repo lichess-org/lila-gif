@@ -8,14 +8,14 @@ const SQUARE: usize = 90;
 pub struct SpriteKey {
     pub piece: Option<Piece>,
     pub dark_square: bool,
-    pub last_move: bool,
+    pub highlight: bool,
     pub check: bool,
 }
 
 impl SpriteKey {
     fn x(&self) -> usize {
         (if self.piece.map_or(false, |p| p.color.is_white()) { 4 } else { 0 }) +
-        (if self.last_move { 2 } else { 0 }) +
+        (if self.highlight { 2 } else { 0 }) +
         (if self.dark_square { 1 } else { 0 })
     }
 
