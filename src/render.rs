@@ -8,7 +8,7 @@ use std::iter::FusedIterator;
 use ndarray::{ArrayViewMut2, s};
 
 use crate::theme::{Theme, SpriteKey};
-use crate::api::{PlayerName, RequestParams, Orientation};
+use crate::api::{PlayerName, RequestParams, Orientation, RequestBody};
 
 #[derive(Copy, Clone)]
 enum RenderState {
@@ -22,6 +22,7 @@ struct RenderBars {
     black: PlayerName,
 }
 
+#[derive(Default)]
 struct RenderFrame {
     board: Board,
     highlighted: Bitboard,
@@ -76,6 +77,34 @@ impl Render {
                 },
                 checked: params.check.into_iter().collect(),
             }],
+            orientation: params.orientation,
+            frame: None,
+        }
+    }
+
+    pub fn new_animation(theme: &'static Theme, params: RequestBody) -> Render {
+        let bars = params.white.is_some() || params.black.is_some();
+        Render {
+            theme,
+            buffer: vec![0; theme.height(bars) * theme.width()],
+            state: RenderState::Preamble,
+            bars: if bars {
+                Some(RenderBars {
+                    white: params.white.unwrap_or_default(),
+                    black: params.black.unwrap_or_default(),
+                })
+            } else {
+                None
+            },
+            frames: if params.frames.is_empty() {
+                vec![RenderFrame::default()]
+            } else {
+                params.frames.into_iter().map(|frame| RenderFrame {
+                    board: frame.fen.board,
+                    highlighted: Bitboard::EMPTY,
+                    checked: frame.check.into_iter().collect(),
+                }).collect()
+            },
             orientation: params.orientation,
             frame: None,
         }

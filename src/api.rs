@@ -52,27 +52,27 @@ pub struct RequestParams {
     pub orientation: Orientation,
 }
 
-/* #[derive(Deserialize)]
+#[derive(Deserialize)]
 pub struct RequestBody {
-    white: Option<String>, // TODO: limit length
-    black: Option<String>,
-    frames: Vec<RequestFrame>,
+    pub white: Option<PlayerName>,
+    pub black: Option<PlayerName>,
+    pub frames: Vec<RequestFrame>,
     #[serde(default)]
-    flipped: bool,
+    pub orientation: Orientation,
     #[serde(default)]
-    delay: u16,
+    pub delay: u16,
 }
 
 #[derive(Deserialize)]
 pub struct RequestFrame {
     #[serde(with = "display_fromstr")]
-    fen: Fen,
-    delay: Option<u16>,
+    pub fen: Fen,
+    pub delay: Option<u16>,
     #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null", alias = "lastMove")]
-    last_move: Uci,
+    pub last_move: Uci,
     #[serde(deserialize_with = "maybe_square")]
-    check: Option<Square>,
-} */
+    pub check: Option<Square>,
+}
 
 fn uci_null() -> Uci {
     Uci::Null
