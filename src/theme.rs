@@ -1,4 +1,4 @@
-use gift::block::{Preamble, GlobalColorTable, ColorTableConfig};
+use gift::block::{GlobalColorTable, ColorTableConfig};
 use ndarray::{s, Array2, ArrayView2, ArrayViewMut2};
 use rusttype::{Font, FontCollection, Scale};
 use shakmaty::{Piece, Role};
@@ -29,7 +29,8 @@ impl SpriteKey {
 }
 
 pub struct Theme {
-    preamble: Preamble,
+    color_table_config: ColorTableConfig,
+    global_color_table: GlobalColorTable,
     sprite: Array2<u8>,
     font: Font<'static>,
 }
@@ -49,18 +50,19 @@ impl Theme {
             .expect("single font");
 
         Theme {
-            preamble,
+            color_table_config: preamble.logical_screen_desc.color_table_config(),
+            global_color_table: preamble.global_color_table.expect("color table present"),
             sprite,
             font,
         }
     }
 
     pub fn color_table_config(&self) -> ColorTableConfig {
-        self.preamble.logical_screen_desc.color_table_config()
+        self.color_table_config
     }
 
     pub fn global_color_table(&self) -> &GlobalColorTable {
-        self.preamble.global_color_table.as_ref().expect("color table present")
+        &self.global_color_table
     }
 
     fn bar_color(&self) -> u8 {
