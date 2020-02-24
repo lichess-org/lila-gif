@@ -10,7 +10,7 @@ mod api;
 mod theme;
 mod render;
 
-use api::{RequestParams, RequestBody, PlayerName, Orientation};
+use api::{RequestParams, RequestBody, PlayerName, Orientation, RequestFrame};
 use render::Render;
 use theme::{SpriteKey, Theme};
 
@@ -35,7 +35,20 @@ fn animation(theme: &'static Theme) -> impl warp::Reply {
         black: Some(PlayerName::from("revoof").unwrap()),
         white: Some(PlayerName::from("CM KingsCrusher-YouTube").unwrap()),
         delay: 50,
-        frames: vec![],
+        frames: vec![
+            RequestFrame {
+                fen: shakmaty::fen::Fen::default(),
+                check: None,
+                delay: None,
+                last_move: shakmaty::uci::Uci::Null,
+            },
+            RequestFrame {
+                fen: shakmaty::fen::Fen::empty(),
+                check: None,
+                delay: None,
+                last_move: shakmaty::uci::Uci::Null,
+            }
+        ],
         orientation: Orientation::White,
     };
 
