@@ -14,6 +14,9 @@ name = "arrayvec"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cff77d8686867eceff3105329d4698d96c2391c176d5d03adc90c7389162b5b8"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "autocfg"
@@ -461,6 +464,7 @@ checksum = "d515b1f41455adea1313a4a2ac8a8a477634fbae63cc6100e3aebb207ce61558"
 name = "lila-gif"
 version = "0.1.0"
 dependencies = [
+ "arrayvec",
  "bytes 0.5.4",
  "gift",
  "ndarray",

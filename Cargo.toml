@@ -21,3 +21,4 @@ serde_with = "1.4"
 gift = { git = "https://github.com/niklasf/gift", branch = "high-bit" } # https://github.com/DougLau/gift/pull/3
 ndarray = "0.13"
 bytes = "0.5"
+arrayvec = { version = "0.5.1", features = ["serde"] }

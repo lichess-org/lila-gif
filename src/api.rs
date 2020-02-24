@@ -1,3 +1,4 @@
+use arrayvec::ArrayString;
 use serde::{Deserialize, de};
 use serde_with::rust::display_fromstr;
 use shakmaty::Square;
@@ -18,10 +19,12 @@ impl Default for Orientation {
     }
 }
 
+pub type PlayerName = ArrayString<[u8; 100]>;
+
 #[derive(Deserialize)]
 pub struct RequestParams {
-    pub white: Option<String>,
-    pub black: Option<String>,
+    pub white: Option<PlayerName>,
+    pub black: Option<PlayerName>,
     #[serde(with = "display_fromstr", default)]
     pub fen: Fen,
     #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null", rename = "lastMove")]
@@ -32,7 +35,7 @@ pub struct RequestParams {
     pub orientation: Orientation,
 }
 
-#[derive(Deserialize)]
+/* #[derive(Deserialize)]
 pub struct RequestBody {
     white: Option<String>, // TODO: limit length
     black: Option<String>,
@@ -52,7 +55,7 @@ pub struct RequestFrame {
     last_move: Uci,
     #[serde(deserialize_with = "maybe_square")]
     check: Option<Square>,
-}
+} */
 
 fn uci_null() -> Uci {
     Uci::Null

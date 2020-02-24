@@ -7,7 +7,7 @@ use std::convert::Infallible;
 use std::iter::FusedIterator;
 
 use crate::theme::Theme;
-use crate::api::{RequestParams, Orientation};
+use crate::api::{PlayerName, RequestParams, Orientation};
 
 #[derive(Copy, Clone)]
 enum RenderState {
@@ -17,8 +17,8 @@ enum RenderState {
 }
 
 struct RenderBars {
-    white: String,
-    black: String,
+    white: PlayerName,
+    black: PlayerName,
 }
 
 struct RenderFrame {
