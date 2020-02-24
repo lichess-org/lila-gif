@@ -10,10 +10,9 @@ use ndarray::{ArrayViewMut2, s};
 use crate::theme::{Theme, SpriteKey};
 use crate::api::{PlayerName, RequestParams, Orientation, RequestBody};
 
-#[derive(Copy, Clone)]
 enum RenderState {
     Preamble,
-    Frame,
+    Frame(RenderFrame),
     Complete,
 }
 
@@ -27,6 +26,7 @@ struct RenderFrame {
     board: Board,
     highlighted: Bitboard,
     checked: Bitboard,
+    delay: Option<u16>,
 }
 
 impl RenderFrame {
@@ -48,7 +48,6 @@ pub struct Render {
     state: RenderState,
     buffer: Vec<u8>,
     bars: Option<RenderBars>,
-    frame: Option<RenderFrame>,
     orientation: Orientation,
     frames: Vec<RenderFrame>,
 }
@@ -76,9 +75,9 @@ impl Render {
                     Uci::Put { to, .. } => Bitboard::from(to),
                 },
                 checked: params.check.into_iter().collect(),
+                delay: None,
             }],
             orientation: params.orientation,
-            frame: None,
         }
     }
 
@@ -99,14 +98,15 @@ impl Render {
             frames: if params.frames.is_empty() {
                 vec![RenderFrame::default()]
             } else {
+                let default_delay = params.delay;
                 params.frames.into_iter().map(|frame| RenderFrame {
                     board: frame.fen.board,
                     highlighted: Bitboard::EMPTY,
                     checked: frame.check.into_iter().collect(),
+                    delay: Some(frame.delay.unwrap_or(default_delay)),
                 }).collect()
             },
             orientation: params.orientation,
-            frame: None,
         }
     }
 }
@@ -118,7 +118,6 @@ impl Iterator for Render {
         let mut output = BytesMut::new().writer();
         match self.state {
             RenderState::Preamble => {
-                self.state = RenderState::Complete; // XXX
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
 
                 blocks.encode(block::Header::default()).expect("enc header");
@@ -153,12 +152,14 @@ impl Iterator for Render {
                     view
                 };
 
+                let frame = self.frames.remove(0);
+
                 render_diff(
                     board_view.as_slice_mut().expect("continguous"),
                     self.theme,
                     self.orientation,
                     None,
-                    &self.frames.remove(0));
+                    &frame);
 
                 blocks.encode(
                     block::ImageDesc::default()
@@ -169,24 +170,47 @@ impl Iterator for Render {
                 let mut image_data = block::ImageData::new(self.buffer.len());
                 image_data.add_data(&self.buffer);
                 blocks.encode(image_data).expect("enc image data");
+
+                self.state = RenderState::Frame(frame);
             }
-            RenderState::Frame => {
+            RenderState::Frame(ref prev) => {
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
+
                 if self.frames.is_empty() {
-                    self.state = RenderState::Complete;
                     blocks.encode(block::Trailer::default()).expect("enc trailer");
+                    self.state = RenderState::Complete;
                 } else {
                     let frame = self.frames.remove(0);
-                    let mut image_data = block::ImageData::new(self.buffer.len());
-                    image_data.add_data(&self.buffer);
+
+                    let mut ctrl = block::GraphicControl::default();
+                    ctrl.set_disposal_method(block::DisposalMethod::Keep);
+                    if let Some(delay) = frame.delay {
+                        ctrl.set_delay_time_cs(delay);
+                    }
+                    ctrl.set_transparent_color_idx(self.theme.transparent_color());
+
+                    blocks.encode(ctrl).expect("enc graphic control");
+
+                    let ((x, y), (w, h)) = render_diff(
+                        &mut self.buffer,
+                        self.theme,
+                        self.orientation,
+                        Some(&prev),
+                        &frame);
 
                     blocks.encode(
                         block::ImageDesc::default()
-                            .with_height(self.theme.height(self.bars.is_some()) as u16)
-                            .with_width(self.theme.width() as u16)
+                            .with_left(x as u16)
+                            .with_top(if self.bars.is_some() { self.theme.bar_height() + y} else { y } as u16)
+                            .with_height(h as u16)
+                            .with_width(w as u16) // TODO
                     ).expect("enc image desc");
 
+                    let mut image_data = block::ImageData::new(w * h);
+                    image_data.add_data(&self.buffer[..(w * h)]);
                     blocks.encode(image_data).expect("enc image data");
+
+                    self.state = RenderState::Frame(frame);
                 }
             }
             RenderState::Complete => return None,
@@ -197,7 +221,7 @@ impl Iterator for Render {
 
 impl FusedIterator for Render { }
 
-fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev: Option<&RenderFrame>, frame: &RenderFrame) -> usize {
+fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev: Option<&RenderFrame>, frame: &RenderFrame) -> ((usize, usize), (usize, usize)) {
     let diff = if let Some(prev) = prev {
         prev.diff(frame)
     } else {
@@ -205,7 +229,7 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
     };
 
     if diff.is_empty() {
-        return 0;
+        return ((0, 0), (0, 0));
     }
 
     let x_min = diff.into_iter().map(|sq| orientation.x(sq)).min().unwrap();
@@ -213,10 +237,10 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
     let y_min = diff.into_iter().map(|sq| orientation.y(sq)).min().unwrap();
     let y_max = diff.into_iter().map(|sq| orientation.y(sq)).max().unwrap();
 
-    let mut view = ArrayViewMut2::from_shape(
-        (theme.square() * (x_max - x_min + 1), (theme.square() * (y_max - y_min + 1))),
-        buffer
-    ).expect("shape");
+    let width = theme.square() * (x_max - x_min + 1);
+    let height = theme.square() * (y_max - y_min + 1);
+
+    let mut view = ArrayViewMut2::from_shape((width, height), buffer).expect("shape");
 
     if prev.is_some() {
         view.fill(theme.transparent_color());
@@ -238,5 +262,5 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
         ).assign(&theme.sprite(key));
     }
 
-    view.len()
+    ((theme.square() * x_min, theme.square() * y_min), (width, height))
 }
