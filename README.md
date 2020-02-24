@@ -34,7 +34,7 @@ orientation | string | `white` | Pass `black` to flip the board.
   "white": "Molinari", // optional
   "black": "Bordais", // optional
   "orientation": "white", // default
-  "delay": 50, // default frame delay in centiseconds, fallback: 50
+  "delay": 50, // default frame delay in centiseconds
   "frames": [
     // [...]
     {
