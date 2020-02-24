@@ -64,7 +64,7 @@ where
 {
     Option::<&str>::deserialize(deserializer).and_then(|maybe_name| {
         Ok(match maybe_name {
-            Some(name) => Some(name.parse().map_err(|_| de::Error::custom("invald square name"))?),
+            Some(name) => Some(name.parse().map_err(|_| de::Error::custom("invalid square name"))?),
             None => None,
         })
     })
