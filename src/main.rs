@@ -4,10 +4,6 @@ use warp::http::Response;
 use warp::http::status::StatusCode;
 use std::convert::Infallible;
 
-use shakmaty::{Board, Bitboard, Square};
-
-use ndarray::{ArrayViewMut2, s};
-
 use gift::{Encoder, block};
 
 mod api;

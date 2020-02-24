@@ -5,6 +5,7 @@ use shakmaty::uci::Uci;
 use gift::{Encoder, block};
 use std::convert::Infallible;
 use std::iter::FusedIterator;
+use ndarray::{ArrayViewMut2, s};
 
 use crate::theme::Theme;
 use crate::api::{PlayerName, RequestParams, Orientation};
@@ -47,7 +48,7 @@ pub struct Render {
     buffer: Vec<u8>,
     bars: Option<RenderBars>,
     frame: Option<RenderFrame>,
-    flipped: bool,
+    orientation: Orientation,
     frames: Vec<RenderFrame>,
 }
 
@@ -56,7 +57,7 @@ impl Render {
         let bars = params.white.is_some() || params.black.is_some();
         Render {
             theme,
-            buffer: vec![0; theme.width() * if bars { theme.height() } else { theme.width() }],
+            buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
             bars: if bars {
                 Some(RenderBars {
@@ -75,7 +76,7 @@ impl Render {
                 },
                 checked: params.check.into_iter().collect(),
             }],
-            flipped: params.orientation == Orientation::Black,
+            orientation: params.orientation,
             frame: None,
         }
     }
@@ -88,21 +89,46 @@ impl Iterator for Render {
         let mut output = BytesMut::new().writer();
         match self.state {
             RenderState::Preamble => {
-                self.state = RenderState::Frame;
+                self.state = RenderState::Complete; // XXX
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
 
                 blocks.encode(block::Header::default()).expect("enc header");
 
                 blocks.encode(
                     block::LogicalScreenDesc::default()
+                        .with_screen_height(self.theme.height(self.bars.is_some()) as u16)
                         .with_screen_width(self.theme.width() as u16)
-                        .with_screen_height(self.theme.height() as u16)
                         .with_color_table_config(&self.theme.preamble.logical_screen_desc.color_table_config())
                 ).expect("enc logical screen desc");
 
                 blocks.encode(
                     self.theme.preamble.global_color_table.clone().expect("color table present")
                 ).expect("enc global color table");
+
+                let mut view = ArrayViewMut2::from_shape(
+                    (self.theme.height(self.bars.is_some()), self.theme.width()),
+                    &mut self.buffer
+                ).expect("shape");
+
+                if let Some(ref bars) = self.bars {
+                    self.theme.render_bar(
+                        view.slice_mut(s!(..self.theme.bar_height(), ..)),
+                        self.orientation.fold(&bars.black, &bars.white));
+
+                    self.theme.render_bar(
+                        view.slice_mut(s!((self.theme.bar_height() + self.theme.width()).., ..)),
+                        self.orientation.fold(&bars.white, &bars.black));
+                }
+
+                blocks.encode(
+                    block::ImageDesc::default()
+                        .with_height(self.theme.height(self.bars.is_some()) as u16)
+                        .with_width(self.theme.width() as u16)
+                ).expect("enc image desc");
+
+                let mut image_data = block::ImageData::new(self.buffer.len());
+                image_data.add_data(&self.buffer);
+                blocks.encode(image_data).expect("enc image data");
             }
             RenderState::Frame => {
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
@@ -111,14 +137,13 @@ impl Iterator for Render {
                     blocks.encode(block::Trailer::default()).expect("enc trailer");
                 } else {
                     let frame = self.frames.remove(0);
-                    let mut bitmap = vec![0; self.theme.width() * self.theme.height()];
-                    let mut image_data = block::ImageData::new(bitmap.len());
-                    image_data.add_data(&bitmap);
+                    let mut image_data = block::ImageData::new(self.buffer.len());
+                    image_data.add_data(&self.buffer);
 
                     blocks.encode(
                         block::ImageDesc::default()
+                            .with_height(self.theme.height(self.bars.is_some()) as u16)
                             .with_width(self.theme.width() as u16)
-                            .with_height(self.theme.height() as u16)
                     ).expect("enc image desc");
 
                     blocks.encode(image_data).expect("enc image data");

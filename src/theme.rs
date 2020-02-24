@@ -99,8 +99,12 @@ impl Theme {
         60
     }
 
-    pub fn height(&self) -> usize {
-        self.width() + 2 * self.bar_height()
+    pub fn height(&self, bars: bool) -> usize {
+        if bars {
+            self.width() + 2 * self.bar_height()
+        } else {
+            self.width()
+        }
     }
 
     pub fn sprite(&self, key: SpriteKey) -> ArrayView2<u8> {

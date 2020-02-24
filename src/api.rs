@@ -19,6 +19,15 @@ impl Default for Orientation {
     }
 }
 
+impl Orientation {
+    pub fn fold<T>(self, white: T, black: T) -> T {
+        match self {
+            Orientation::White => white,
+            Orientation::Black => black,
+        }
+    }
+}
+
 pub type PlayerName = ArrayString<[u8; 100]>;
 
 #[derive(Deserialize)]
