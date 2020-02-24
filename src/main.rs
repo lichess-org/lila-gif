@@ -1,4 +1,6 @@
 use std::convert::Infallible;
+use std::net::SocketAddr;
+use structopt::StructOpt;
 use warp::http::status::StatusCode;
 use warp::http::Response;
 use warp::hyper::Body;
@@ -11,6 +13,14 @@ mod theme;
 use api::{RequestBody, RequestParams};
 use render::Render;
 use theme::Theme;
+
+#[derive(StructOpt)]
+struct Opt {
+    /// Listen on this address
+    address: String,
+    /// Listen on this port
+    port: u16
+}
 
 fn image(theme: &'static Theme, req: RequestParams) -> impl warp::Reply {
     Response::builder()
@@ -32,6 +42,9 @@ fn example(theme: &'static Theme) -> impl warp::Reply {
 
 #[tokio::main]
 async fn main() {
+    let opt = Opt::from_args();
+    let bind = SocketAddr::new(opt.address.parse().expect("valid address"), opt.port);
+
     let theme: &'static Theme = Box::leak(Box::new(Theme::new()));
 
     let image_route = warp::path!("image.gif")
@@ -52,6 +65,6 @@ async fn main() {
         .map(example);
 
     warp::serve(example_route.or(image_route).or(animation_route))
-        .run(([127, 0, 0, 1], 3030))
+        .run(bind)
         .await;
 }

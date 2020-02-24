@@ -22,3 +22,4 @@ gift = { git = "https://github.com/niklasf/gift", branch = "high-bit" } # https:
 ndarray = "0.13"
 bytes = "0.5"
 arrayvec = { version = "0.5.1", features = ["serde"] }
+structopt = "0.3"
