@@ -1,17 +1,18 @@
 lila-gif
 ========
 
-WIP
----
+Webservice to render gifs of chess positions and games.
 
-* [x] request parsing
-* [ ] single frame
-* [ ] animations
-* [ ] evaluation
-* [ ] optimize gift
-* [ ] write readme
-* [ ] select theme
-* [ ] cleanups
+![Example: Molinari vs. Bordais](/example.gif)
+
+metric | data
+--- | ---
+frames | 10
+colors | 31
+size | 53 KiB
+width | 720 px
+height | 840 px
+render time | ~30 ms
 
 Technique
 ---------
