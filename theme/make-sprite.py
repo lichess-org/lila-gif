@@ -5,9 +5,9 @@ from chess.svg import SQUARE_SIZE
 
 
 COLORS = [
-    "#ffce9e", # light square
-    "#d18b47", # dark square
-    "#cdd16a", # highlighted light square
+    "#f0d9b5", # light square
+    "#b58863", # dark square
+    "#ced26b", # highlighted light square
     "#aaa23b", # highlighted dark square
     "#262421", # dark background
     "#bababa", # text color
