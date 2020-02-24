@@ -121,11 +121,11 @@ impl Iterator for Render {
                     block::LogicalScreenDesc::default()
                         .with_screen_height(self.theme.height(self.bars.is_some()) as u16)
                         .with_screen_width(self.theme.width() as u16)
-                        .with_color_table_config(&self.theme.preamble.logical_screen_desc.color_table_config())
+                        .with_color_table_config(&self.theme.color_table_config())
                 ).expect("enc logical screen desc");
 
                 blocks.encode(
-                    self.theme.preamble.global_color_table.clone().expect("color table present")
+                    self.theme.global_color_table().clone()
                 ).expect("enc global color table");
 
                 blocks.encode(
