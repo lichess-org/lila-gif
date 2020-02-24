@@ -17,8 +17,10 @@ use theme::Theme;
 #[derive(StructOpt)]
 struct Opt {
     /// Listen on this address
+    #[structopt(long = "address", default_value = "127.0.0.1")]
     address: String,
     /// Listen on this port
+    #[structopt(long = "port", default_value = "6175")]
     port: u16
 }
 
