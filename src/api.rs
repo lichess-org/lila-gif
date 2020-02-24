@@ -110,6 +110,60 @@ impl RequestBody {
                     last_move: "e2e4".parse().unwrap(),
                     check: None,
                 },
+                RequestFrame {
+                    fen: "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2".parse().unwrap(),
+                    delay: None,
+                    last_move: "c7c5".parse().unwrap(),
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "rnbqkbnr/pp1ppppp/8/2p5/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2".parse().unwrap(),
+                    delay: None,
+                    last_move: "c2c4".parse().unwrap(),
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P1P3/8/PP1P1PPP/RNBQKBNR w KQkq - 1 3".parse().unwrap(),
+                    delay: None,
+                    last_move: "b8c6".parse().unwrap(),
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P1P3/8/PP1PNPPP/RNBQKB1R b KQkq - 2 3".parse().unwrap(),
+                    delay: None,
+                    last_move: "g1e2".parse().unwrap(),
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P1P3/8/PP1PNPPP/RNBQKB1R b KQkq - 2 3".parse().unwrap(),
+                    delay: None,
+                    last_move: "g8f6".parse().unwrap(),
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "r1bqkb1r/pp1ppppp/2n2n2/2p5/2P1P3/2N5/PP1PNPPP/R1BQKB1R b KQkq - 4 4".parse().unwrap(),
+                    delay: None,
+                    last_move: "b1c3".parse().unwrap(),
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "r1bqkb1r/pp1ppppp/5n2/2p5/1nP1P3/2N5/PP1PNPPP/R1BQKB1R w KQkq - 5 5".parse().unwrap(),
+                    delay: None,
+                    last_move: "c6b4".parse().unwrap(),
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "r1bqkb1r/pp1ppppp/5n2/2p5/1nP1P3/2N3P1/PP1PNP1P/R1BQKB1R b KQkq - 0 5".parse().unwrap(),
+                    delay: None,
+                    last_move: "g2g3".parse().unwrap(),
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "r1bqkb1r/pp1ppppp/5n2/2p5/2P1P3/2Nn2P1/PP1PNP1P/R1BQKB1R w KQkq - 1 6".parse().unwrap(),
+                    delay: Some(500),
+                    last_move: "b4d3".parse().unwrap(),
+                    check: Some(Square::E1),
+                },
             ],
         }
     }
