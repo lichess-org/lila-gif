@@ -89,3 +89,28 @@ where
         })
     })
 }
+
+impl RequestBody {
+    pub fn example() -> RequestBody {
+        RequestBody {
+            white: Some(PlayerName::from("Molinari").unwrap()),
+            black: Some(PlayerName::from("Bordais").unwrap()),
+            orientation: Orientation::White,
+            delay: 50,
+            frames: vec![
+                RequestFrame {
+                    fen: Fen::default(),
+                    delay: None,
+                    last_move: Uci::Null,
+                    check: None,
+                },
+                RequestFrame {
+                    fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1".parse().unwrap(),
+                    delay: None,
+                    last_move: "e2e4".parse().unwrap(),
+                    check: None,
+                },
+            ],
+        }
+    }
+}

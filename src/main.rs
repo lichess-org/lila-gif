@@ -8,62 +8,46 @@ mod api;
 mod theme;
 mod render;
 
-use api::{RequestParams, RequestBody, PlayerName, Orientation, RequestFrame};
+use api::{RequestParams, RequestBody};
 use render::Render;
 use theme::Theme;
 
 fn image(theme: &'static Theme, req: RequestParams) -> impl warp::Reply {
-    /* let params = RequestParams {
-        black: Some("revoof".to_owned()),
-        white: Some("CM KingsCrusher-YouTube".to_owned()),
-        check: None,
-        fen: shakmaty::fen::Fen::default(),
-        last_move: shakmaty::uci::Uci::Normal { from: Square::E2, to: Square::E4, promotion: None },
-        orientation: api::Orientation::White,
-    }; */
-
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
         .body(Body::wrap_stream(tokio::stream::iter(Render::new_image(theme, req).map(Ok::<_, Infallible>))))
 }
 
-fn animation(theme: &'static Theme) -> impl warp::Reply {
-    let req = RequestBody {
-        black: Some(PlayerName::from("revoof").unwrap()),
-        white: Some(PlayerName::from("CM KingsCrusher-YouTube").unwrap()),
-        delay: 50,
-        frames: vec![
-            RequestFrame {
-                fen: shakmaty::fen::Fen::default(),
-                check: None,
-                delay: Some(200),
-                last_move: shakmaty::uci::Uci::Null,
-            },
-            RequestFrame {
-                fen: shakmaty::fen::Fen::empty(),
-                check: None,
-                delay: None,
-                last_move: shakmaty::uci::Uci::Null,
-            }
-        ],
-        orientation: Orientation::White,
-    };
-
+fn animation(theme: &'static Theme, req: RequestBody) -> impl warp::Reply {
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
         .body(Body::wrap_stream(tokio::stream::iter(Render::new_animation(theme, req).map(Ok::<_, Infallible>))))
 }
 
+fn example(theme: &'static Theme) -> impl warp::Reply {
+    animation(theme, RequestBody::example())
+}
+
 #[tokio::main]
 async fn main() {
     let theme: &'static Theme = Box::leak(Box::new(Theme::new()));
 
-    let routes = warp::get()
+    let image_route = warp::get()
         .map(move || theme)
-        //.and(warp::query::query())
+        .and(warp::query::query())
+        .map(image);
+
+    let animation_route = warp::post()
+        .map(move || theme)
+        .and(warp::body::json())
         .map(animation);
 
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    let example_route = warp::get()
+        .map(move || theme)
+        .map(example);
+
+    warp::serve(example_route.or(image_route).or(animation_route))
+        .run(([127, 0, 0, 1], 3030)).await;
 }
