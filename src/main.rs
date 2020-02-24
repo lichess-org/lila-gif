@@ -34,17 +34,20 @@ fn example(theme: &'static Theme) -> impl warp::Reply {
 async fn main() {
     let theme: &'static Theme = Box::leak(Box::new(Theme::new()));
 
-    let image_route = warp::get()
+    let image_route = warp::path!("image.gif")
+        .and(warp::get())
         .map(move || theme)
         .and(warp::query::query())
         .map(image);
 
-    let animation_route = warp::post()
+    let animation_route = warp::path!("game.gif")
+        .and(warp::post())
         .map(move || theme)
         .and(warp::body::json())
         .map(animation);
 
-    let example_route = warp::get()
+    let example_route = warp::path!("example.gif")
+        .and(warp::get())
         .map(move || theme)
         .map(example);
 

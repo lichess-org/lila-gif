@@ -23,8 +23,8 @@ name | type | default | description
 **fen** | string | *starting position* | FEN of the position. Board part is sufficient.
 white | string | *none* | Username of white player. If multiple words, first word is assumed to be title.
 black | string | *none* | Username of black player. If multiple words, first word is assumed to be title.
-lastMove | string | *none* | Last move in UCI notation, e.g., `e2e4`.
-check | string | *none* | Square of king in check.
+lastMove | string | *none* | Last move in UCI notation (like `e2e4`).
+check | string | *none* | Square of king in check (like `e1`).
 orientation | string | `white` | Pass `black` to flip the board.
 
 ### `POST /game.gif`
