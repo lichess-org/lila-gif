@@ -91,18 +91,13 @@ impl Iterator for Render {
                 self.state = RenderState::Frame;
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
 
-                blocks.encode(block::Header::with_version(*b"89a")).expect("enc header");
+                blocks.encode(block::Header::default()).expect("enc header");
 
-                let color_table_cfg = block::ColorTableConfig::new( // TODO
-                    block::ColorTableExistence::Present,
-                    block::ColorTableOrdering::NotSorted,
-                    31
-                );
                 blocks.encode(
                     block::LogicalScreenDesc::default()
                         .with_screen_width(self.theme.width() as u16)
                         .with_screen_height(self.theme.height() as u16)
-                        .with_color_table_config(&color_table_cfg)
+                        .with_color_table_config(&self.theme.preamble.logical_screen_desc.color_table_config())
                 ).expect("enc logical screen desc");
 
                 blocks.encode(
