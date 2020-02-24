@@ -189,6 +189,10 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
         buffer
     ).expect("shape");
 
+    if prev.is_some() {
+        view.fill(theme.transparent_color());
+    }
+
     for sq in diff {
         let key = SpriteKey {
             check: frame.checked.contains(sq),
