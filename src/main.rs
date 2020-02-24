@@ -1,14 +1,14 @@
-use warp::Filter;
-use warp::hyper::Body;
-use warp::http::Response;
-use warp::http::status::StatusCode;
 use std::convert::Infallible;
+use warp::http::status::StatusCode;
+use warp::http::Response;
+use warp::hyper::Body;
+use warp::Filter;
 
 mod api;
-mod theme;
 mod render;
+mod theme;
 
-use api::{RequestParams, RequestBody};
+use api::{RequestBody, RequestParams};
 use render::Render;
 use theme::Theme;
 
@@ -52,5 +52,6 @@ async fn main() {
         .map(example);
 
     warp::serve(example_route.or(image_route).or(animation_route))
-        .run(([127, 0, 0, 1], 3030)).await;
+        .run(([127, 0, 0, 1], 3030))
+        .await;
 }

@@ -1,13 +1,13 @@
-use bytes::{Bytes, BytesMut};
 use bytes::buf::ext::BufMutExt as _;
-use shakmaty::{Bitboard, Board};
+use bytes::{Bytes, BytesMut};
+use gift::{block, Encoder};
+use ndarray::{s, ArrayViewMut2};
 use shakmaty::uci::Uci;
-use gift::{Encoder, block};
+use shakmaty::{Bitboard, Board};
 use std::iter::FusedIterator;
-use ndarray::{ArrayViewMut2, s};
 
-use crate::theme::{Theme, SpriteKey};
-use crate::api::{PlayerName, RequestParams, Orientation, RequestBody};
+use crate::api::{Orientation, PlayerName, RequestBody, RequestParams};
+use crate::theme::{SpriteKey, Theme};
 
 enum RenderState {
     Preamble,

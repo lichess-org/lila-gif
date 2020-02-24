@@ -1,6 +1,6 @@
 use gift::block::Preamble;
+use ndarray::{s, Array2, ArrayView2, ArrayViewMut2};
 use rusttype::{Font, FontCollection, Scale};
-use ndarray::{Array2, ArrayView2, ArrayViewMut2, s};
 use shakmaty::{Piece, Role};
 
 const SQUARE: usize = 90;
