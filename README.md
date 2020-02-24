@@ -5,14 +5,9 @@ Webservice to render gifs of chess positions and games.
 
 ![Example: Molinari vs. Bordais](/example.gif)
 
-metric | data
---- | ---
-frames | 10
-colors | 31
-size | 53 KiB
-width | 720 px
-height | 840 px
-render time | ~30 ms
+size | render time | frames | colors | width | height
+--- | --- | --- | --- | --- | ---
+53 KiB | ~30 ms | 10 | 31 | 720 px | 840 px
 
 HTTP API
 --------
@@ -20,7 +15,7 @@ HTTP API
 ### `GET /image.gif`
 
 ```
-curl http://localhost:3030/?fen=4k3/6KP/8/8/8/8/7p/8
+curl http://localhost:3030/?fen=4k3/6KP/8/8/8/8/7p/8 --output image.gif
 ```
 
 name | type | default | description
@@ -38,7 +33,7 @@ orientation | string | `white` | Pass `black` to flip the board.
 {
   "white": "Molinari", // optional
   "black": "Bordais", // optional
-  "orientation": "white",
+  "orientation": "white", // default
   "delay": 50, // default frame delay in centiseconds, fallback: 50
   "frames": [
     // [...]
@@ -55,7 +50,7 @@ orientation | string | `white` | Pass `black` to flip the board.
 ### `GET /example.gif`
 
 ```
-curl http://localhost:3030/example.gif
+curl http://localhost:3030/example.gif --output example.gif
 ```
 
 Render the example Gif (Molinari vs. Bordais) for the README.
