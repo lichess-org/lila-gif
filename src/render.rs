@@ -15,9 +15,22 @@ enum RenderState {
     Complete,
 }
 
-struct RenderBars {
+struct PlayerBars {
     white: PlayerName,
     black: PlayerName,
+}
+
+impl PlayerBars {
+    fn from(white: Option<PlayerName>, black: Option<PlayerName>) -> Option<PlayerBars> {
+        if white.is_some() || black.is_some() {
+            Some(PlayerBars {
+                white: white.unwrap_or_default(),
+                black: black.unwrap_or_default(),
+            })
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Default)]
@@ -46,7 +59,7 @@ pub struct Render {
     theme: &'static Theme,
     state: RenderState,
     buffer: Vec<u8>,
-    bars: Option<RenderBars>,
+    bars: Option<PlayerBars>,
     orientation: Orientation,
     frames: Vec<RenderFrame>,
 }
@@ -58,14 +71,7 @@ impl Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
-            bars: if bars {
-                Some(RenderBars {
-                    white: params.white.unwrap_or_default(),
-                    black: params.black.unwrap_or_default(),
-                })
-            } else {
-                None
-            },
+            bars: PlayerBars::from(params.white, params.black),
             frames: vec![RenderFrame {
                 board: params.fen.board,
                 highlighted: highlight_uci(params.last_move),
@@ -82,14 +88,7 @@ impl Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
-            bars: if bars {
-                Some(RenderBars {
-                    white: params.white.unwrap_or_default(),
-                    black: params.black.unwrap_or_default(),
-                })
-            } else {
-                None
-            },
+            bars: PlayerBars::from(params.white, params.black),
             frames: if params.frames.is_empty() {
                 vec![RenderFrame::default()]
             } else {
