@@ -72,13 +72,13 @@ impl Render {
             buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
             bars: PlayerBars::from(params.white, params.black),
+            orientation: params.orientation,
             frames: vec![RenderFrame {
                 board: params.fen.board,
                 highlighted: highlight_uci(params.last_move),
                 checked: params.check.into_iter().collect(),
                 delay: None,
             }],
-            orientation: params.orientation,
         }
     }
 
@@ -89,6 +89,7 @@ impl Render {
             buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
             bars: PlayerBars::from(params.white, params.black),
+            orientation: params.orientation,
             frames: if params.frames.is_empty() {
                 vec![RenderFrame::default()]
             } else {
@@ -100,7 +101,6 @@ impl Render {
                     delay: Some(frame.delay.unwrap_or(default_delay)),
                 }).collect()
             },
-            orientation: params.orientation,
         }
     }
 }
@@ -188,25 +188,27 @@ impl Iterator for Render {
 
                     let mut ctrl = block::GraphicControl::default();
                     ctrl.set_disposal_method(block::DisposalMethod::Keep);
+                    ctrl.set_transparent_color_idx(self.theme.transparent_color());
                     if let Some(delay) = frame.delay {
                         ctrl.set_delay_time_cs(delay);
                     }
-                    ctrl.set_transparent_color_idx(self.theme.transparent_color());
                     blocks.encode(ctrl).expect("enc graphic control");
 
-                    let ((x, y), (w, h)) = render_diff(
+                    let ((left, y), (w, h)) = render_diff(
                         &mut self.buffer,
                         self.theme,
                         self.orientation,
                         Some(&prev),
                         &frame);
 
+                    let top = y + if self.bars.is_some() { self.theme.bar_height() } else { 0 };
+
                     blocks.encode(
                         block::ImageDesc::default()
-                            .with_left(x as u16)
-                            .with_top(if self.bars.is_some() { self.theme.bar_height() + y} else { y } as u16)
+                            .with_left(left as u16)
+                            .with_top(top as u16)
                             .with_height(h as u16)
-                            .with_width(w as u16) // TODO
+                            .with_width(w as u16)
                     ).expect("enc image desc");
 
                     let mut image_data = block::ImageData::new(w * h);
@@ -251,17 +253,17 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
 
     for sq in diff {
         let key = SpriteKey {
-            check: frame.checked.contains(sq),
+            piece: frame.board.piece_at(sq),
             dark_square: sq.is_dark(),
             highlight: frame.highlighted.contains(sq),
-            piece: frame.board.piece_at(sq),
+            check: frame.checked.contains(sq),
         };
 
-        let real_x = (orientation.x(sq) - x_min) * theme.square();
-        let real_y = (orientation.y(sq) - y_min) * theme.square();
+        let view_x = (orientation.x(sq) - x_min) * theme.square();
+        let view_y = (orientation.y(sq) - y_min) * theme.square();
 
         view.slice_mut(
-            s!(real_y..(real_y + theme.square()), real_x..(real_x + theme.square()))
+            s!(view_y..(view_y + theme.square()), view_x..(view_x + theme.square()))
         ).assign(&theme.sprite(key));
     }
 
