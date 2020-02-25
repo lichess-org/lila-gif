@@ -7,7 +7,7 @@ Webservice to render gifs of chess positions and games.
 
 size | render time | frames | colors | width | height
 --- | --- | --- | --- | --- | ---
-53 KiB | ~30 ms | 10 | 31 | 720 px | 840 px
+53 KiB | ~30 ms | 10 | 63 | 720 px | 840 px
 
 HTTP API
 --------
