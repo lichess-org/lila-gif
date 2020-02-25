@@ -44,8 +44,8 @@ pub struct RequestParams {
     pub black: Option<PlayerName>,
     #[serde(with = "display_fromstr", default)]
     pub fen: Fen,
-    #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null", rename = "lastMove")]
-    pub last_move: Uci,
+    #[serde(deserialize_with = "maybe_uci", default)]
+    pub last_move: Option<Uci>,
     #[serde(deserialize_with = "maybe_square", default)]
     pub check: Option<Square>,
     #[serde(default)]
@@ -69,23 +69,31 @@ pub struct RequestFrame {
     pub fen: Fen,
     #[serde(default)]
     pub delay: Option<u16>,
-    #[serde(deserialize_with = "display_fromstr::deserialize", default = "uci_null", rename = "lastMove")]
-    pub last_move: Uci,
+    #[serde(deserialize_with = "maybe_uci", default, rename = "lastMove")]
+    pub last_move: Option<Uci>,
     #[serde(deserialize_with = "maybe_square", default)]
     pub check: Option<Square>,
-}
-
-fn uci_null() -> Uci {
-    Uci::Null
 }
 
 fn maybe_square<'de, D>(deserializer: D) -> Result<Option<Square>, D::Error>
 where
     D: de::Deserializer<'de>,
 {
-    Option::<&str>::deserialize(deserializer).and_then(|maybe_name| {
+    Option::<String>::deserialize(deserializer).and_then(|maybe_name| {
         Ok(match maybe_name {
             Some(name) => Some(name.parse().map_err(|_| de::Error::custom("invalid square name"))?),
+            None => None,
+        })
+    })
+}
+
+fn maybe_uci<'de, D>(deserializer: D) -> Result<Option<Uci>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    Option::<String>::deserialize(deserializer).and_then(|maybe_uci| {
+        Ok(match maybe_uci {
+            Some(uci) => Some(uci.parse().map_err(|_| de::Error::custom("invalid uci"))?),
             None => None,
         })
     })
@@ -102,67 +110,67 @@ impl RequestBody {
                 RequestFrame {
                     fen: Fen::default(),
                     delay: None,
-                    last_move: Uci::Null,
+                    last_move: None,
                     check: None,
                 },
                 RequestFrame {
                     fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1".parse().unwrap(),
                     delay: None,
-                    last_move: "e2e4".parse().unwrap(),
+                    last_move: "e2e4".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2".parse().unwrap(),
                     delay: None,
-                    last_move: "c7c5".parse().unwrap(),
+                    last_move: "c7c5".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "rnbqkbnr/pp1ppppp/8/2p5/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2".parse().unwrap(),
                     delay: None,
-                    last_move: "c2c4".parse().unwrap(),
+                    last_move: "c2c4".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P1P3/8/PP1P1PPP/RNBQKBNR w KQkq - 1 3".parse().unwrap(),
                     delay: None,
-                    last_move: "b8c6".parse().unwrap(),
+                    last_move: "b8c6".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P1P3/8/PP1PNPPP/RNBQKB1R b KQkq - 2 3".parse().unwrap(),
                     delay: None,
-                    last_move: "g1e2".parse().unwrap(),
+                    last_move: "g1e2".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "r1bqkb1r/pp1ppppp/2n2n2/2p5/2P1P3/8/PP1PNPPP/RNBQKB1R w KQkq - 3 4".parse().unwrap(),
                     delay: None,
-                    last_move: "g8f6".parse().unwrap(),
+                    last_move: "g8f6".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "r1bqkb1r/pp1ppppp/2n2n2/2p5/2P1P3/2N5/PP1PNPPP/R1BQKB1R b KQkq - 4 4".parse().unwrap(),
                     delay: None,
-                    last_move: "b1c3".parse().unwrap(),
+                    last_move: "b1c3".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "r1bqkb1r/pp1ppppp/5n2/2p5/1nP1P3/2N5/PP1PNPPP/R1BQKB1R w KQkq - 5 5".parse().unwrap(),
                     delay: None,
-                    last_move: "c6b4".parse().unwrap(),
+                    last_move: "c6b4".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "r1bqkb1r/pp1ppppp/5n2/2p5/1nP1P3/2N3P1/PP1PNP1P/R1BQKB1R b KQkq - 0 5".parse().unwrap(),
                     delay: None,
-                    last_move: "g2g3".parse().unwrap(),
+                    last_move: "g2g3".parse().ok(),
                     check: None,
                 },
                 RequestFrame {
                     fen: "r1bqkb1r/pp1ppppp/5n2/2p5/2P1P3/2Nn2P1/PP1PNP1P/R1BQKB1R w KQkq - 1 6".parse().unwrap(),
                     delay: Some(500),
-                    last_move: "b4d3".parse().unwrap(),
+                    last_move: "b4d3".parse().ok(),
                     check: Some(Square::E1),
                 },
             ],

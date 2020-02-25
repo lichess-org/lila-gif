@@ -270,10 +270,10 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
     ((theme.square() * x_min, theme.square() * y_min), (width, height))
 }
 
-fn highlight_uci(uci: Uci) -> Bitboard {
+fn highlight_uci(uci: Option<Uci>) -> Bitboard {
     match uci {
-        Uci::Normal { from, to, .. } => Bitboard::from(from) | Bitboard::from(to),
-        Uci::Put { to, .. } => Bitboard::from(to),
-        Uci::Null => Bitboard::EMPTY,
+        Some(Uci::Normal { from, to, .. }) => Bitboard::from(from) | Bitboard::from(to),
+        Some(Uci::Put { to, .. }) => Bitboard::from(to),
+        _ => Bitboard::EMPTY,
     }
 }
