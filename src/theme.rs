@@ -110,18 +110,24 @@ impl Theme {
     pub fn render_bar(&self, mut view: ArrayViewMut2<u8>, player_name: &str) {
         view.fill(self.bar_color());
 
-        let mut text_color = if player_name.contains(' ') {
-            self.gold_color() // title
-        } else {
-            self.text_color()
-        };
+        let mut text_color = self.text_color();
+        for title in &["GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ", "BOT "] {
+            if player_name.starts_with(title) {
+                text_color = self.gold_color();
+                break;
+            }
+        }
+
         let height = 40.0;
+        let padding = 10.0;
         let scale = Scale {
             x: height,
             y: height,
         };
+
         let v_metrics = self.font.v_metrics(scale);
-        let glyphs = self.font.layout(player_name, scale, rusttype::point(10.0, 10.0 + v_metrics.ascent));
+        let glyphs = self.font.layout(player_name, scale, rusttype::point(padding, padding + v_metrics.ascent));
+
         for g in glyphs {
             if let Some(bb) = g.pixel_bounding_box() {
                 g.draw(|x, y, intensity| {
