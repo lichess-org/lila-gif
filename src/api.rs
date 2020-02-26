@@ -102,6 +102,7 @@ where
 
 impl RequestBody {
     pub fn example() -> RequestBody {
+        // https://lichess.org/Q0iQs5Zi
         let pgn = "\
             1. c4 Nf6 2. Nc3 e5 3. d4 exd4 4. Qxd4 Nc6 5. Qd1 Bb4 6. Bd2 O-O \
             7. e3 Bxc3 8. Bxc3 Ne4 9. Ne2 d6 10. Qc2 Re8 11. Nf4 Bf5 \

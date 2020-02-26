@@ -3,11 +3,11 @@ lila-gif
 
 Webservice to render gifs of chess positions and games.
 
-![Example: Molinari vs. Bordais](/example.gif)
+![Example: DrDrunkenstein vs. Zhigalko_Sergei](/example.gif)
 
 size | render time | frames | colors | width | height
 --- | --- | --- | --- | --- | ---
-53 KiB | ~30 ms | 10 | 63 | 720 px | 840 px
+334 KiB | ~200 ms | 93 | 63 | 720 px | 840 px
 
 HTTP API
 --------
@@ -15,7 +15,7 @@ HTTP API
 ### `GET /image.gif`
 
 ```
-curl http://localhost:3030/?fen=4k3/6KP/8/8/8/8/7p/8 --output image.gif
+curl http://localhost:6175/?fen=4k3/6KP/8/8/8/8/7p/8 --output image.gif
 ```
 
 name | type | default | description
@@ -50,7 +50,7 @@ orientation | string | `white` | Pass `black` to flip the board.
 ### `GET /example.gif`
 
 ```
-curl http://localhost:3030/example.gif --output example.gif
+curl http://localhost:6175/example.gif --output example.gif
 ```
 
 Render an [example game](https://lichess.org/Q0iQs5Zi).
@@ -66,6 +66,7 @@ for anti-aliasing on the different background colors).
 ![Sprite](/theme/sprite.gif)
 
 All thats left to do at runtime, is copying sprites and Gif encoding.
+More than 95% of the rendering time is spent in LZW compression.
 
 For animated games, frames only contain the changed squares on transparent
 background. The example below is the last frame of the animation.
