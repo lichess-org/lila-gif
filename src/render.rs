@@ -112,7 +112,7 @@ impl Iterator for Render {
         let mut output = BytesMut::new().writer();
         match self.state {
             RenderState::Preamble => {
-                let mut blocks = Encoder::new(&mut output).into_block_enc();
+                let mut blocks = Encoder::new_unbuffered(&mut output).into_block_enc();
 
                 blocks.encode(block::Header::default()).expect("enc header");
 
@@ -178,7 +178,7 @@ impl Iterator for Render {
                 self.state = RenderState::Frame(frame);
             }
             RenderState::Frame(ref prev) => {
-                let mut blocks = Encoder::new(&mut output).into_block_enc();
+                let mut blocks = Encoder::new_unbuffered(&mut output).into_block_enc();
 
                 if self.frames.is_empty() {
                     blocks.encode(block::Trailer::default()).expect("enc trailer");

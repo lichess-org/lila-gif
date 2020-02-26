@@ -38,7 +38,7 @@ pub struct Theme {
 impl Theme {
     pub fn new() -> Theme {
         let sprite_data = include_bytes!("../theme/sprite.gif") as &[u8];
-        let mut decoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
+        let mut decoder = gift::Decoder::new_unbuffered(std::io::Cursor::new(sprite_data)).into_frames();
         let preamble = decoder.preamble().expect("decode preamble").expect("preamble");
         let frame = decoder.next().expect("frame").expect("decode frame");
         let sprite = Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned()).expect("from shape");
