@@ -53,7 +53,7 @@ orientation | string | `white` | Pass `black` to flip the board.
 curl http://localhost:3030/example.gif --output example.gif
 ```
 
-Render the example Gif (Molinari vs. Bordais) for the README.
+Render an [example game](https://lichess.org/Q0iQs5Zi).
 
 Technique
 ---------
