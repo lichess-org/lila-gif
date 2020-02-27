@@ -21,13 +21,13 @@ curl http://localhost:6175/image.gif?fen=4k3/6KP/8/8/8/8/7p/8 --output image.gif
 
 name | type | default | description
 --- | --- | --- | ---
-**fen** | string | *starting position* | FEN of the position. Board part is sufficient.
-white | string | *none* | Username of white player. If multiple words, first word is assumed to be title. Limited to 100 bytes.
-black | string | *none* | Username of black player. If multiple words, first word is assumed to be title. Limited to 100 bytes.
-comment | string | https://github.com/niklasf/lila-git | GIF comment. Limited to 255 bytes.
-lastMove | string | *none* | Last move in UCI notation (like `e2e4`).
-check | string | *none* | Square of king in check (like `e1`).
-orientation | string | `white` | Pass `black` to flip the board.
+**fen** | ascii | *starting position* | FEN of the position. Board part is sufficient.
+white | utf-8 | *none* | Name of the white player. Known chess titles are highlighted. Limited to 100 bytes.
+black | utf-8 | *none* | Name of the black player. Known chess titles are highlighted. Limited to 100 bytes.
+comment | utf-8 | https://github.com/niklasf/lila-git | Comment to be added to GIF meta data. Limited to 255 bytes.
+lastMove | ascii | *none* | Last move in UCI notation (like `e2e4`).
+check | ascii | *none* | Square of king in check (like `e1`).
+orientation | | `white` | Pass `black` to flip the board.
 
 ### `POST /game.gif`
 
