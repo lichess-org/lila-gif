@@ -1,7 +1,7 @@
 lila-gif
 ========
 
-Webservice to render gifs of chess positions and games, and stream them
+Webservice to render Gifs of chess positions and games, and stream them
 frame by frame.
 
 ![Example: DrDrunkenstein vs. Zhigalko_Sergei](/example.gif)
