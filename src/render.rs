@@ -6,7 +6,7 @@ use shakmaty::uci::Uci;
 use shakmaty::{Bitboard, Board};
 use std::iter::FusedIterator;
 
-use crate::api::{Orientation, PlayerName, RequestBody, RequestParams};
+use crate::api::{Orientation, PlayerName, Comment, RequestBody, RequestParams};
 use crate::theme::{SpriteKey, Theme};
 
 enum RenderState {
@@ -59,6 +59,7 @@ pub struct Render {
     theme: &'static Theme,
     state: RenderState,
     buffer: Vec<u8>,
+    comment: Option<Comment>,
     bars: Option<PlayerBars>,
     orientation: Orientation,
     frames: Vec<RenderFrame>,
@@ -71,6 +72,7 @@ impl Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
+            comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
             frames: vec![RenderFrame {
@@ -88,6 +90,7 @@ impl Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
+            comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
             frames: if params.frames.is_empty() {
@@ -130,6 +133,13 @@ impl Iterator for Render {
                 blocks.encode(
                     block::Application::with_loop_count(0)
                 ).expect("enc application");
+
+                let mut comments = block::Comment::default();
+                comments.add_comment(self.comment.as_ref().map_or(
+                    "https://github.com/niklasf/lila-gif".as_bytes(),
+                    |c| c.as_bytes()
+                ));
+                blocks.encode(comments).expect("enc comment");
 
                 let mut view = ArrayViewMut2::from_shape(
                     (self.theme.height(self.bars.is_some()), self.theme.width()),

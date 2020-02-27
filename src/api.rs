@@ -37,12 +37,15 @@ impl Orientation {
     }
 }
 
-pub type PlayerName = ArrayString<[u8; 100]>;
+pub type PlayerName = ArrayString<[u8; 100]>; // length limited to prevent dos
+
+pub type Comment = ArrayString<[u8; 255]>; // strict length limit for gif comments
 
 #[derive(Deserialize)]
 pub struct RequestParams {
     pub white: Option<PlayerName>,
     pub black: Option<PlayerName>,
+    pub comment: Option<Comment>,
     #[serde(with = "display_fromstr", default)]
     pub fen: Fen,
     #[serde(deserialize_with = "maybe_uci", default)]
@@ -57,6 +60,7 @@ pub struct RequestParams {
 pub struct RequestBody {
     pub white: Option<PlayerName>,
     pub black: Option<PlayerName>,
+    pub comment: Option<Comment>,
     pub frames: Vec<RequestFrame>,
     #[serde(default)]
     pub orientation: Orientation,
@@ -102,7 +106,6 @@ where
 
 impl RequestBody {
     pub fn example() -> RequestBody {
-        // https://lichess.org/Q0iQs5Zi
         let pgn = "\
             1. c4 Nf6 2. Nc3 e5 3. d4 exd4 4. Qxd4 Nc6 5. Qd1 Bb4 6. Bd2 O-O \
             7. e3 Bxc3 8. Bxc3 Ne4 9. Ne2 d6 10. Qc2 Re8 11. Nf4 Bf5 \
@@ -138,6 +141,7 @@ impl RequestBody {
         frames.last_mut().unwrap().delay = Some(500);
 
         RequestBody {
+            comment: Some(Comment::from("https://lichess.org/Q0iQs5Zi").unwrap()),
             white: Some(PlayerName::from("GM DrDrunkenstein (2888)").unwrap()),
             black: Some(PlayerName::from("GM Zhigalko_Sergei (2895)").unwrap()),
             orientation: Orientation::White,

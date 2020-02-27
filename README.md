@@ -16,7 +16,7 @@ HTTP API
 ### `GET /image.gif`
 
 ```
-curl http://localhost:6175/?fen=4k3/6KP/8/8/8/8/7p/8 --output image.gif
+curl http://localhost:6175/image.gif?fen=4k3/6KP/8/8/8/8/7p/8 --output image.gif
 ```
 
 name | type | default | description
@@ -24,6 +24,7 @@ name | type | default | description
 **fen** | string | *starting position* | FEN of the position. Board part is sufficient.
 white | string | *none* | Username of white player. If multiple words, first word is assumed to be title.
 black | string | *none* | Username of black player. If multiple words, first word is assumed to be title.
+comment | string | | GIF comment
 lastMove | string | *none* | Last move in UCI notation (like `e2e4`).
 check | string | *none* | Square of king in check (like `e1`).
 orientation | string | `white` | Pass `black` to flip the board.
@@ -34,6 +35,7 @@ orientation | string | `white` | Pass `black` to flip the board.
 {
   "white": "Molinari", // optional
   "black": "Bordais", // optional
+  "comment": "https://www.chessgames.com/perl/chessgame?gid=1251038", // optional
   "orientation": "white", // default
   "delay": 50, // default frame delay in centiseconds
   "frames": [
