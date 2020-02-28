@@ -21,21 +21,25 @@ struct Opt {
     address: String,
     /// Listen on this port
     #[structopt(long = "port", default_value = "6175")]
-    port: u16
+    port: u16,
 }
 
 fn image(theme: &'static Theme, req: RequestParams) -> impl warp::Reply {
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
-        .body(Body::wrap_stream(tokio::stream::iter(Render::new_image(theme, req).map(Ok::<_, Infallible>))))
+        .body(Body::wrap_stream(tokio::stream::iter(
+            Render::new_image(theme, req).map(Ok::<_, Infallible>),
+        )))
 }
 
 fn animation(theme: &'static Theme, req: RequestBody) -> impl warp::Reply {
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
-        .body(Body::wrap_stream(tokio::stream::iter(Render::new_animation(theme, req).map(Ok::<_, Infallible>))))
+        .body(Body::wrap_stream(tokio::stream::iter(
+            Render::new_animation(theme, req).map(Ok::<_, Infallible>),
+        )))
 }
 
 fn example(theme: &'static Theme) -> impl warp::Reply {

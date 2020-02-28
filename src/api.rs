@@ -2,9 +2,9 @@ use arrayvec::ArrayString;
 use serde::{de, Deserialize};
 use serde_with::rust::display_fromstr;
 use shakmaty::fen::Fen;
-use shakmaty::uci::Uci;
 use shakmaty::san::San;
-use shakmaty::{Chess, Square, Setup, Position};
+use shakmaty::uci::Uci;
+use shakmaty::{Chess, Position, Setup, Square};
 
 #[derive(Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum Orientation {

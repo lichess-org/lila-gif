@@ -4,10 +4,10 @@ use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use shakmaty::uci::Uci;
 use shakmaty::{Bitboard, Board};
-use std::vec;
 use std::iter::FusedIterator;
+use std::vec;
 
-use crate::api::{Orientation, PlayerName, Comment, RequestBody, RequestParams};
+use crate::api::{Comment, Orientation, PlayerName, RequestBody, RequestParams};
 use crate::theme::{SpriteKey, Theme};
 
 enum RenderState {

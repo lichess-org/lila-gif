@@ -1,4 +1,4 @@
-use gift::block::{GlobalColorTable, ColorTableConfig};
+use gift::block::{ColorTableConfig, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2, ArrayViewMut2};
 use rusttype::{Font, FontCollection, Scale};
 use shakmaty::{Piece, Role};
@@ -130,11 +130,14 @@ impl Theme {
 
         for g in glyphs {
             if let Some(bb) = g.pixel_bounding_box() {
-                g.draw(|x, y, intensity| {
-                    let x = x as i32 + bb.min.x;
-                    let y = y as i32 + bb.min.y;
-                    if intensity > 0.01 && 0 <= x && x < self.width() as i32 && 0 <= y && y < self.bar_height() as i32 {
-                        view[(y as usize, x as usize)] = text_color;
+                g.draw(|left, top, intensity| {
+                    let left = left as i32 + bb.min.x;
+                    let top = top as i32 + bb.min.y;
+                    if intensity > 0.01
+                        && 0 <= left && left < self.width() as i32
+                        && 0 <= top && top < self.bar_height() as i32
+                    {
+                        view[(top as usize, left as usize)] = text_color;
                     }
                 });
             } else {
