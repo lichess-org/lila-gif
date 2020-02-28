@@ -4,6 +4,7 @@ use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use shakmaty::uci::Uci;
 use shakmaty::{Bitboard, Board};
+use std::vec;
 use std::iter::FusedIterator;
 
 use crate::api::{Orientation, PlayerName, Comment, RequestBody, RequestParams};
@@ -62,7 +63,7 @@ pub struct Render {
     comment: Option<Comment>,
     bars: Option<PlayerBars>,
     orientation: Orientation,
-    frames: Vec<RenderFrame>,
+    frames: vec::IntoIter<RenderFrame>,
 }
 
 impl Render {
@@ -80,12 +81,13 @@ impl Render {
                 highlighted: highlight_uci(params.last_move),
                 checked: params.check.into_iter().collect(),
                 delay: None,
-            }],
+            }].into_iter(),
         }
     }
 
     pub fn new_animation(theme: &'static Theme, params: RequestBody) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
+        let default_delay = params.delay;
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
@@ -93,17 +95,12 @@ impl Render {
             comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
-            frames: if params.frames.is_empty() {
-                vec![RenderFrame::default()]
-            } else {
-                let default_delay = params.delay;
-                params.frames.into_iter().map(|frame| RenderFrame {
-                    board: frame.fen.board,
-                    highlighted: highlight_uci(frame.last_move),
-                    checked: frame.check.into_iter().collect(),
-                    delay: Some(frame.delay.unwrap_or(default_delay)),
-                }).collect()
-            },
+            frames: params.frames.into_iter().map(|frame| RenderFrame {
+                board: frame.fen.board,
+                highlighted: highlight_uci(frame.last_move),
+                checked: frame.check.into_iter().collect(),
+                delay: Some(frame.delay.unwrap_or(default_delay)),
+            }).collect::<Vec<_>>().into_iter()
         }
     }
 }
@@ -160,7 +157,7 @@ impl Iterator for Render {
                     view
                 };
 
-                let frame = self.frames.remove(0);
+                let frame = self.frames.next().unwrap_or_default();
 
                 if let Some(delay) = frame.delay {
                     let mut ctrl = block::GraphicControl::default();
@@ -190,12 +187,7 @@ impl Iterator for Render {
             RenderState::Frame(ref prev) => {
                 let mut blocks = Encoder::new_unbuffered(&mut output).into_block_enc();
 
-                if self.frames.is_empty() {
-                    blocks.encode(block::Trailer::default()).expect("enc trailer");
-                    self.state = RenderState::Complete;
-                } else {
-                    let frame = self.frames.remove(0);
-
+                if let Some(frame) = self.frames.next() {
                     let mut ctrl = block::GraphicControl::default();
                     ctrl.set_disposal_method(block::DisposalMethod::Keep);
                     ctrl.set_transparent_color_idx(self.theme.transparent_color());
@@ -226,6 +218,9 @@ impl Iterator for Render {
                     blocks.encode(image_data).expect("enc image data");
 
                     self.state = RenderState::Frame(frame);
+                } else {
+                    blocks.encode(block::Trailer::default()).expect("enc trailer");
+                    self.state = RenderState::Complete;
                 }
             }
             RenderState::Complete => return None,
