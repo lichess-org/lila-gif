@@ -232,11 +232,7 @@ impl Iterator for Render {
 impl FusedIterator for Render { }
 
 fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev: Option<&RenderFrame>, frame: &RenderFrame) -> ((usize, usize), (usize, usize)) {
-    let diff = if let Some(prev) = prev {
-        prev.diff(frame)
-    } else {
-        Bitboard::ALL
-    };
+    let diff = prev.map_or(Bitboard::ALL, |p| p.diff(frame));
 
     if diff.is_empty() {
         return ((0, 0), (0, 0));
