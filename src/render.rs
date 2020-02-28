@@ -234,17 +234,13 @@ impl FusedIterator for Render { }
 fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev: Option<&RenderFrame>, frame: &RenderFrame) -> ((usize, usize), (usize, usize)) {
     let diff = prev.map_or(Bitboard::ALL, |p| p.diff(frame));
 
-    if diff.is_empty() {
-        return ((0, 0), (0, 0));
-    }
+    let x_min = diff.into_iter().map(|sq| orientation.x(sq)).min().unwrap_or(0);
+    let y_min = diff.into_iter().map(|sq| orientation.y(sq)).min().unwrap_or(0);
+    let x_max = diff.into_iter().map(|sq| orientation.x(sq)).max().unwrap_or(0) + 1;
+    let y_max = diff.into_iter().map(|sq| orientation.y(sq)).max().unwrap_or(0) + 1;
 
-    let x_min = diff.into_iter().map(|sq| orientation.x(sq)).min().unwrap();
-    let x_max = diff.into_iter().map(|sq| orientation.x(sq)).max().unwrap();
-    let y_min = diff.into_iter().map(|sq| orientation.y(sq)).min().unwrap();
-    let y_max = diff.into_iter().map(|sq| orientation.y(sq)).max().unwrap();
-
-    let width = theme.square() * (x_max - x_min + 1);
-    let height = theme.square() * (y_max - y_min + 1);
+    let width = (x_max - x_min) * theme.square();
+    let height = (y_max - y_min) * theme.square();
 
     let mut view = ArrayViewMut2::from_shape((height, width), buffer).expect("shape");
 
@@ -260,11 +256,11 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
             check: frame.checked.contains(sq),
         };
 
-        let view_x = (orientation.x(sq) - x_min) * theme.square();
-        let view_y = (orientation.y(sq) - y_min) * theme.square();
+        let left = (orientation.x(sq) - x_min) * theme.square();
+        let top = (orientation.y(sq) - y_min) * theme.square();
 
         view.slice_mut(
-            s!(view_y..(view_y + theme.square()), view_x..(view_x + theme.square()))
+            s!(top..(top + theme.square()), left..(left + theme.square()))
         ).assign(&theme.sprite(key));
     }
 
