@@ -12,7 +12,11 @@ COLORS = [
     "#262421", # dark background
     "#bababa", # text color
     "#bf811d", # title color
+    "#b72fc6", # bot color
+    "#706f6e", # 50% text color on dark background
 ]
+
+COLOR_WIDTH = SQUARE_SIZE * 2 // 3
 
 
 def make_sprite(f):
@@ -29,11 +33,11 @@ def make_sprite(f):
 
     defs.append(ET.fromstring(chess.svg.CHECK_GRADIENT))
 
-    for x, color in enumerate(COLORS):
+    for x, color in enumerate(COLORS[4:]):
         ET.SubElement(svg, "rect", {
-            "x": str(SQUARE_SIZE * x),
+            "x": str(SQUARE_SIZE * 4 + COLOR_WIDTH * x),
             "y": "0",
-            "width": str(SQUARE_SIZE),
+            "width": str(COLOR_WIDTH),
             "height": str(SQUARE_SIZE),
             "stroke": "none",
             "fill": color,
@@ -42,9 +46,9 @@ def make_sprite(f):
     for x in range(8):
         ET.SubElement(svg, "rect", {
             "x": str(SQUARE_SIZE * x),
-            "y": str(SQUARE_SIZE),
+            "y": str(SQUARE_SIZE if x >= 4 else 0),
             "width": str(SQUARE_SIZE),
-            "height": str(SQUARE_SIZE * 7),
+            "height": str(SQUARE_SIZE * (7 if x >= 4 else 8)),
             "stroke": "none",
             "fill": COLORS[x % 4],
         })

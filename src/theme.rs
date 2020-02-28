@@ -4,6 +4,7 @@ use rusttype::{Font, FontCollection, Scale};
 use shakmaty::{Piece, Role};
 
 const SQUARE: usize = 90;
+const COLOR_WIDTH: usize = 90 * 2 / 3;
 
 pub struct SpriteKey {
     pub piece: Option<Piece>,
@@ -70,15 +71,23 @@ impl Theme {
     }
 
     fn text_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 5)]
+        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH)]
     }
 
     fn gold_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 6)]
+        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 2)]
+    }
+
+    fn bot_color(&self) -> u8 {
+        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 3)]
+    }
+
+    fn med_text_color(&self) -> u8 {
+        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 4)]
     }
 
     pub fn transparent_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 7)]
+        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 5)]
     }
 
     pub fn square(&self) -> usize {
@@ -111,10 +120,14 @@ impl Theme {
         view.fill(self.bar_color());
 
         let mut text_color = self.text_color();
-        for title in &["GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ", "BOT "] {
-            if player_name.starts_with(title) {
-                text_color = self.gold_color();
-                break;
+        if player_name.starts_with("BOT ") {
+            text_color = self.bot_color();
+        } else {
+            for title in &["GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ", "BOT "] {
+                if player_name.starts_with(title) {
+                    text_color = self.gold_color();
+                    break;
+                }
             }
         }
 
@@ -133,11 +146,14 @@ impl Theme {
                 g.draw(|left, top, intensity| {
                     let left = left as i32 + bb.min.x;
                     let top = top as i32 + bb.min.y;
-                    if intensity > 0.01
-                        && 0 <= left && left < self.width() as i32
-                        && 0 <= top && top < self.bar_height() as i32
-                    {
-                        view[(top as usize, left as usize)] = text_color;
+                    if 0 <= left && left < self.width() as i32 && 0 <= top && top < self.bar_height() as i32 {
+                        if intensity < 0.01 {
+                            return;
+                        } else if intensity < 0.5 && text_color == self.text_color() {
+                            view[(top as usize, left as usize)] = self.med_text_color();
+                        } else {
+                            view[(top as usize, left as usize)] = text_color;
+                        }
                     }
                 });
             } else {
