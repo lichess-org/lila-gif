@@ -48,7 +48,7 @@ pub struct RequestParams {
     pub comment: Option<Comment>,
     #[serde(with = "display_fromstr", default)]
     pub fen: Fen,
-    #[serde(deserialize_with = "maybe_uci", default)]
+    #[serde(deserialize_with = "maybe_uci", default, rename = "lastMove")]
     pub last_move: Option<Uci>,
     #[serde(deserialize_with = "maybe_square", default)]
     pub check: Option<Square>,
