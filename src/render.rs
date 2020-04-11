@@ -6,6 +6,7 @@ use shakmaty::uci::Uci;
 use shakmaty::{Bitboard, Board};
 use std::iter::FusedIterator;
 use std::vec;
+use rusttype::Scale;
 
 use crate::api::{Comment, Orientation, PlayerName, RequestBody, RequestParams};
 use crate::theme::{SpriteKey, Theme};
@@ -144,12 +145,14 @@ impl Iterator for Render {
                 ).expect("shape");
 
                 let mut board_view = if let Some(ref bars) = self.bars {
-                    self.theme.render_bar(
+                    render_bar(
                         view.slice_mut(s!(..self.theme.bar_height(), ..)),
+                        self.theme,
                         self.orientation.fold(&bars.black, &bars.white));
 
-                    self.theme.render_bar(
+                    render_bar(
                         view.slice_mut(s!((self.theme.bar_height() + self.theme.width()).., ..)),
+                        self.theme,
                         self.orientation.fold(&bars.white, &bars.black));
 
                     view.slice_mut(s!(self.theme.bar_height()..(self.theme.bar_height() + self.theme.width()), ..))
@@ -265,6 +268,52 @@ fn render_diff(buffer: &mut [u8], theme: &Theme, orientation: Orientation, prev:
     }
 
     ((theme.square() * x_min, theme.square() * y_min), (width, height))
+}
+
+fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, player_name: &str) {
+    view.fill(theme.bar_color());
+
+    let mut text_color = theme.text_color();
+    if player_name.starts_with("BOT ") {
+        text_color = theme.bot_color();
+    } else {
+        for title in &["GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ", "BOT "] {
+            if player_name.starts_with(title) {
+                text_color = theme.gold_color();
+                break;
+            }
+        }
+    }
+
+    let height = 40.0;
+    let padding = 10.0;
+    let scale = Scale {
+        x: height,
+        y: height,
+    };
+
+    let v_metrics = theme.font().v_metrics(scale);
+    let glyphs = theme.font().layout(player_name, scale, rusttype::point(padding, padding + v_metrics.ascent));
+
+    for g in glyphs {
+        if let Some(bb) = g.pixel_bounding_box() {
+            g.draw(|left, top, intensity| {
+                let left = left as i32 + bb.min.x;
+                let top = top as i32 + bb.min.y;
+                if 0 <= left && left < theme.width() as i32 && 0 <= top && top < theme.bar_height() as i32 {
+                    if intensity < 0.01 {
+                        return;
+                    } else if intensity < 0.5 && text_color == theme.text_color() {
+                        view[(top as usize, left as usize)] = theme.med_text_color();
+                    } else {
+                        view[(top as usize, left as usize)] = text_color;
+                    }
+                }
+            });
+        } else {
+            text_color = theme.text_color();
+        }
+    }
 }
 
 fn highlight_uci(uci: Option<Uci>) -> Bitboard {

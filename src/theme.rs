@@ -1,6 +1,6 @@
 use gift::block::{ColorTableConfig, GlobalColorTable};
-use ndarray::{s, Array2, ArrayView2, ArrayViewMut2};
-use rusttype::{Font, FontCollection, Scale};
+use ndarray::{s, Array2, ArrayView2};
+use rusttype::{Font, FontCollection};
 use shakmaty::{Piece, Role};
 
 const SQUARE: usize = 90;
@@ -58,6 +58,10 @@ impl Theme {
         }
     }
 
+    pub fn font(&self) -> &Font {
+        &self.font
+    }
+
     pub fn color_table_config(&self) -> ColorTableConfig {
         self.color_table_config
     }
@@ -66,23 +70,23 @@ impl Theme {
         &self.global_color_table
     }
 
-    fn bar_color(&self) -> u8 {
+    pub fn bar_color(&self) -> u8 {
         self.sprite[(0, SQUARE * 4)]
     }
 
-    fn text_color(&self) -> u8 {
+    pub fn text_color(&self) -> u8 {
         self.sprite[(0, SQUARE * 4 + COLOR_WIDTH)]
     }
 
-    fn gold_color(&self) -> u8 {
+    pub fn gold_color(&self) -> u8 {
         self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 2)]
     }
 
-    fn bot_color(&self) -> u8 {
+    pub fn bot_color(&self) -> u8 {
         self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 3)]
     }
 
-    fn med_text_color(&self) -> u8 {
+    pub fn med_text_color(&self) -> u8 {
         self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 4)]
     }
 
@@ -114,51 +118,5 @@ impl Theme {
         let y = key.y();
         let x = key.x();
         self.sprite.slice(s!((SQUARE * y)..(SQUARE + SQUARE * y), (SQUARE * x)..(SQUARE + SQUARE * x)))
-    }
-
-    pub fn render_bar(&self, mut view: ArrayViewMut2<u8>, player_name: &str) {
-        view.fill(self.bar_color());
-
-        let mut text_color = self.text_color();
-        if player_name.starts_with("BOT ") {
-            text_color = self.bot_color();
-        } else {
-            for title in &["GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ", "BOT "] {
-                if player_name.starts_with(title) {
-                    text_color = self.gold_color();
-                    break;
-                }
-            }
-        }
-
-        let height = 40.0;
-        let padding = 10.0;
-        let scale = Scale {
-            x: height,
-            y: height,
-        };
-
-        let v_metrics = self.font.v_metrics(scale);
-        let glyphs = self.font.layout(player_name, scale, rusttype::point(padding, padding + v_metrics.ascent));
-
-        for g in glyphs {
-            if let Some(bb) = g.pixel_bounding_box() {
-                g.draw(|left, top, intensity| {
-                    let left = left as i32 + bb.min.x;
-                    let top = top as i32 + bb.min.y;
-                    if 0 <= left && left < self.width() as i32 && 0 <= top && top < self.bar_height() as i32 {
-                        if intensity < 0.01 {
-                            return;
-                        } else if intensity < 0.5 && text_color == self.text_color() {
-                            view[(top as usize, left as usize)] = self.med_text_color();
-                        } else {
-                            view[(top as usize, left as usize)] = text_color;
-                        }
-                    }
-                });
-            } else {
-                text_color = self.text_color();
-            }
-        }
     }
 }
