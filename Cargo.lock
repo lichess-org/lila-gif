@@ -245,9 +245,9 @@ dependencies = [
 
 [[package]]
 name = "gift"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4aeeb4f590341b78563636f33c221def8986d82376f2b430db3cb7bb791168f3"
+checksum = "bf3eb601277fa52a9c748886f865c89266f61bd0a985fde120b0c5285f0d6f57"
 dependencies = [
  "log",
  "lzw",
@@ -642,9 +642,9 @@ checksum = "5894c618ce612a3fa23881b152b608bafb8c56cfc22f434a3ba3120b40f7b587"
 
 [[package]]
 name = "pix"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66ae7a228ad4a75224eb6d2ec87fedb431f9b8c240df4271c2a3efa7108b74ba"
+checksum = "7fd88a1c917821563a00b72a2aa5266bddba8a1ed30a067f9864b38dcce18dda"
 
 [[package]]
 name = "proc-macro-error"
