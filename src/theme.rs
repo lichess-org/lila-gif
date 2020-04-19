@@ -1,6 +1,6 @@
 use gift::block::{ColorTableConfig, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2};
-use rusttype::{Font, FontCollection};
+use rusttype::Font;
 use shakmaty::{Piece, Role};
 
 const SQUARE: usize = 90;
@@ -45,10 +45,7 @@ impl Theme {
         let sprite = Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned()).expect("from shape");
 
         let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
-        let font = FontCollection::from_bytes(font_data)
-            .expect("font collection")
-            .into_font()
-            .expect("single font");
+        let font = Font::try_from_bytes(font_data).expect("parse font");
 
         Theme {
             color_table_config: preamble.logical_screen_desc.color_table_config(),
