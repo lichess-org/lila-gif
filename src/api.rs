@@ -5,6 +5,7 @@ use shakmaty::fen::Fen;
 use shakmaty::san::San;
 use shakmaty::uci::Uci;
 use shakmaty::{Chess, Position, Setup, Square};
+use std::fmt;
 
 #[derive(Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum Orientation {
@@ -41,6 +42,68 @@ pub type PlayerName = ArrayString<[u8; 100]>; // length limited to prevent dos
 
 pub type Comment = ArrayString<[u8; 255]>; // strict length limit for gif comments
 
+#[derive(Copy, Clone)]
+pub enum CheckSquare {
+    No,
+    Yes,
+    Square(Square),
+}
+
+impl Default for CheckSquare {
+    fn default() -> CheckSquare {
+        CheckSquare::No
+    }
+}
+
+impl<'de> Deserialize<'de> for CheckSquare {
+    fn deserialize<D>(deseralizer: D) -> Result<CheckSquare, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        struct CheckSquareVisitor;
+
+        impl<'de> de::Visitor<'de> for CheckSquareVisitor {
+            type Value = CheckSquare;
+
+            fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+                fmt.write_str("square name or bool")
+            }
+
+            fn visit_str<E>(self, name: &str) -> Result<CheckSquare, E>
+            where
+                E: de::Error,
+            {
+                match name.parse() {
+                    Ok(sq) => Ok(CheckSquare::Square(sq)),
+                    Err(_) => Err(de::Error::custom("invalid square name"))
+                }
+            }
+
+            fn visit_bool<E>(self, yes: bool) -> Result<CheckSquare, E>
+            where
+                E: de::Error,
+            {
+                Ok(match yes {
+                    true => CheckSquare::Yes,
+                    false => CheckSquare::No,
+                })
+            }
+        }
+
+        deseralizer.deserialize_any(CheckSquareVisitor)
+    }
+}
+
+impl CheckSquare {
+    pub fn to_square(self, fen: &Fen) -> Option<Square> {
+        match self {
+            CheckSquare::No => None,
+            CheckSquare::Yes => fen.board.king_of(fen.turn()),
+            CheckSquare::Square(sq) => Some(sq),
+        }
+    }
+}
+
 #[derive(Deserialize)]
 pub struct RequestParams {
     pub white: Option<PlayerName>,
@@ -50,8 +113,8 @@ pub struct RequestParams {
     pub fen: Fen,
     #[serde(deserialize_with = "maybe_uci", default, rename = "lastMove")]
     pub last_move: Option<Uci>,
-    #[serde(deserialize_with = "maybe_square", default)]
-    pub check: Option<Square>,
+    #[serde(default)]
+    pub check: CheckSquare,
     #[serde(default)]
     pub orientation: Orientation,
 }
@@ -76,20 +139,8 @@ pub struct RequestFrame {
     pub delay: Option<u16>,
     #[serde(deserialize_with = "maybe_uci", default, rename = "lastMove")]
     pub last_move: Option<Uci>,
-    #[serde(deserialize_with = "maybe_square", default)]
-    pub check: Option<Square>,
-}
-
-fn maybe_square<'de, D>(deserializer: D) -> Result<Option<Square>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    Option::<String>::deserialize(deserializer).and_then(|maybe_name| {
-        Ok(match maybe_name {
-            Some(name) => Some(name.parse().map_err(|_| de::Error::custom("invalid square name"))?),
-            None => None,
-        })
-    })
+    #[serde(default)]
+    pub check: CheckSquare,
 }
 
 fn maybe_uci<'de, D>(deserializer: D) -> Result<Option<Uci>, D::Error>
@@ -132,7 +183,7 @@ impl RequestBody {
 
             frames.push(RequestFrame {
                 fen: Fen::from_setup(&pos),
-                check: pos.board().king_of(pos.turn()).filter(|_| pos.is_check()),
+                check: if pos.is_check() { CheckSquare::Yes } else { CheckSquare::No },
                 last_move: Some(Uci::from_move(&pos, &m)),
                 delay: None,
             })

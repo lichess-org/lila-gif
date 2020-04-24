@@ -78,9 +78,9 @@ impl Render {
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
             frames: vec![RenderFrame {
-                board: params.fen.board,
                 highlighted: highlight_uci(params.last_move),
-                checked: params.check.into_iter().collect(),
+                checked: params.check.to_square(&params.fen).into_iter().collect(),
+                board: params.fen.board,
                 delay: None,
             }].into_iter(),
         }
@@ -97,9 +97,9 @@ impl Render {
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
             frames: params.frames.into_iter().map(|frame| RenderFrame {
-                board: frame.fen.board,
                 highlighted: highlight_uci(frame.last_move),
-                checked: frame.check.into_iter().collect(),
+                checked: frame.check.to_square(&frame.fen).into_iter().collect(),
+                board: frame.fen.board,
                 delay: Some(frame.delay.unwrap_or(default_delay)),
             }).collect::<Vec<_>>().into_iter()
         }
