@@ -575,6 +575,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
+name = "owned_ttf_parser"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72cfab9c2775bbb8481678d71a0117718bf8042a79cf9db61125d71e4018690b"
+dependencies = [
+ "ttf-parser",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -670,12 +679,12 @@ checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
 
 [[package]]
 name = "rusttype"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40cbe3f2bab536ff4784f14f2a73f1e37550ceb36a074c47a8f4150f57182049"
+checksum = "03be7d3a07ba7216974d7e4b8508bc10040918f2374680613277389bdd84fd10"
 dependencies = [
  "ab_glyph_rasterizer",
- "ttf-parser",
+ "owned_ttf_parser",
 ]
 
 [[package]]
