@@ -236,9 +236,9 @@ dependencies = [
 
 [[package]]
 name = "gift"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf3eb601277fa52a9c748886f865c89266f61bd0a985fde120b0c5285f0d6f57"
+checksum = "09a6e559ef8af1073bd061ce9e6e3649e492047519f8a3998c9a055bde99ceba"
 dependencies = [
  "log",
  "lzw",
@@ -300,9 +300,9 @@ dependencies = [
 
 [[package]]
 name = "hermit-abi"
-version = "0.1.11"
+version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a0d737e0f947a1864e93d33fdef4af8445a00d1ed8dc0c8ddb73139ea6abf15"
+checksum = "61565ff7aaace3525556587bd2dc31d4a07071957be715e63ce7b1eccf51a8f4"
 dependencies = [
  "libc",
 ]
@@ -575,6 +575,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
+name = "owned_ttf_parser"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72cfab9c2775bbb8481678d71a0117718bf8042a79cf9db61125d71e4018690b"
+dependencies = [
+ "ttf-parser",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -614,9 +623,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pix"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fd88a1c917821563a00b72a2aa5266bddba8a1ed30a067f9864b38dcce18dda"
+checksum = "adb5aa3475be9060b33feffab8f6142505445f8835ae08cd4185d861e0e4db64"
 
 [[package]]
 name = "proc-macro-error"
@@ -670,12 +679,12 @@ checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
 
 [[package]]
 name = "rusttype"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40cbe3f2bab536ff4784f14f2a73f1e37550ceb36a074c47a8f4150f57182049"
+checksum = "03be7d3a07ba7216974d7e4b8508bc10040918f2374680613277389bdd84fd10"
 dependencies = [
  "ab_glyph_rasterizer",
- "ttf-parser",
+ "owned_ttf_parser",
 ]
 
 [[package]]
@@ -712,9 +721,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.51"
+version = "1.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da07b57ee2623368351e9a0488bb0b261322a15a6e0ae53e243cbdc0f4208da9"
+checksum = "a7894c8ed05b7a3a279aeb79025fdec1d3158080b75b98a08faf2806bb799edd"
 dependencies = [
  "itoa",
  "ryu",
@@ -862,9 +871,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "0.2.18"
+version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34ef16d072d2b6dc8b4a56c70f5c5ced1a37752116f8e7c1e80c659aa7cb6713"
+checksum = "7d9c43f1bb96970e153bcbae39a65e249ccb942bd9d36dbdf086024920417c9c"
 dependencies = [
  "bytes",
  "fnv",
