@@ -10,6 +10,24 @@ size | render time | frames | colors | width | height
 --- | --- | --- | --- | --- | ---
 334 KiB | ~200 ms | 93 | 63 | 720 px | 840 px
 
+Usage
+-----
+
+```
+lila-gif 0.1.0
+
+USAGE:
+    lila-gif [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+        --address <address>    Listen on this address [default: 127.0.0.1]
+        --port <port>          Listen on this port [default: 6175]
+```
+
 HTTP API
 --------
 
