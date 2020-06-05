@@ -237,9 +237,9 @@ dependencies = [
 
 [[package]]
 name = "gift"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74b02b48c04dbe8e7d64283f698629304c1005acdd22c08e0b9e2fb3221a7b11"
+checksum = "f99e516d48350629ba16a9326db207eccf3235a5c2f0fb941c79c5fcaf4c20f7"
 dependencies = [
  "log",
  "lzw",
