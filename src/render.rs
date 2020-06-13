@@ -301,6 +301,7 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, player_name: &str) {
                 let left = left as i32 + bb.min.x;
                 let top = top as i32 + bb.min.y;
                 if 0 <= left && left < theme.width() as i32 && 0 <= top && top < theme.bar_height() as i32 {
+                    // Poor man's anti-aliasing.
                     if intensity < 0.01 {
                         return;
                     } else if intensity < 0.5 && text_color == theme.text_color() {
