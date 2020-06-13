@@ -33,7 +33,7 @@ fn image(theme: &'static Theme, req: RequestParams) -> impl warp::Reply {
         )))
 }
 
-fn animation(theme: &'static Theme, req: RequestBody) -> impl warp::Reply {
+fn game(theme: &'static Theme, req: RequestBody) -> impl warp::Reply {
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
@@ -43,7 +43,7 @@ fn animation(theme: &'static Theme, req: RequestBody) -> impl warp::Reply {
 }
 
 fn example(theme: &'static Theme) -> impl warp::Reply {
-    animation(theme, RequestBody::example())
+    game(theme, RequestBody::example())
 }
 
 #[tokio::main]
@@ -59,18 +59,18 @@ async fn main() {
         .and(warp::query::query())
         .map(image);
 
-    let animation_route = warp::path!("game.gif")
+    let game_route = warp::path!("game.gif")
         .and(warp::post())
         .map(move || theme)
         .and(warp::body::json())
-        .map(animation);
+        .map(game);
 
     let example_route = warp::path!("example.gif")
         .and(warp::get())
         .map(move || theme)
         .map(example);
 
-    warp::serve(example_route.or(image_route).or(animation_route))
+    warp::serve(example_route.or(image_route).or(game_route))
         .run(bind)
         .await;
 }
