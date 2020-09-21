@@ -22,4 +22,4 @@ ndarray = "0.13"
 bytes = "0.5"
 arrayvec = { version = "0.5.1", features = ["serde", "array-sizes-129-255"] }
 structopt = "0.3"
-gift = "0.9"
+gift = { git = "https://github.com/DougLau/gift.git" }

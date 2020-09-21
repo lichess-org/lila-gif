@@ -113,7 +113,7 @@ impl Iterator for Render {
         let mut output = BytesMut::new().writer();
         match self.state {
             RenderState::Preamble => {
-                let mut blocks = Encoder::new_unbuffered(&mut output).into_block_enc();
+                let mut blocks = Encoder::new(&mut output).into_block_enc();
 
                 blocks.encode(block::Header::default()).expect("enc header");
 
@@ -182,13 +182,13 @@ impl Iterator for Render {
                 ).expect("enc image desc");
 
                 let mut image_data = block::ImageData::new(self.buffer.len());
-                image_data.add_data(&self.buffer);
+                image_data.data_mut().extend(&self.buffer);
                 blocks.encode(image_data).expect("enc image data");
 
                 self.state = RenderState::Frame(frame);
             }
             RenderState::Frame(ref prev) => {
-                let mut blocks = Encoder::new_unbuffered(&mut output).into_block_enc();
+                let mut blocks = Encoder::new(&mut output).into_block_enc();
 
                 if let Some(frame) = self.frames.next() {
                     let mut ctrl = block::GraphicControl::default();
@@ -217,7 +217,7 @@ impl Iterator for Render {
                     ).expect("enc image desc");
 
                     let mut image_data = block::ImageData::new(w * h);
-                    image_data.add_data(&self.buffer[..(w * h)]);
+                    image_data.data_mut().extend(&self.buffer[..(w * h)]);
                     blocks.encode(image_data).expect("enc image data");
 
                     self.state = RenderState::Frame(frame);
