@@ -182,7 +182,7 @@ impl Iterator for Render {
                 ).expect("enc image desc");
 
                 let mut image_data = block::ImageData::new(self.buffer.len());
-                image_data.data_mut().extend(&self.buffer);
+                image_data.data_mut().extend_from_slice(&self.buffer);
                 blocks.encode(image_data).expect("enc image data");
 
                 self.state = RenderState::Frame(frame);
@@ -217,7 +217,7 @@ impl Iterator for Render {
                     ).expect("enc image desc");
 
                     let mut image_data = block::ImageData::new(w * h);
-                    image_data.data_mut().extend(&self.buffer[..(w * h)]);
+                    image_data.data_mut().extend_from_slice(&self.buffer[..(w * h)]);
                     blocks.encode(image_data).expect("enc image data");
 
                     self.state = RenderState::Frame(frame);
