@@ -73,9 +73,15 @@ impl<'de> Deserialize<'de> for CheckSquare {
             where
                 E: de::Error,
             {
-                match name.parse() {
-                    Ok(sq) => Ok(CheckSquare::Square(sq)),
-                    Err(_) => Err(de::Error::custom("invalid square name"))
+                if name == "1" || name == "yes" || name == "true" {
+                    Ok(CheckSquare::Yes)
+                } else if name == "0" || name == "no" || name == "false" {
+                    Ok(CheckSquare::No)
+                } else {
+                    match name.parse() {
+                        Ok(sq) => Ok(CheckSquare::Square(sq)),
+                        Err(_) => Err(de::Error::custom("invalid square name"))
+                    }
                 }
             }
 
