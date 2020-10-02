@@ -1,6 +1,6 @@
 use arrayvec::ArrayString;
 use serde::{de, Deserialize};
-use serde_with::rust::display_fromstr;
+use serde_with::{serde_as, DisplayFromStr};
 use shakmaty::fen::Fen;
 use shakmaty::san::San;
 use shakmaty::uci::Uci;
@@ -104,14 +104,17 @@ impl CheckSquare {
     }
 }
 
+#[serde_as]
 #[derive(Deserialize)]
 pub struct RequestParams {
     pub white: Option<PlayerName>,
     pub black: Option<PlayerName>,
     pub comment: Option<Comment>,
-    #[serde(with = "display_fromstr", default)]
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(default)]
     pub fen: Fen,
-    #[serde(deserialize_with = "maybe_uci", default, rename = "lastMove")]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    #[serde(default, rename = "lastMove")]
     pub last_move: Option<Uci>,
     #[serde(default)]
     pub check: CheckSquare,
@@ -131,28 +134,19 @@ pub struct RequestBody {
     pub delay: u16,
 }
 
+#[serde_as]
 #[derive(Deserialize, Default)]
 pub struct RequestFrame {
-    #[serde(with = "display_fromstr", default)]
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(default)]
     pub fen: Fen,
     #[serde(default)]
     pub delay: Option<u16>,
-    #[serde(deserialize_with = "maybe_uci", default, rename = "lastMove")]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    #[serde(default, rename = "lastMove")]
     pub last_move: Option<Uci>,
     #[serde(default)]
     pub check: CheckSquare,
-}
-
-fn maybe_uci<'de, D>(deserializer: D) -> Result<Option<Uci>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    Option::<String>::deserialize(deserializer).and_then(|maybe_uci| {
-        Ok(match maybe_uci {
-            Some(uci) => Some(uci.parse().map_err(|_| de::Error::custom("invalid uci"))?),
-            None => None,
-        })
-    })
 }
 
 impl RequestBody {
