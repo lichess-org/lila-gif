@@ -132,12 +132,12 @@ impl Iterator for Render {
                     block::Application::with_loop_count(0)
                 ).expect("enc application");
 
-                let mut comments = block::Comment::default();
-                comments.add_comment(self.comment.as_ref().map_or(
-                    "https://github.com/niklasf/lila-gif".as_bytes(),
-                    |c| c.as_bytes()
-                ));
-                blocks.encode(comments).expect("enc comment");
+                let comment = self.comment.as_ref().map_or("https://github.com/niklasf/lila-gif".as_bytes(), |c| c.as_bytes());
+                if !comment.is_empty() {
+                    let mut comments = block::Comment::default();
+                    comments.add_comment(comment);
+                    blocks.encode(comments).expect("enc comment");
+                }
 
                 let mut view = ArrayViewMut2::from_shape(
                     (self.theme.height(self.bars.is_some()), self.theme.width()),
