@@ -20,6 +20,6 @@ shakmaty = "0.16"
 serde_with = "1.4"
 ndarray = "0.13"
 bytes = "0.5"
-arrayvec = { version = "0.5.1", features = ["serde", "array-sizes-129-255"] }
+arrayvec = { version = "0.5.2", features = ["serde", "array-sizes-129-255"] }
 structopt = "0.3"
 gift = { git = "https://github.com/DougLau/gift.git" }
