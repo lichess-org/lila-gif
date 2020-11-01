@@ -272,8 +272,8 @@ dependencies = [
 
 [[package]]
 name = "gift"
-version = "0.9.1"
-source = "git+https://github.com/DougLau/gift.git#102f3b5e62b32455ad7408cea8ecc2abf1dfe644"
+version = "0.10.0"
+source = "git+https://github.com/DougLau/gift.git#51d4f2493693de89cdad447e16241d31f6a841d4"
 dependencies = [
  "log",
  "pix",
