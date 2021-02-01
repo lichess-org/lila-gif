@@ -16,7 +16,7 @@ warp = { version = "0.2", default-features = false }
 tokio = { version = "0.2", features = ["macros"] }
 rusttype = "0.9"
 serde = { version = "1.0", features = ["derive"] }
-shakmaty = "0.16"
+shakmaty = "0.17"
 serde_with = "1.4"
 ndarray = "0.14"
 bytes = "0.5"
