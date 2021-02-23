@@ -64,6 +64,7 @@ pub struct Render {
     bars: Option<PlayerBars>,
     orientation: Orientation,
     frames: vec::IntoIter<RenderFrame>,
+    kork: bool,
 }
 
 impl Render {
@@ -82,6 +83,7 @@ impl Render {
                 board: params.fen.board,
                 delay: None,
             }].into_iter(),
+            kork: false,
         }
     }
 
@@ -100,7 +102,8 @@ impl Render {
                 checked: frame.check.to_square(&frame.fen).into_iter().collect(),
                 board: frame.fen.board,
                 delay: Some(frame.delay.unwrap_or(default_delay)),
-            }).collect::<Vec<_>>().into_iter()
+            }).collect::<Vec<_>>().into_iter(),
+            kork: true,
         }
     }
 }
@@ -221,6 +224,30 @@ impl Iterator for Render {
 
                     self.state = RenderState::Frame(frame);
                 } else {
+                    // Add a black frame at the end, to work around twitter
+                    // cutting off the last frame.
+                    if self.kork {
+                        let mut ctrl = block::GraphicControl::default();
+                        ctrl.set_disposal_method(block::DisposalMethod::Keep);
+                        ctrl.set_transparent_color_idx(self.theme.transparent_color());
+                        ctrl.set_delay_time_cs(1);
+                        blocks.encode(ctrl).expect("enc graphic control");
+
+                        let height = self.theme.height(self.bars.is_some());
+                        let width = self.theme.width();
+                        blocks.encode(
+                            block::ImageDesc::default()
+                                .with_left(0)
+                                .with_top(0)
+                                .with_height(height as u16)
+                                .with_width(width as u16)
+                        ).expect("enc image desc");
+
+                        let mut image_data = block::ImageData::new(height * width);
+                        image_data.data_mut().resize(height * width, self.theme.bar_color());
+                        blocks.encode(image_data).expect("enc image data");
+                    }
+
                     blocks.encode(block::Trailer::default()).expect("enc trailer");
                     self.state = RenderState::Complete;
                 }

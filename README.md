@@ -8,7 +8,7 @@ frame by frame.
 
 size | render time | frames | colors | width | height
 --- | --- | --- | --- | --- | ---
-338 KiB | ~150 ms | 93 | 63 | 720 px | 840 px
+336 KiB | ~60 ms | 93 | 63 | 720 px | 840 px
 
 Usage
 -----
