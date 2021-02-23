@@ -4,7 +4,7 @@ use serde_with::{serde_as, DisplayFromStr};
 use shakmaty::fen::Fen;
 use shakmaty::san::San;
 use shakmaty::uci::Uci;
-use shakmaty::{Chess, Position, Setup, Square};
+use shakmaty::{CastlingMode, Chess, Position, Setup, Square};
 use std::fmt;
 
 #[derive(Deserialize, PartialEq, Eq, Copy, Clone)]
@@ -184,7 +184,7 @@ impl RequestBody {
             frames.push(RequestFrame {
                 fen: Fen::from_setup(&pos),
                 check: if pos.is_check() { CheckSquare::Yes } else { CheckSquare::No },
-                last_move: Some(Uci::from_move(&pos, &m)),
+                last_move: Some(Uci::from_move(&m, CastlingMode::Standard)),
                 delay: None,
             })
         }

@@ -1,5 +1,4 @@
-use bytes::buf::ext::BufMutExt as _;
-use bytes::{Bytes, BytesMut};
+use bytes::{Bytes, BytesMut, BufMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use shakmaty::uci::Uci;

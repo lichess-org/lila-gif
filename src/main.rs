@@ -28,7 +28,7 @@ fn image(theme: &'static Theme, req: RequestParams) -> impl warp::Reply {
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
-        .body(Body::wrap_stream(tokio::stream::iter(
+        .body(Body::wrap_stream(tokio_stream::iter(
             Render::new_image(theme, req).map(Ok::<_, Infallible>),
         )))
 }
@@ -37,7 +37,7 @@ fn game(theme: &'static Theme, req: RequestBody) -> impl warp::Reply {
     Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "image/gif")
-        .body(Body::wrap_stream(tokio::stream::iter(
+        .body(Body::wrap_stream(tokio_stream::iter(
             Render::new_animation(theme, req).map(Ok::<_, Infallible>),
         )))
 }

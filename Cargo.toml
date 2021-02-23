@@ -12,14 +12,15 @@ keywords = ["chess", "gif"]
 edition = "2018"
 
 [dependencies]
-warp = { version = "0.2", default-features = false }
-tokio = { version = "0.2", features = ["macros"] }
+warp = { version = "0.3", default-features = false }
+tokio = { version = "1", features = ["full"] }
 rusttype = "0.9"
 serde = { version = "1.0", features = ["derive"] }
-shakmaty = "0.16"
-serde_with = "1.4"
+shakmaty = "0.18"
+serde_with = "1"
 ndarray = "0.14"
-bytes = "0.5"
-arrayvec = { version = "0.5.1", features = ["serde", "array-sizes-129-255"] }
+bytes = "1"
+arrayvec = { version = "0.5", features = ["serde", "array-sizes-129-255"] }
 structopt = "0.3"
 gift = "0.10"
+tokio-stream = "0.1"
