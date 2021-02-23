@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 use std::net::SocketAddr;
-use structopt::StructOpt;
+use clap::Clap;
 use warp::http::status::StatusCode;
 use warp::http::Response;
 use warp::hyper::Body;
@@ -14,13 +14,13 @@ use api::{RequestBody, RequestParams};
 use render::Render;
 use theme::Theme;
 
-#[derive(StructOpt)]
+#[derive(Clap)]
 struct Opt {
     /// Listen on this address
-    #[structopt(long = "address", default_value = "127.0.0.1")]
+    #[clap(long = "address", default_value = "127.0.0.1")]
     address: String,
     /// Listen on this port
-    #[structopt(long = "port", default_value = "6175")]
+    #[clap(long = "port", default_value = "6175")]
     port: u16,
 }
 
@@ -48,7 +48,7 @@ fn example(theme: &'static Theme) -> impl warp::Reply {
 
 #[tokio::main]
 async fn main() {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
     let bind = SocketAddr::new(opt.address.parse().expect("valid address"), opt.port);
 
     let theme: &'static Theme = Box::leak(Box::new(Theme::new()));

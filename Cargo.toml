@@ -21,6 +21,6 @@ serde_with = "1"
 ndarray = "0.14"
 bytes = "1"
 arrayvec = { version = "0.5", features = ["serde", "array-sizes-129-255"] }
-structopt = "0.3"
+clap = "3.0.0-beta.2"
 gift = "0.10"
 tokio-stream = "0.1"
