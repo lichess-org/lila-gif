@@ -16,6 +16,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrayvec"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a2f58b0bb10c380af2b26e57212856b8c9a59e0925b4c20f4a174a49734eaf7"
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -449,7 +455,7 @@ checksum = "b7282d924be3275cec7f6756ff4121987bc6481325397dde6ba3e7802b1a8b1c"
 name = "lila-gif"
 version = "0.1.0"
 dependencies = [
- "arrayvec",
+ "arrayvec 0.5.2",
  "bytes",
  "clap",
  "gift",
@@ -861,11 +867,11 @@ dependencies = [
 
 [[package]]
 name = "shakmaty"
-version = "0.18.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f580db5b2b7aa5903b997ef6309c461dd30015f0b61e748a8082f84f245889a7"
+checksum = "5d2f76c665c10e915a3371689a668796f9fe1f93b47a6dd1955e0ebe91477f51"
 dependencies = [
- "arrayvec",
+ "arrayvec 0.7.0",
  "bitflags",
  "btoi",
 ]
