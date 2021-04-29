@@ -38,9 +38,9 @@ impl Orientation {
     }
 }
 
-pub type PlayerName = ArrayString<[u8; 100]>; // length limited to prevent dos
+pub type PlayerName = ArrayString<100>; // length limited to prevent dos
 
-pub type Comment = ArrayString<[u8; 255]>; // strict length limit for gif comments
+pub type Comment = ArrayString<255>; // strict length limit for gif comments
 
 #[derive(Copy, Clone)]
 pub enum CheckSquare {
