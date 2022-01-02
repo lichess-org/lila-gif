@@ -1,11 +1,9 @@
+use std::fmt;
+
 use arrayvec::ArrayString;
 use serde::{de, Deserialize};
 use serde_with::{serde_as, DisplayFromStr};
-use shakmaty::fen::Fen;
-use shakmaty::san::San;
-use shakmaty::uci::Uci;
-use shakmaty::{CastlingMode, Chess, Position, Setup, Square};
-use std::fmt;
+use shakmaty::{fen::Fen, san::San, uci::Uci, CastlingMode, Chess, Position, Setup, Square};
 
 #[derive(Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum Orientation {
@@ -80,7 +78,7 @@ impl<'de> Deserialize<'de> for CheckSquare {
                 } else {
                     match name.parse() {
                         Ok(sq) => Ok(CheckSquare::Square(sq)),
-                        Err(_) => Err(de::Error::custom("invalid square name"))
+                        Err(_) => Err(de::Error::custom("invalid square name")),
                     }
                 }
             }
@@ -172,8 +170,8 @@ impl RequestBody {
         frames.push(RequestFrame::default());
 
         let mut pos = Chess::default();
-        for pgn_move in pgn.split(" ") {
-            if pgn_move.trim().is_empty() || pgn_move.ends_with(".") {
+        for pgn_move in pgn.split(' ') {
+            if pgn_move.trim().is_empty() || pgn_move.ends_with('.') {
                 continue;
             }
 
@@ -183,7 +181,11 @@ impl RequestBody {
 
             frames.push(RequestFrame {
                 fen: Fen::from_setup(&pos),
-                check: if pos.is_check() { CheckSquare::Yes } else { CheckSquare::No },
+                check: if pos.is_check() {
+                    CheckSquare::Yes
+                } else {
+                    CheckSquare::No
+                },
                 last_move: Some(Uci::from_move(&m, CastlingMode::Standard)),
                 delay: None,
             })
@@ -197,7 +199,7 @@ impl RequestBody {
             black: Some(PlayerName::from("GM Zhigalko_Sergei (2895)").unwrap()),
             orientation: Orientation::White,
             delay: 50,
-            frames: frames,
+            frames,
         }
     }
 }

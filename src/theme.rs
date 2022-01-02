@@ -15,9 +15,12 @@ pub struct SpriteKey {
 
 impl SpriteKey {
     fn x(&self) -> usize {
-        (if self.piece.map_or(false, |p| p.color.is_white()) { 4 } else { 0 }) +
-        (if self.highlight { 2 } else { 0 }) +
-        (if self.dark_square { 1 } else { 0 })
+        (if self.piece.map_or(false, |p| p.color.is_white()) {
+            4
+        } else {
+            0
+        }) + (if self.highlight { 2 } else { 0 })
+            + (if self.dark_square { 1 } else { 0 })
     }
 
     fn y(&self) -> usize {
@@ -40,9 +43,14 @@ impl Theme {
     pub fn new() -> Theme {
         let sprite_data = include_bytes!("../theme/sprite.gif") as &[u8];
         let mut decoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
-        let preamble = decoder.preamble().expect("decode preamble").expect("preamble");
+        let preamble = decoder
+            .preamble()
+            .expect("decode preamble")
+            .expect("preamble");
         let frame = decoder.next().expect("frame").expect("decode frame");
-        let sprite = Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned()).expect("from shape");
+        let sprite =
+            Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned())
+                .expect("from shape");
 
         let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
         let font = Font::try_from_bytes(font_data).expect("parse font");
@@ -114,6 +122,9 @@ impl Theme {
     pub fn sprite(&self, key: SpriteKey) -> ArrayView2<u8> {
         let y = key.y();
         let x = key.x();
-        self.sprite.slice(s!((SQUARE * y)..(SQUARE + SQUARE * y), (SQUARE * x)..(SQUARE + SQUARE * x)))
+        self.sprite.slice(s!(
+            (SQUARE * y)..(SQUARE + SQUARE * y),
+            (SQUARE * x)..(SQUARE + SQUARE * x)
+        ))
     }
 }
