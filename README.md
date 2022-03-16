@@ -14,18 +14,14 @@ Usage
 -----
 
 ```
-lila-gif 0.1.0
+lila-gif
 
 USAGE:
     lila-gif [OPTIONS]
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
 OPTIONS:
-        --address <address>    Listen on this address [default: 127.0.0.1]
-        --port <port>          Listen on this port [default: 6175]
+        --bind <BIND>    Listen on this address [default: 127.0.0.1:6175]
+    -h, --help           Print help information
 ```
 
 HTTP API

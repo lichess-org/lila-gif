@@ -99,10 +99,10 @@ impl<'de> Deserialize<'de> for CheckSquare {
 }
 
 impl CheckSquare {
-    pub fn to_square(self, fen: &Fen) -> Option<Square> {
+    pub fn to_square(self, setup: &Setup) -> Option<Square> {
         match self {
             CheckSquare::No => None,
-            CheckSquare::Yes => fen.board.king_of(fen.turn()),
+            CheckSquare::Yes => setup.board.king_of(setup.turn),
             CheckSquare::Square(sq) => Some(sq),
         }
     }
@@ -180,7 +180,7 @@ impl RequestBody {
             pos.play_unchecked(&m);
 
             frames.push(RequestFrame {
-                fen: Fen::from_setup(&pos),
+                fen: Fen(pos.clone().into_setup(shakmaty::EnPassantMode::Always)),
                 check: if pos.is_check() {
                     CheckSquare::Yes
                 } else {

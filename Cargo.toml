@@ -8,19 +8,19 @@ readme = "README.md"
 license = "AGPL-3.0+"
 authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "multimedia"]
-keywords = ["chess", "gif"]
+keywords = ["chess", "gif", "lichess"]
 edition = "2021"
 
 [dependencies]
-warp = { version = "0.3", default-features = false }
+axum = "0.4"
 tokio = { version = "1", features = ["full"] }
 rusttype = "0.9"
 serde = { version = "1.0", features = ["derive"] }
-shakmaty = "0.20"
+shakmaty = "0.21"
 serde_with = "1"
 ndarray = "0.15"
 bytes = "1"
 arrayvec = { version = "0.7", features = ["serde"] }
 clap = { version = "3", features = ["derive"] }
 gift = "0.10"
-tokio-stream = "0.1"
+futures = "0.3"

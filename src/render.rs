@@ -80,8 +80,8 @@ impl Render {
             orientation: params.orientation,
             frames: vec![RenderFrame {
                 highlighted: highlight_uci(params.last_move),
-                checked: params.check.to_square(&params.fen).into_iter().collect(),
-                board: params.fen.board,
+                checked: params.check.to_square(&params.fen.0).into_iter().collect(),
+                board: params.fen.0.board,
                 delay: None,
             }]
             .into_iter(),
@@ -104,8 +104,8 @@ impl Render {
                 .into_iter()
                 .map(|frame| RenderFrame {
                     highlighted: highlight_uci(frame.last_move),
-                    checked: frame.check.to_square(&frame.fen).into_iter().collect(),
-                    board: frame.fen.board,
+                    checked: frame.check.to_square(&frame.fen.0).into_iter().collect(),
+                    board: frame.fen.0.board,
                     delay: Some(frame.delay.unwrap_or(default_delay)),
                 })
                 .collect::<Vec<_>>()
