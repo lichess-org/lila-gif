@@ -3,7 +3,9 @@ use std::fmt;
 use arrayvec::ArrayString;
 use serde::{de, Deserialize};
 use serde_with::{serde_as, DisplayFromStr};
-use shakmaty::{fen::Fen, san::San, uci::Uci, CastlingMode, Chess, Position, Setup, Square};
+use shakmaty::{
+    fen::Fen, san::San, uci::Uci, CastlingMode, Chess, EnPassantMode, Position, Setup, Square,
+};
 
 #[derive(Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum Orientation {
@@ -180,7 +182,7 @@ impl RequestBody {
             pos.play_unchecked(&m);
 
             frames.push(RequestFrame {
-                fen: Fen(pos.clone().into_setup(shakmaty::EnPassantMode::Always)),
+                fen: Fen(pos.clone().into_setup(EnPassantMode::Always)),
                 check: if pos.is_check() {
                     CheckSquare::Yes
                 } else {
