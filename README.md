@@ -1,6 +1,8 @@
 lila-gif
 ========
 
+[![Test](https://github.com/lichess-org/lila-gif/actions/workflows/test.yml/badge.svg)](https://github.com/lichess-org/lila-gif/actions/workflows/test.yml)
+
 Webservice to render Gifs of chess positions and games, and stream them
 frame by frame.
 
