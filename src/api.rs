@@ -42,6 +42,10 @@ pub type PlayerName = ArrayString<100>; // length limited to prevent dos
 
 pub type Comment = ArrayString<255>; // strict length limit for gif comments
 
+pub type ThemeName = ArrayString<50>; // length limited to prevent dos
+
+pub type PieceName = ArrayString<50>; // length limited to prevent dos
+
 #[derive(Copy, Clone)]
 pub enum CheckSquare {
     No,
@@ -126,6 +130,8 @@ pub struct RequestParams {
     pub check: CheckSquare,
     #[serde(default)]
     pub orientation: Orientation,
+    pub theme: Option<ThemeName>,
+    pub piece: Option<PieceName>,
 }
 
 #[derive(Deserialize)]
@@ -138,6 +144,8 @@ pub struct RequestBody {
     pub orientation: Orientation,
     #[serde(default)]
     pub delay: u16,
+    pub theme: Option<ThemeName>,
+    pub piece: Option<PieceName>,
 }
 
 #[serde_as]
@@ -202,6 +210,8 @@ impl RequestBody {
             orientation: Orientation::White,
             delay: 50,
             frames,
+            theme: None,
+            piece: None,
         }
     }
 }

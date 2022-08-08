@@ -1,3 +1,7 @@
+use std::fs::DirEntry;
+use std::io::Read;
+use std::{collections::HashMap, fs};
+
 use gift::block::{ColorTableConfig, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
@@ -5,6 +9,9 @@ use shakmaty::{Piece, Role};
 
 const SQUARE: usize = 90;
 const COLOR_WIDTH: usize = 90 * 2 / 3;
+
+pub const DEFAULT_THEME_NAME: &str = "brown";
+pub const DEFAULT_PIECE_NAME: &str = "cburnett";
 
 pub struct SpriteKey {
     pub piece: Option<Piece>,
@@ -40,8 +47,10 @@ pub struct Theme {
 }
 
 impl Theme {
-    pub fn new() -> Theme {
-        let sprite_data = include_bytes!("../theme/sprite.gif") as &[u8];
+    pub fn new(file_path: &str) -> Theme {
+        let mut f = std::fs::File::open(file_path).unwrap();
+        let mut sprite_data = Vec::new();
+        f.read_to_end(&mut sprite_data).unwrap();
         let mut decoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
         let preamble = decoder
             .preamble()
@@ -126,5 +135,44 @@ impl Theme {
             (SQUARE * y)..(SQUARE + SQUARE * y),
             (SQUARE * x)..(SQUARE + SQUARE * x)
         ))
+    }
+}
+
+pub struct ThemeMap {
+    // Map of theme_name to map of piece_name to Theme
+    // map["theme name"]["piece name"] -> Theme
+    pub map: HashMap<String, HashMap<String, Theme>>,
+}
+
+impl ThemeMap {
+    pub fn new() -> ThemeMap {
+        ThemeMap {
+            map: HashMap::new(),
+        }
+    }
+
+    pub fn initialize(mut self) -> ThemeMap {
+        let paths = fs::read_dir("./theme/sprites/").unwrap();
+        for maybe_path in paths {
+            if let Result::Ok(path) = maybe_path {
+                let _ = &mut self.insert_theme_from_path(path);
+            }
+        }
+        println!("initialized theme map");
+        self
+    }
+
+    fn insert_theme_from_path(&mut self, path: DirEntry) -> Option<()> {
+        let file_name_string = path.file_name().as_os_str().to_string_lossy().to_string();
+        let file_name = file_name_string.split(".").next()?;
+        let mut file_name_parts = file_name.split("-");
+        let board_theme = file_name_parts.next()?.to_string();
+        let piece_set = file_name_parts.next()?.to_string();
+        let sub_map = self
+            .map
+            .entry(board_theme.clone())
+            .or_insert(HashMap::new());
+        sub_map.insert(piece_set.clone(), Theme::new(path.path().to_str().unwrap()));
+        Some(())
     }
 }
