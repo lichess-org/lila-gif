@@ -152,6 +152,7 @@ impl ThemeMap {
     }
 
     pub fn initialize(mut self) -> ThemeMap {
+        println!("initializing...");
         let paths = fs::read_dir("./theme/sprites/").unwrap();
         for maybe_path in paths {
             if let Result::Ok(path) = maybe_path {
