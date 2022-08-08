@@ -1,11 +1,13 @@
+from chess.svg import SQUARE_SIZE
+from genericpath import isdir
+from os import listdir
+from os.path import join
+from PIL import Image
 import chess.svg
 import io
 import re
 import subprocess
 import xml.etree.ElementTree as ET
-
-from chess.svg import SQUARE_SIZE
-from PIL import Image
 
 # Highlight color defined in chessground:
 # https://github.com/lichess-org/chessground/blob/b59f71127bec7151e4d929d6b66050c0b54ed6f7/assets/chessground.brown.css#L27
@@ -39,6 +41,17 @@ THEMES = {
     "ic": include_highlight_colors({"light": "#ececec", "dark": "#c1c18e"}),
     "purple": include_highlight_colors({"light": "#9f90b0", "dark": "#7d4a8d"}),
 }
+
+OMIT_PIECE_SETS = ["mono"]  # omit mono since it has different SVGs
+
+
+def get_piece_set_names():
+    piece_sets = set([f for f in listdir("./piece") if isdir(join("./piece", f))])
+    for piece_set in OMIT_PIECE_SETS:
+        if piece_set in piece_sets:
+            piece_sets.remove(piece_set)
+    return piece_sets
+
 
 NONTHEME_COLORS = [
     "#262421",  # dark background
@@ -216,43 +229,9 @@ def make_sprite(theme_name: str, piece_set_name: str):
     )
 
 
-PIECE_SET_NAMES = [
-    "alpha",
-    "anarcandy",
-    "california",
-    "cardinal",
-    "cburnett",
-    "chess7",
-    "chessnut",
-    "companion",
-    "dubrovny",
-    "fantasy",
-    "fresca",
-    "gioco",
-    "governor",
-    "horsey",
-    "icpieces",
-    "kosal",
-    "leipzig",
-    "letter",
-    "libra",
-    "maestro",
-    "merida",
-    # "mono", # this set has different SVGs... not implementing for now
-    "pirouetti",
-    "pixel",
-    "reillycraig",
-    "riohacha",
-    "shapes",
-    "spatial",
-    "staunty",
-    "tatiana",
-]
-
-
 def make_all_sprites():
     for theme_name in THEMES.keys():
-        for piece_set_name in PIECE_SET_NAMES:
+        for piece_set_name in get_piece_set_names():
             make_sprite(theme_name, piece_set_name)
 
 
