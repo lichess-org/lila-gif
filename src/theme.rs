@@ -1,4 +1,4 @@
-use gift::block::{ColorTableConfig, GlobalColorTable};
+use gif::Decoder;
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
 use shakmaty::{Piece, Role};
@@ -33,8 +33,7 @@ impl SpriteKey {
 }
 
 pub struct Theme {
-    color_table_config: ColorTableConfig,
-    global_color_table: GlobalColorTable,
+    global_color_table: Vec<u8>,
     sprite: Array2<u8>,
     font: Font<'static>,
 }
@@ -42,22 +41,16 @@ pub struct Theme {
 impl Theme {
     pub fn new() -> Theme {
         let sprite_data = include_bytes!("../theme/sprite.gif") as &[u8];
-        let mut decoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
-        let preamble = decoder
-            .preamble()
-            .expect("decode preamble")
-            .expect("preamble");
-        let frame = decoder.next().expect("frame").expect("decode frame");
-        let sprite =
-            Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned())
-                .expect("from shape");
+        let mut decoder = Decoder::new(std::io::Cursor::new(sprite_data)).unwrap();
+        let frame = decoder.read_next_frame().unwrap().expect("no frames");
+        let sprite = Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.buffer.to_vec())
+            .expect("from shape");
 
         let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
         let font = Font::try_from_bytes(font_data).expect("parse font");
 
         Theme {
-            color_table_config: preamble.logical_screen_desc.color_table_config(),
-            global_color_table: preamble.global_color_table.expect("color table present"),
+            global_color_table: decoder.global_palette().unwrap().to_vec(),
             sprite,
             font,
         }
@@ -67,11 +60,7 @@ impl Theme {
         &self.font
     }
 
-    pub fn color_table_config(&self) -> ColorTableConfig {
-        self.color_table_config
-    }
-
-    pub fn global_color_table(&self) -> &GlobalColorTable {
+    pub fn global_color_table(&self) -> &Vec<u8> {
         &self.global_color_table
     }
 

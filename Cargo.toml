@@ -22,5 +22,5 @@ ndarray = "0.15"
 bytes = "1"
 arrayvec = { version = "0.7", features = ["serde"] }
 clap = { version = "3", features = ["derive"] }
-gift = "0.10"
+gif = "0.11.4"
 futures = "0.3"

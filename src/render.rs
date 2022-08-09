@@ -1,20 +1,19 @@
-use std::{iter::FusedIterator, vec};
+use std::{borrow::Cow, vec};
 
 use bytes::{BufMut, Bytes, BytesMut};
-use gift::{block, Encoder};
+use gif::{DisposalMethod, Repeat};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::Scale;
 use shakmaty::{uci::Uci, Bitboard, Board};
 
 use crate::{
-    api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
+    api::{Orientation, PlayerName, RequestBody, RequestParams},
     theme::{SpriteKey, Theme},
 };
 
-enum RenderState {
-    Preamble,
-    Frame(RenderFrame),
-    Complete,
+enum PlayerBar {
+    Top,
+    Bottom,
 }
 
 struct PlayerBars {
@@ -59,12 +58,11 @@ impl RenderFrame {
 
 pub struct Render {
     theme: &'static Theme,
-    state: RenderState,
     buffer: Vec<u8>,
-    comment: Option<Comment>,
+    // comment: Option<Comment>,
     bars: Option<PlayerBars>,
     orientation: Orientation,
-    frames: vec::IntoIter<RenderFrame>,
+    frames: Vec<RenderFrame>,
     kork: bool,
 }
 
@@ -74,8 +72,7 @@ impl Render {
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
-            state: RenderState::Preamble,
-            comment: params.comment,
+            // comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
             frames: vec![RenderFrame {
@@ -83,8 +80,7 @@ impl Render {
                 checked: params.check.to_square(&params.fen.0).into_iter().collect(),
                 board: params.fen.0.board,
                 delay: None,
-            }]
-            .into_iter(),
+            }],
             kork: false,
         }
     }
@@ -95,8 +91,7 @@ impl Render {
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
-            state: RenderState::Preamble,
-            comment: params.comment,
+            // comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
             frames: params
@@ -108,315 +103,247 @@ impl Render {
                     board: frame.fen.0.board,
                     delay: Some(frame.delay.unwrap_or(default_delay)),
                 })
-                .collect::<Vec<_>>()
-                .into_iter(),
+                .collect(),
             kork: true,
         }
     }
-}
 
-impl Iterator for Render {
-    type Item = Bytes;
+    /// Generates the GIF, returning a Bytes object
+    pub fn render(mut self) -> Bytes {
+        let (image_height, image_width) = self.image_dims();
 
-    fn next(&mut self) -> Option<Bytes> {
-        let mut output = BytesMut::new().writer();
-        match self.state {
-            RenderState::Preamble => {
-                let mut blocks = Encoder::new(&mut output).into_block_enc();
+        // Create the GIF encoder and
+        let mut encoder = gif::Encoder::new(
+            BytesMut::new().writer(),
+            image_width as u16,
+            image_height as u16,
+            self.theme.global_color_table(),
+        )
+        .expect("create encoder");
+        encoder.set_repeat(Repeat::Infinite).expect("encode repeat");
 
-                blocks.encode(block::Header::default()).expect("enc header");
+        // Render the player bars
+        self.render_player_bar(PlayerBar::Top);
+        self.render_player_bar(PlayerBar::Bottom);
 
-                blocks
-                    .encode(
-                        block::LogicalScreenDesc::default()
-                            .with_screen_height(self.theme.height(self.bars.is_some()) as u16)
-                            .with_screen_width(self.theme.width() as u16)
-                            .with_color_table_config(self.theme.color_table_config()),
-                    )
-                    .expect("enc logical screen desc");
+        // Iterate over every RenderFrame and encode the diff between consecutive frames in the GIF
+        for frame_index in 0..self.frames.len() {
+            // Generates the diff frame and adds its contents to the buffer
+            let (board_left, board_top, w, h) = self.render_frame_diff(frame_index);
 
-                blocks
-                    .encode(self.theme.global_color_table().clone())
-                    .expect("enc global color table");
+            // For the first frame, the image block always begins at (0, 0) and spans the entire
+            // width and height of the image. For all other frames, the diff must be positioned
+            let (left, top, width, height) = if frame_index == 0 {
+                (0, 0, image_width, image_height)
+            } else {
+                let block_top = board_top + self.bar_pixel_offset();
+                (board_left, block_top, w, h)
+            };
 
-                blocks
-                    .encode(block::Application::with_loop_count(0))
-                    .expect("enc application");
-
-                let comment = self
-                    .comment
-                    .as_ref()
-                    .map_or("https://github.com/lichess-org/lila-gif".as_bytes(), |c| {
-                        c.as_bytes()
-                    });
-                if !comment.is_empty() {
-                    let mut comments = block::Comment::default();
-                    comments.add_comment(comment);
-                    blocks.encode(comments).expect("enc comment");
-                }
-
-                let mut view = ArrayViewMut2::from_shape(
-                    (self.theme.height(self.bars.is_some()), self.theme.width()),
-                    &mut self.buffer,
-                )
-                .expect("shape");
-
-                let mut board_view = if let Some(ref bars) = self.bars {
-                    render_bar(
-                        view.slice_mut(s!(..self.theme.bar_height(), ..)),
-                        self.theme,
-                        self.orientation.fold(&bars.black, &bars.white),
-                    );
-
-                    render_bar(
-                        view.slice_mut(s!((self.theme.bar_height() + self.theme.width()).., ..)),
-                        self.theme,
-                        self.orientation.fold(&bars.white, &bars.black),
-                    );
-
-                    view.slice_mut(s!(
-                        self.theme.bar_height()..(self.theme.bar_height() + self.theme.width()),
-                        ..
-                    ))
-                } else {
-                    view
-                };
-
-                let frame = self.frames.next().unwrap_or_default();
-
-                if let Some(delay) = frame.delay {
-                    let mut ctrl = block::GraphicControl::default();
-                    ctrl.set_delay_time_cs(delay);
-                    blocks.encode(ctrl).expect("enc graphic control");
-                }
-
-                render_diff(
-                    board_view.as_slice_mut().expect("continguous"),
-                    self.theme,
-                    self.orientation,
-                    None,
-                    &frame,
-                );
-
-                blocks
-                    .encode(
-                        block::ImageDesc::default()
-                            .with_height(self.theme.height(self.bars.is_some()) as u16)
-                            .with_width(self.theme.width() as u16),
-                    )
-                    .expect("enc image desc");
-
-                let mut image_data = block::ImageData::new(self.buffer.len());
-                image_data.data_mut().extend_from_slice(&self.buffer);
-                blocks.encode(image_data).expect("enc image data");
-
-                self.state = RenderState::Frame(frame);
-            }
-            RenderState::Frame(ref prev) => {
-                let mut blocks = Encoder::new(&mut output).into_block_enc();
-
-                if let Some(frame) = self.frames.next() {
-                    let mut ctrl = block::GraphicControl::default();
-                    ctrl.set_disposal_method(block::DisposalMethod::Keep);
-                    ctrl.set_transparent_color_idx(self.theme.transparent_color());
-                    if let Some(delay) = frame.delay {
-                        ctrl.set_delay_time_cs(delay);
-                    }
-                    blocks.encode(ctrl).expect("enc graphic control");
-
-                    let ((left, y), (w, h)) = render_diff(
-                        &mut self.buffer,
-                        self.theme,
-                        self.orientation,
-                        Some(prev),
-                        &frame,
-                    );
-
-                    let top = y + if self.bars.is_some() {
-                        self.theme.bar_height()
-                    } else {
-                        0
-                    };
-
-                    blocks
-                        .encode(
-                            block::ImageDesc::default()
-                                .with_left(left as u16)
-                                .with_top(top as u16)
-                                .with_height(h as u16)
-                                .with_width(w as u16),
-                        )
-                        .expect("enc image desc");
-
-                    let mut image_data = block::ImageData::new(w * h);
-                    image_data
-                        .data_mut()
-                        .extend_from_slice(&self.buffer[..(w * h)]);
-                    blocks.encode(image_data).expect("enc image data");
-
-                    self.state = RenderState::Frame(frame);
-                } else {
-                    // Add a black frame at the end, to work around twitter
-                    // cutting off the last frame.
-                    if self.kork {
-                        let mut ctrl = block::GraphicControl::default();
-                        ctrl.set_disposal_method(block::DisposalMethod::Keep);
-                        ctrl.set_transparent_color_idx(self.theme.transparent_color());
-                        ctrl.set_delay_time_cs(1);
-                        blocks.encode(ctrl).expect("enc graphic control");
-
-                        let height = self.theme.height(self.bars.is_some());
-                        let width = self.theme.width();
-                        blocks
-                            .encode(
-                                block::ImageDesc::default()
-                                    .with_left(0)
-                                    .with_top(0)
-                                    .with_height(height as u16)
-                                    .with_width(width as u16),
-                            )
-                            .expect("enc image desc");
-
-                        let mut image_data = block::ImageData::new(height * width);
-                        image_data
-                            .data_mut()
-                            .resize(height * width, self.theme.bar_color());
-                        blocks.encode(image_data).expect("enc image data");
-                    }
-
-                    blocks
-                        .encode(block::Trailer::default())
-                        .expect("enc trailer");
-                    self.state = RenderState::Complete;
-                }
-            }
-            RenderState::Complete => return None,
+            encoder
+                .write_frame(&gif::Frame {
+                    delay: self.frames[frame_index].delay.unwrap_or(0),
+                    dispose: DisposalMethod::Keep,
+                    transparent: Option::Some(self.theme.transparent_color()),
+                    needs_user_input: false,
+                    top: top as u16,
+                    left: left as u16,
+                    width: width as u16,
+                    height: height as u16,
+                    interlaced: false,
+                    palette: None,
+                    buffer: Cow::Borrowed(&self.buffer),
+                })
+                .expect("write frame");
         }
-        Some(output.into_inner().freeze())
-    }
-}
 
-impl FusedIterator for Render {}
+        // Add a black frame at the end, to work around twitter cutting off the last frame.
+        if self.kork {
+            self.buffer.clear();
+            self.buffer
+                .resize(image_width * image_height, self.theme.bar_color());
 
-fn render_diff(
-    buffer: &mut [u8],
-    theme: &Theme,
-    orientation: Orientation,
-    prev: Option<&RenderFrame>,
-    frame: &RenderFrame,
-) -> ((usize, usize), (usize, usize)) {
-    let diff = prev.map_or(Bitboard::FULL, |p| p.diff(frame));
+            encoder
+                .write_frame(&gif::Frame {
+                    delay: 1,
+                    dispose: DisposalMethod::Keep,
+                    transparent: Option::Some(self.theme.transparent_color()),
+                    needs_user_input: false,
+                    top: 0,
+                    left: 0,
+                    width: image_width as u16,
+                    height: image_height as u16,
+                    interlaced: false,
+                    palette: None,
+                    buffer: Cow::Borrowed(&self.buffer),
+                })
+                .expect("write frame");
+        }
 
-    let x_min = diff
-        .into_iter()
-        .map(|sq| orientation.x(sq))
-        .min()
-        .unwrap_or(0);
-    let y_min = diff
-        .into_iter()
-        .map(|sq| orientation.y(sq))
-        .min()
-        .unwrap_or(0);
-    let x_max = diff
-        .into_iter()
-        .map(|sq| orientation.x(sq))
-        .max()
-        .unwrap_or(0)
-        + 1;
-    let y_max = diff
-        .into_iter()
-        .map(|sq| orientation.y(sq))
-        .max()
-        .unwrap_or(0)
-        + 1;
-
-    let width = (x_max - x_min) * theme.square();
-    let height = (y_max - y_min) * theme.square();
-
-    let mut view = ArrayViewMut2::from_shape((height, width), buffer).expect("shape");
-
-    if prev.is_some() {
-        view.fill(theme.transparent_color());
+        encoder
+            .into_inner()
+            .expect("add trailer")
+            .get_ref()
+            .to_owned()
+            .freeze()
     }
 
-    for sq in diff {
-        let key = SpriteKey {
-            piece: frame.board.piece_at(sq),
-            dark_square: sq.is_dark(),
-            highlight: frame.highlighted.contains(sq),
-            check: frame.checked.contains(sq),
+    /// Renders a single player bar (either top or bottom)
+    fn render_player_bar(&mut self, player_bar: PlayerBar) {
+        if self.bars.is_none() {
+            return;
+        }
+
+        let bars = self.bars.as_ref().unwrap();
+        let width = self.theme.width();
+        let height = self.theme.height(true);
+        let bar_height = self.theme.bar_height();
+
+        let mut view = ArrayViewMut2::from_shape((height, width), &mut self.buffer).expect("shape");
+        let mut view = view.slice_mut(match player_bar {
+            PlayerBar::Bottom => s!((bar_height + width).., ..),
+            PlayerBar::Top => s!(..bar_height, ..),
+        });
+
+        view.fill(self.theme.bar_color());
+
+        let mut text_color = self.theme.text_color();
+        let player_name = match player_bar {
+            PlayerBar::Bottom => self.orientation.fold(&bars.white, &bars.black),
+            PlayerBar::Top => self.orientation.fold(&bars.black, &bars.white),
         };
 
-        let left = (orientation.x(sq) - x_min) * theme.square();
-        let top = (orientation.y(sq) - y_min) * theme.square();
+        if player_name.starts_with("BOT ") {
+            text_color = self.theme.bot_color();
+        } else {
+            for title in &[
+                "GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ",
+                "BOT ",
+            ] {
+                if player_name.starts_with(title) {
+                    text_color = self.theme.gold_color();
+                    break;
+                }
+            }
+        }
 
-        view.slice_mut(s!(
-            top..(top + theme.square()),
-            left..(left + theme.square())
-        ))
-        .assign(&theme.sprite(key));
-    }
+        let height = 40.0;
+        let padding = 10.0;
+        let scale = Scale {
+            x: height,
+            y: height,
+        };
 
-    (
-        (theme.square() * x_min, theme.square() * y_min),
-        (width, height),
-    )
-}
+        let v_metrics = self.theme.font().v_metrics(scale);
+        let glyphs = self.theme.font().layout(
+            player_name,
+            scale,
+            rusttype::point(padding, padding + v_metrics.ascent),
+        );
 
-fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, player_name: &str) {
-    view.fill(theme.bar_color());
-
-    let mut text_color = theme.text_color();
-    if player_name.starts_with("BOT ") {
-        text_color = theme.bot_color();
-    } else {
-        for title in &[
-            "GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ",
-            "BOT ",
-        ] {
-            if player_name.starts_with(title) {
-                text_color = theme.gold_color();
-                break;
+        for g in glyphs {
+            if let Some(bb) = g.pixel_bounding_box() {
+                // Poor man's anti-aliasing.
+                g.draw(|left, top, intensity| {
+                    let left = left as i32 + bb.min.x;
+                    let top = top as i32 + bb.min.y;
+                    if 0 <= left
+                        && left < self.theme.width() as i32
+                        && 0 <= top
+                        && top < self.theme.bar_height() as i32
+                        && intensity >= 0.01
+                    {
+                        if intensity < 0.5 && text_color == self.theme.text_color() {
+                            view[(top as usize, left as usize)] = self.theme.med_text_color();
+                        } else {
+                            view[(top as usize, left as usize)] = text_color;
+                        }
+                    }
+                });
+            } else {
+                text_color = self.theme.text_color();
             }
         }
     }
 
-    let height = 40.0;
-    let padding = 10.0;
-    let scale = Scale {
-        x: height,
-        y: height,
-    };
+    /// Renders the diff between consecutive frames. The `frame_index` parameter should be in the
+    /// range [0, num_frames) and indicates which frame is being transitioned to. If `frame_index`
+    /// is zero, there is no previous frame and the entire board will be rendered; otherwise, only
+    /// the diff between the previous frame and the current frame is rendered.
+    fn render_frame_diff(&mut self, frame_index: usize) -> (usize, usize, usize, usize) {
+        let frame = &self.frames[frame_index];
 
-    let v_metrics = theme.font().v_metrics(scale);
-    let glyphs = theme.font().layout(
-        player_name,
-        scale,
-        rusttype::point(padding, padding + v_metrics.ascent),
-    );
-
-    for g in glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            // Poor man's anti-aliasing.
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x;
-                let top = top as i32 + bb.min.y;
-                if 0 <= left
-                    && left < theme.width() as i32
-                    && 0 <= top
-                    && top < theme.bar_height() as i32
-                    && intensity >= 0.01
-                {
-                    if intensity < 0.5 && text_color == theme.text_color() {
-                        view[(top as usize, left as usize)] = theme.med_text_color();
-                    } else {
-                        view[(top as usize, left as usize)] = text_color;
-                    }
-                }
-            });
+        // When rendering the first frame, we must be careful not to overwrite the initial buffer
+        // space used to render the top player bar. The `bar_offset` variable provides for this.
+        let (prev, bar_offset) = if frame_index == 0 {
+            (None, self.bar_buffer_offset())
         } else {
-            text_color = theme.text_color();
+            (Some(&self.frames[frame_index - 1]), 0)
+        };
+
+        // Determine the min/max x and y coords involved in this frame
+        let diff = prev.map_or(Bitboard::FULL, |p| p.diff(frame));
+        let x_coords: Vec<_> = diff.into_iter().map(|sq| self.orientation.x(sq)).collect();
+        let y_coords: Vec<_> = diff.into_iter().map(|sq| self.orientation.y(sq)).collect();
+        let x_min = x_coords.iter().min().unwrap_or(&0);
+        let x_max = x_coords.iter().max().unwrap_or(&0) + 1;
+        let y_min = y_coords.iter().min().unwrap_or(&0);
+        let y_max = y_coords.iter().max().unwrap_or(&0) + 1;
+
+        let sq_len = self.theme.square();
+        let width = (x_max - x_min) * sq_len;
+        let height = (y_max - y_min) * sq_len;
+
+        // We want a slice of unused buffer, with the proper width and height dimensions. Leave
+        // the start of the buffer alone if it was used to render the top player bar.
+        let mut view = ArrayViewMut2::from_shape((height, width), &mut self.buffer[bar_offset..])
+            .expect("shape");
+
+        // Every square in the grid starts off transparent...
+        if prev.is_some() {
+            view.fill(self.theme.transparent_color());
         }
+
+        // ...and those squares which change in the current frame are then rendered
+        for sq in diff {
+            let key = SpriteKey {
+                piece: frame.board.piece_at(sq),
+                dark_square: sq.is_dark(),
+                highlight: frame.highlighted.contains(sq),
+                check: frame.checked.contains(sq),
+            };
+
+            let left = (self.orientation.x(sq) - x_min) * sq_len;
+            let top = (self.orientation.y(sq) - y_min) * sq_len;
+
+            view.slice_mut(s!(top..(top + sq_len), left..(left + sq_len)))
+                .assign(&self.theme.sprite(key));
+        }
+
+        (sq_len * x_min, sq_len * y_min, width, height)
+    }
+
+    /// Returns the buffer size required to render one player bar
+    fn bar_buffer_offset(&self) -> usize {
+        if self.bars.is_some() {
+            self.theme.width() * self.theme.bar_height()
+        } else {
+            0
+        }
+    }
+
+    /// Returns the number of pixels required to render one player bar.
+    fn bar_pixel_offset(&self) -> usize {
+        if self.bars.is_some() {
+            self.theme.bar_height()
+        } else {
+            0
+        }
+    }
+
+    /// Returns a tuple of (image height, image width)
+    fn image_dims(&self) -> (usize, usize) {
+        (self.theme.height(self.bars.is_some()), self.theme.width())
     }
 }
 
