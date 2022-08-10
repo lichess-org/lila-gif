@@ -9,7 +9,7 @@ use shakmaty::{
 
 use crate::assets::{BoardTheme, PieceSet};
 
-#[derive(Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Orientation {
     #[serde(rename = "white")]
     White,
@@ -44,7 +44,7 @@ pub type PlayerName = ArrayString<100>; // length limited to prevent dos
 
 pub type Comment = ArrayString<255>; // strict length limit for gif comments
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum CheckSquare {
     No,
     Yes,
@@ -113,7 +113,7 @@ impl CheckSquare {
 }
 
 #[serde_as]
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct RequestParams {
     pub white: Option<PlayerName>,
     pub black: Option<PlayerName>,
