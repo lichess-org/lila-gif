@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Deserialize, Copy, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum BoardTheme {
     Blue,
     Brown,
@@ -36,6 +37,7 @@ impl Default for BoardTheme {
 }
 
 #[derive(Deserialize, Copy, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum PieceSet {
     Alpha,
     Anarcandy,
