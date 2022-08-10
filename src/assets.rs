@@ -9,6 +9,26 @@ pub enum BoardTheme {
     Purple,
 }
 
+pub struct ByBoardTheme<T> {
+    inner: [T; 5],
+}
+
+impl<T> ByBoardTheme<T> {
+    pub fn new<F>(f: F) -> ByBoardTheme<T>
+    where
+        F: FnMut(BoardTheme) -> T,
+    {
+        use BoardTheme::*;
+        ByBoardTheme {
+            inner: [Blue, Brown, Green, Ic, Purple].map(f),
+        }
+    }
+
+    pub fn by_board_theme(&self, board: BoardTheme) -> &T {
+        &self.inner[board as usize]
+    }
+}
+
 impl Default for BoardTheme {
     fn default() -> BoardTheme {
         BoardTheme::Brown
@@ -51,6 +71,57 @@ pub enum PieceSet {
 impl Default for PieceSet {
     fn default() -> PieceSet {
         PieceSet::Cburnett
+    }
+}
+
+pub struct ByPieceSet<T> {
+    inner: [T; 29],
+}
+
+impl<T> ByPieceSet<T> {
+    pub fn new<F>(f: F) -> ByPieceSet<T>
+    where
+        F: FnMut(PieceSet) -> T,
+    {
+        use PieceSet::*;
+        ByPieceSet {
+            inner: [
+                Alpha,
+                Anarcandy,
+                California,
+                Cardinal,
+                Cburnett,
+                Chess7,
+                Chessnut,
+                Companion,
+                Dubrovny,
+                Fantasy,
+                Fresca,
+                Gioco,
+                Governor,
+                Horsey,
+                IcPieces,
+                Kosal,
+                Leipzig,
+                Letter,
+                Libra,
+                Maestro,
+                Merida,
+                Pirouetti,
+                Pixel,
+                ReillyCraig,
+                Riohacha,
+                Shapes,
+                Spatial,
+                Staunty,
+                Tatiana,
+            ]
+            .map(f),
+        }
+    }
+
+    pub fn by_piece_set(&self, piece_set: PieceSet) -> &T {
+        &self.inner[piece_set as usize]
     }
 }
 
