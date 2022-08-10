@@ -7,6 +7,8 @@ use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
 use shakmaty::{Piece, Role};
 
+use crate::api::{PieceName, ThemeName};
+
 const SQUARE: usize = 90;
 const COLOR_WIDTH: usize = 90 * 2 / 3;
 
@@ -175,5 +177,27 @@ impl ThemeMap {
             .or_insert(HashMap::new());
         sub_map.insert(piece_set.clone(), Theme::new(path.path().to_str().unwrap()));
         Some(())
+    }
+
+    pub fn get_theme_from_params(
+        &'static self,
+        theme_param: &Option<ThemeName>,
+        piece_param: &Option<PieceName>,
+    ) -> &'static Theme {
+        let theme_name = match theme_param.is_some()
+            && self.map.contains_key(&theme_param.unwrap().to_string())
+        {
+            true => theme_param.unwrap().to_string(),
+            false => DEFAULT_THEME_NAME.to_string(),
+        };
+
+        let piece_name = match piece_param.is_some()
+            && self.map[&DEFAULT_THEME_NAME.to_string()]
+                .contains_key(&piece_param.unwrap().to_string())
+        {
+            true => piece_param.unwrap().to_string(),
+            false => DEFAULT_PIECE_NAME.to_string(),
+        };
+        &self.map[&theme_name][&piece_name]
     }
 }

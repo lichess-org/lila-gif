@@ -7,8 +7,8 @@ use rusttype::Scale;
 use shakmaty::{uci::Uci, Bitboard, Board};
 
 use crate::{
-    api::{Comment, Orientation, PieceName, PlayerName, RequestBody, RequestParams, ThemeName},
-    theme::{SpriteKey, Theme, ThemeMap, DEFAULT_PIECE_NAME, DEFAULT_THEME_NAME},
+    api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
+    theme::{SpriteKey, Theme, ThemeMap},
 };
 
 enum RenderState {
@@ -57,30 +57,6 @@ impl RenderFrame {
     }
 }
 
-fn get_theme_from_params(
-    theme_map: &'static ThemeMap,
-    theme_param: &Option<ThemeName>,
-    piece_param: &Option<PieceName>,
-) -> &'static Theme {
-    let theme_name = match theme_param.is_some()
-        && theme_map
-            .map
-            .contains_key(&theme_param.unwrap().to_string())
-    {
-        true => theme_param.unwrap().to_string(),
-        false => DEFAULT_THEME_NAME.to_string(),
-    };
-
-    let piece_name = match piece_param.is_some()
-        && theme_map.map[&DEFAULT_THEME_NAME.to_string()]
-            .contains_key(&piece_param.unwrap().to_string())
-    {
-        true => piece_param.unwrap().to_string(),
-        false => DEFAULT_PIECE_NAME.to_string(),
-    };
-    &theme_map.map[&theme_name][&piece_name]
-}
-
 pub struct Render {
     theme: &'static Theme,
     state: RenderState,
@@ -95,7 +71,7 @@ pub struct Render {
 impl Render {
     pub fn new_image(theme_map: &'static ThemeMap, params: RequestParams) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
-        let theme = get_theme_from_params(theme_map, &params.theme, &params.piece);
+        let theme = theme_map.get_theme_from_params(&params.theme, &params.piece);
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
@@ -117,7 +93,7 @@ impl Render {
     pub fn new_animation(theme_map: &'static ThemeMap, params: RequestBody) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
         let default_delay = params.delay;
-        let theme = get_theme_from_params(theme_map, &params.theme, &params.piece);
+        let theme = theme_map.get_theme_from_params(&params.theme, &params.piece);
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
