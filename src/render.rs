@@ -72,7 +72,7 @@ pub struct Render {
 impl Render {
     pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
-        let theme = themes.get_theme_from_params(&params.theme, &params.piece);
+        let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
             font: themes.font(),
@@ -95,7 +95,7 @@ impl Render {
     pub fn new_animation(themes: &'static Themes, params: RequestBody) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
         let default_delay = params.delay;
-        let theme = themes.get_theme_from_params(&params.theme, &params.piece);
+        let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
             font: themes.font(),

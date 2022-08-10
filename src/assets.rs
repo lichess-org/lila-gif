@@ -125,7 +125,7 @@ impl<T> ByPieceSet<T> {
     }
 }
 
-pub fn theme(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
+pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
     use PieceSet::*;
     match board {
         BoardTheme::Blue => match pieces {

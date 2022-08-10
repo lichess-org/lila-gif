@@ -1,17 +1,12 @@
-use std::{collections::HashMap, fs, fs::DirEntry, io::Read};
-
 use gift::block::{ColorTableConfig, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
 use shakmaty::{Piece, Role};
 
-use crate::api::{PieceName, ThemeName};
+use crate::assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet};
 
 const SQUARE: usize = 90;
 const COLOR_WIDTH: usize = 90 * 2 / 3;
-
-pub const DEFAULT_THEME_NAME: &str = "brown";
-pub const DEFAULT_PIECE_NAME: &str = "cburnett";
 
 pub struct SpriteKey {
     pub piece: Option<Piece>,
@@ -46,10 +41,7 @@ pub struct Theme {
 }
 
 impl Theme {
-    pub fn new(file_path: &str) -> Theme {
-        let mut f = std::fs::File::open(file_path).unwrap();
-        let mut sprite_data = Vec::new();
-        f.read_to_end(&mut sprite_data).unwrap();
+    fn new(sprite_data: &[u8]) -> Theme {
         let mut decoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
         let preamble = decoder
             .preamble()
@@ -130,9 +122,7 @@ impl Theme {
 }
 
 pub struct Themes {
-    // Map of theme_name to map of piece_name to Theme
-    // map["theme name"]["piece name"] -> Theme
-    pub map: HashMap<String, HashMap<String, Theme>>,
+    map: ByBoardTheme<ByPieceSet<Theme>>,
     font: Font<'static>,
 }
 
@@ -142,7 +132,9 @@ impl Themes {
         let font = Font::try_from_bytes(font_data).expect("parse font");
 
         Themes {
-            map: HashMap::new(),
+            map: ByBoardTheme::new(|board| {
+                ByPieceSet::new(|pieces| Theme::new(sprite_data(board, pieces)))
+            }),
             font,
         }
     }
@@ -151,51 +143,7 @@ impl Themes {
         &self.font
     }
 
-    pub fn initialize(mut self) -> Themes {
-        println!("initializing...");
-        let paths = fs::read_dir("./theme/sprites/").unwrap();
-        for maybe_path in paths {
-            if let Result::Ok(path) = maybe_path {
-                let _ = &mut self.insert_theme_from_path(path);
-            }
-        }
-        println!("initialized theme map");
-        self
-    }
-
-    fn insert_theme_from_path(&mut self, path: DirEntry) -> Option<()> {
-        let file_name_string = path.file_name().as_os_str().to_string_lossy().to_string();
-        let file_name = file_name_string.split(".").next()?;
-        let mut file_name_parts = file_name.split("-");
-        let board_theme = file_name_parts.next()?.to_string();
-        let piece_set = file_name_parts.next()?.to_string();
-        let sub_map = self
-            .map
-            .entry(board_theme.clone())
-            .or_insert(HashMap::new());
-        sub_map.insert(piece_set.clone(), Theme::new(path.path().to_str().unwrap()));
-        Some(())
-    }
-
-    pub fn get_theme_from_params(
-        &'static self,
-        theme_param: &Option<ThemeName>,
-        piece_param: &Option<PieceName>,
-    ) -> &'static Theme {
-        let theme_name = match theme_param.is_some()
-            && self.map.contains_key(&theme_param.unwrap().to_string())
-        {
-            true => theme_param.unwrap().to_string(),
-            false => DEFAULT_THEME_NAME.to_string(),
-        };
-
-        let piece_name = match piece_param.is_some()
-            && self.map[&DEFAULT_THEME_NAME.to_string()]
-                .contains_key(&piece_param.unwrap().to_string())
-        {
-            true => piece_param.unwrap().to_string(),
-            false => DEFAULT_PIECE_NAME.to_string(),
-        };
-        &self.map[&theme_name][&piece_name]
+    pub fn get(&self, board: BoardTheme, pieces: PieceSet) -> &Theme {
+        self.map.by_board_theme(board).by_piece_set(pieces)
     }
 }
