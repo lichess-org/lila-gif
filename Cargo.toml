@@ -17,7 +17,7 @@ tokio = { version = "1", features = ["full"] }
 rusttype = "0.9"
 serde = { version = "1.0", features = ["derive"] }
 shakmaty = "0.21"
-serde_with = "1"
+serde_with = "2"
 ndarray = "0.15"
 bytes = "1"
 arrayvec = { version = "0.7", features = ["serde"] }
