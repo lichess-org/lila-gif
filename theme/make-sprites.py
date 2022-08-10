@@ -42,15 +42,9 @@ THEMES = {
     "purple": include_highlight_colors({"light": "#9f90b0", "dark": "#7d4a8d"}),
 }
 
-OMIT_PIECE_SETS = ["mono"]  # omit mono since it has different SVGs
-
 
 def get_piece_set_names():
-    piece_sets = set([f for f in listdir("./piece") if isdir(join("./piece", f))])
-    for piece_set in OMIT_PIECE_SETS:
-        if piece_set in piece_sets:
-            piece_sets.remove(piece_set)
-    return piece_sets
+    return set([f for f in listdir("./piece") if isdir(join("./piece", f))])
 
 
 NONTHEME_COLORS = [
