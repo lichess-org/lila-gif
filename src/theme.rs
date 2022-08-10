@@ -3,7 +3,6 @@ use std::{collections::HashMap, fs, fs::DirEntry, io::Read};
 use gift::block::{ColorTableConfig, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
-use serde::Deserialize;
 use shakmaty::{Piece, Role};
 
 use crate::api::{PieceName, ThemeName};
@@ -44,7 +43,6 @@ pub struct Theme {
     color_table_config: ColorTableConfig,
     global_color_table: GlobalColorTable,
     sprite: Array2<u8>,
-    font: Font<'static>,
 }
 
 impl Theme {
@@ -62,19 +60,11 @@ impl Theme {
             Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned())
                 .expect("from shape");
 
-        let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
-        let font = Font::try_from_bytes(font_data).expect("parse font");
-
         Theme {
             color_table_config: preamble.logical_screen_desc.color_table_config(),
             global_color_table: preamble.global_color_table.expect("color table present"),
             sprite,
-            font,
         }
-    }
-
-    pub fn font(&self) -> &Font {
-        &self.font
     }
 
     pub fn color_table_config(&self) -> ColorTableConfig {
@@ -139,20 +129,29 @@ impl Theme {
     }
 }
 
-pub struct ThemeMap {
+pub struct Themes {
     // Map of theme_name to map of piece_name to Theme
     // map["theme name"]["piece name"] -> Theme
     pub map: HashMap<String, HashMap<String, Theme>>,
+    font: Font<'static>,
 }
 
-impl ThemeMap {
-    pub fn new() -> ThemeMap {
-        ThemeMap {
+impl Themes {
+    pub fn new() -> Themes {
+        let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
+        let font = Font::try_from_bytes(font_data).expect("parse font");
+
+        Themes {
             map: HashMap::new(),
+            font,
         }
     }
 
-    pub fn initialize(mut self) -> ThemeMap {
+    pub fn font(&self) -> &Font {
+        &self.font
+    }
+
+    pub fn initialize(mut self) -> Themes {
         println!("initializing...");
         let paths = fs::read_dir("./theme/sprites/").unwrap();
         for maybe_path in paths {

@@ -18,7 +18,7 @@ mod theme;
 
 use api::{RequestBody, RequestParams};
 use render::Render;
-use theme::ThemeMap;
+use theme::Themes;
 
 #[derive(Parser)]
 struct Opt {
@@ -28,7 +28,7 @@ struct Opt {
 }
 
 async fn image(
-    theme_map: &'static ThemeMap,
+    theme_map: &'static Themes,
     Query(req): Query<RequestParams>,
 ) -> impl IntoResponse {
     Response::builder()
@@ -39,7 +39,7 @@ async fn image(
         .unwrap()
 }
 
-async fn game(theme_map: &'static ThemeMap, Json(req): Json<RequestBody>) -> impl IntoResponse {
+async fn game(theme_map: &'static Themes, Json(req): Json<RequestBody>) -> impl IntoResponse {
     Response::builder()
         .header(CONTENT_TYPE, "image/gif")
         .body(StreamBody::new(stream::iter(
@@ -48,7 +48,7 @@ async fn game(theme_map: &'static ThemeMap, Json(req): Json<RequestBody>) -> imp
         .unwrap()
 }
 
-async fn example(theme_map: &'static ThemeMap) -> impl IntoResponse {
+async fn example(theme_map: &'static Themes) -> impl IntoResponse {
     game(theme_map, Json(RequestBody::example())).await
 }
 
@@ -56,7 +56,7 @@ async fn example(theme_map: &'static ThemeMap) -> impl IntoResponse {
 async fn main() {
     let opt = Opt::parse();
 
-    let theme_map: &'static ThemeMap = Box::leak(Box::new(ThemeMap::new().initialize()));
+    let theme_map: &'static Themes = Box::leak(Box::new(Themes::new().initialize()));
 
     let app = Router::new()
         .route("/image.gif", get(move |req| image(theme_map, req)))

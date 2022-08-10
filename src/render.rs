@@ -3,12 +3,12 @@ use std::{iter::FusedIterator, vec};
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
-use rusttype::Scale;
+use rusttype::{Font, Scale};
 use shakmaty::{uci::Uci, Bitboard, Board};
 
 use crate::{
     api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{SpriteKey, Theme, ThemeMap},
+    theme::{SpriteKey, Theme, Themes},
 };
 
 enum RenderState {
@@ -59,6 +59,7 @@ impl RenderFrame {
 
 pub struct Render {
     theme: &'static Theme,
+    font: &'static Font<'static>,
     state: RenderState,
     buffer: Vec<u8>,
     comment: Option<Comment>,
@@ -69,11 +70,12 @@ pub struct Render {
 }
 
 impl Render {
-    pub fn new_image(theme_map: &'static ThemeMap, params: RequestParams) -> Render {
+    pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
-        let theme = theme_map.get_theme_from_params(&params.theme, &params.piece);
+        let theme = themes.get_theme_from_params(&params.theme, &params.piece);
         Render {
             theme,
+            font: themes.font(),
             buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
@@ -90,12 +92,13 @@ impl Render {
         }
     }
 
-    pub fn new_animation(theme_map: &'static ThemeMap, params: RequestBody) -> Render {
+    pub fn new_animation(themes: &'static Themes, params: RequestBody) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
         let default_delay = params.delay;
-        let theme = theme_map.get_theme_from_params(&params.theme, &params.piece);
+        let theme = themes.get_theme_from_params(&params.theme, &params.piece);
         Render {
             theme,
+            font: themes.font(),
             buffer: vec![0; theme.height(bars) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
@@ -167,12 +170,14 @@ impl Iterator for Render {
                     render_bar(
                         view.slice_mut(s!(..self.theme.bar_height(), ..)),
                         self.theme,
+                        self.font,
                         self.orientation.fold(&bars.black, &bars.white),
                     );
 
                     render_bar(
                         view.slice_mut(s!((self.theme.bar_height() + self.theme.width()).., ..)),
                         self.theme,
+                        self.font,
                         self.orientation.fold(&bars.white, &bars.black),
                     );
 
@@ -365,7 +370,7 @@ fn render_diff(
     )
 }
 
-fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, player_name: &str) {
+fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_name: &str) {
     view.fill(theme.bar_color());
 
     let mut text_color = theme.text_color();
@@ -390,8 +395,8 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, player_name: &str) {
         y: height,
     };
 
-    let v_metrics = theme.font().v_metrics(scale);
-    let glyphs = theme.font().layout(
+    let v_metrics = font.v_metrics(scale);
+    let glyphs = font.layout(
         player_name,
         scale,
         rusttype::point(padding, padding + v_metrics.ascent),
