@@ -12,6 +12,7 @@ use clap::Parser;
 use futures::stream;
 
 mod api;
+mod assets;
 mod render;
 mod theme;
 

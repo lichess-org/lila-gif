@@ -1,10 +1,9 @@
-use std::fs::DirEntry;
-use std::io::Read;
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, fs::DirEntry, io::Read};
 
 use gift::block::{ColorTableConfig, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
+use serde::Deserialize;
 use shakmaty::{Piece, Role};
 
 use crate::api::{PieceName, ThemeName};
