@@ -8,7 +8,7 @@ use shakmaty::{uci::Uci, Bitboard, Board};
 
 use crate::{
     api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{SpriteKey, Theme},
+    theme::{SpriteKey, Theme, ThemeMap},
 };
 
 enum RenderState {
@@ -69,8 +69,9 @@ pub struct Render {
 }
 
 impl Render {
-    pub fn new_image(theme: &'static Theme, params: RequestParams) -> Render {
+    pub fn new_image(theme_map: &'static ThemeMap, params: RequestParams) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
+        let theme = theme_map.get_theme_from_params(&params.theme, &params.piece);
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
@@ -89,9 +90,10 @@ impl Render {
         }
     }
 
-    pub fn new_animation(theme: &'static Theme, params: RequestBody) -> Render {
+    pub fn new_animation(theme_map: &'static ThemeMap, params: RequestBody) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
         let default_delay = params.delay;
+        let theme = theme_map.get_theme_from_params(&params.theme, &params.piece);
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
