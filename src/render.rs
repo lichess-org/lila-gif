@@ -1,13 +1,13 @@
 use std::{borrow::Cow, vec};
 
-use bytes::{BufMut, Bytes, BytesMut};
-use gif::{DisposalMethod, Repeat};
+use bytes::{buf::Writer, BufMut, Bytes, BytesMut};
+use gif::{AnyExtension, DisposalMethod, Extension, Repeat};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::Scale;
 use shakmaty::{uci::Uci, Bitboard, Board};
 
 use crate::{
-    api::{Orientation, PlayerName, RequestBody, RequestParams},
+    api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
     theme::{SpriteKey, Theme},
 };
 
@@ -59,7 +59,7 @@ impl RenderFrame {
 pub struct Render {
     theme: &'static Theme,
     buffer: Vec<u8>,
-    // comment: Option<Comment>,
+    comment: Option<Comment>,
     bars: Option<PlayerBars>,
     orientation: Orientation,
     frames: Vec<RenderFrame>,
@@ -72,7 +72,7 @@ impl Render {
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
-            // comment: params.comment,
+            comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
             frames: vec![RenderFrame {
@@ -91,7 +91,7 @@ impl Render {
         Render {
             theme,
             buffer: vec![0; theme.height(bars) * theme.width()],
-            // comment: params.comment,
+            comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
             frames: params
@@ -120,9 +120,9 @@ impl Render {
             self.theme.global_color_table(),
         )
         .expect("create encoder");
-        encoder.set_repeat(Repeat::Infinite).expect("encode repeat");
 
-        // Render the player bars
+        encoder.set_repeat(Repeat::Infinite).expect("encode repeat");
+        self.render_comment(&mut encoder);
         self.render_player_bar(PlayerBar::Top);
         self.render_player_bar(PlayerBar::Bottom);
 
@@ -186,6 +186,21 @@ impl Render {
             .get_ref()
             .to_owned()
             .freeze()
+    }
+
+    /// Encodes a comment block. If no comment was requested, the repo URL is used
+    fn render_comment(&mut self, encoder: &mut gif::Encoder<Writer<BytesMut>>) {
+        let comment = self
+            .comment
+            .as_ref()
+            .map_or("https://github.com/lichess-org/lila-gif".as_bytes(), |c| {
+                c.as_bytes()
+            });
+
+        let extension = AnyExtension::from(Extension::Comment);
+        encoder
+            .write_raw_extension(extension, &[comment])
+            .expect("write comment");
     }
 
     /// Renders a single player bar (either top or bottom)
