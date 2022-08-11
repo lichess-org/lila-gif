@@ -11,12 +11,13 @@ use axum::{
 use clap::Parser;
 
 mod api;
+mod assets;
 mod render;
 mod theme;
 
 use api::{RequestBody, RequestParams};
 use render::Render;
-use theme::Theme;
+use theme::Themes;
 
 #[derive(Parser)]
 struct Opt {
@@ -25,34 +26,34 @@ struct Opt {
     bind: SocketAddr,
 }
 
-async fn image(theme: &'static Theme, Query(req): Query<RequestParams>) -> impl IntoResponse {
+async fn image(themes: &'static Themes, Query(req): Query<RequestParams>) -> impl IntoResponse {
     Response::builder()
         .header(CONTENT_TYPE, "image/gif")
-        .body(Body::from(Render::new_image(theme, req).render()))
+        .body(Body::from(Render::new_image(themes, req).render()))
         .unwrap()
 }
 
-async fn game(theme: &'static Theme, Json(req): Json<RequestBody>) -> impl IntoResponse {
+async fn game(themes: &'static Themes, Json(req): Json<RequestBody>) -> impl IntoResponse {
     Response::builder()
         .header(CONTENT_TYPE, "image/gif")
-        .body(Body::from(Render::new_animation(theme, req).render()))
+        .body(Body::from(Render::new_animation(themes, req).render()))
         .unwrap()
 }
 
-async fn example(theme: &'static Theme) -> impl IntoResponse {
-    game(theme, Json(RequestBody::example())).await
+async fn example(themes: &'static Themes) -> impl IntoResponse {
+    game(themes, Json(RequestBody::example())).await
 }
 
 #[tokio::main]
 async fn main() {
     let opt = Opt::parse();
 
-    let theme: &'static Theme = Box::leak(Box::new(Theme::new()));
+    let themes: &'static Themes = Box::leak(Box::new(Themes::new()));
 
     let app = Router::new()
-        .route("/image.gif", get(move |req| image(theme, req)))
-        .route("/game.gif", post(move |req| game(theme, req)))
-        .route("/example.gif", get(move || example(theme)));
+        .route("/image.gif", get(move |req| image(themes, req)))
+        .route("/game.gif", post(move |req| game(themes, req)))
+        .route("/example.gif", get(move || example(themes)));
 
     axum::Server::bind(&opt.bind)
         .serve(app.into_make_service())

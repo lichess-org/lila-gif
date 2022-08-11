@@ -7,7 +7,9 @@ use shakmaty::{
     fen::Fen, san::San, uci::Uci, CastlingMode, Chess, EnPassantMode, Position, Setup, Square,
 };
 
-#[derive(Deserialize, PartialEq, Eq, Copy, Clone)]
+use crate::assets::{BoardTheme, PieceSet};
+
+#[derive(Deserialize, Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Orientation {
     #[serde(rename = "white")]
     White,
@@ -42,7 +44,7 @@ pub type PlayerName = ArrayString<100>; // length limited to prevent dos
 
 pub type Comment = ArrayString<255>; // strict length limit for gif comments
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum CheckSquare {
     No,
     Yes,
@@ -111,7 +113,7 @@ impl CheckSquare {
 }
 
 #[serde_as]
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct RequestParams {
     pub white: Option<PlayerName>,
     pub black: Option<PlayerName>,
@@ -126,6 +128,10 @@ pub struct RequestParams {
     pub check: CheckSquare,
     #[serde(default)]
     pub orientation: Orientation,
+    #[serde(default)]
+    pub theme: BoardTheme,
+    #[serde(default)]
+    pub piece: PieceSet,
 }
 
 #[derive(Deserialize)]
@@ -138,6 +144,10 @@ pub struct RequestBody {
     pub orientation: Orientation,
     #[serde(default)]
     pub delay: u16,
+    #[serde(default)]
+    pub theme: BoardTheme,
+    #[serde(default)]
+    pub piece: PieceSet,
 }
 
 #[serde_as]
@@ -202,6 +212,8 @@ impl RequestBody {
             orientation: Orientation::White,
             delay: 50,
             frames,
+            theme: BoardTheme::default(),
+            piece: PieceSet::default(),
         }
     }
 }

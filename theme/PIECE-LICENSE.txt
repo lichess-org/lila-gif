@@ -1,0 +1,2 @@
+See https://github.com/lichess-org/lila/blob/master/COPYING.md for licenses
+of the various piece sets.

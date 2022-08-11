@@ -3,6 +3,8 @@ use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
 use shakmaty::{Piece, Role};
 
+use crate::assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet};
+
 const SQUARE: usize = 90;
 const COLOR_WIDTH: usize = 90 * 2 / 3;
 
@@ -35,29 +37,19 @@ impl SpriteKey {
 pub struct Theme {
     global_color_table: Vec<u8>,
     sprite: Array2<u8>,
-    font: Font<'static>,
 }
 
 impl Theme {
-    pub fn new() -> Theme {
-        let sprite_data = include_bytes!("../theme/sprite.gif") as &[u8];
+    fn new(sprite_data: &[u8]) -> Theme {
         let mut decoder = Decoder::new(std::io::Cursor::new(sprite_data)).unwrap();
         let frame = decoder.read_next_frame().unwrap().expect("no frames");
         let sprite = Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.buffer.to_vec())
             .expect("from shape");
 
-        let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
-        let font = Font::try_from_bytes(font_data).expect("parse font");
-
         Theme {
             global_color_table: decoder.global_palette().unwrap().to_vec(),
             sprite,
-            font,
         }
-    }
-
-    pub fn font(&self) -> &Font {
-        &self.font
     }
 
     pub fn global_color_table(&self) -> &Vec<u8> {
@@ -115,5 +107,32 @@ impl Theme {
             (SQUARE * y)..(SQUARE + SQUARE * y),
             (SQUARE * x)..(SQUARE + SQUARE * x)
         ))
+    }
+}
+
+pub struct Themes {
+    map: ByBoardTheme<ByPieceSet<Theme>>,
+    font: Font<'static>,
+}
+
+impl Themes {
+    pub fn new() -> Themes {
+        let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
+        let font = Font::try_from_bytes(font_data).expect("parse font");
+
+        Themes {
+            map: ByBoardTheme::new(|board| {
+                ByPieceSet::new(|pieces| Theme::new(sprite_data(board, pieces)))
+            }),
+            font,
+        }
+    }
+
+    pub fn font(&self) -> &Font {
+        &self.font
+    }
+
+    pub fn get(&self, board: BoardTheme, pieces: PieceSet) -> &Theme {
+        self.map.by_board_theme(board).by_piece_set(pieces)
     }
 }

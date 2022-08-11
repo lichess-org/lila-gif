@@ -3,12 +3,12 @@ use std::{borrow::Cow, vec};
 use bytes::{buf::Writer, BufMut, Bytes, BytesMut};
 use gif::{AnyExtension, DisposalMethod, Extension, Repeat};
 use ndarray::{s, ArrayViewMut2};
-use rusttype::Scale;
+use rusttype::{Font, Scale};
 use shakmaty::{uci::Uci, Bitboard, Board};
 
 use crate::{
     api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{SpriteKey, Theme},
+    theme::{SpriteKey, Theme, Themes},
 };
 
 enum PlayerBar {
@@ -58,6 +58,7 @@ impl RenderFrame {
 
 pub struct Render {
     theme: &'static Theme,
+    font: &'static Font<'static>,
     buffer: Vec<u8>,
     comment: Option<Comment>,
     bars: Option<PlayerBars>,
@@ -67,10 +68,12 @@ pub struct Render {
 }
 
 impl Render {
-    pub fn new_image(theme: &'static Theme, params: RequestParams) -> Render {
+    pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
+        let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
+            font: themes.font(),
             buffer: vec![0; theme.height(bars) * theme.width()],
             comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
@@ -85,11 +88,13 @@ impl Render {
         }
     }
 
-    pub fn new_animation(theme: &'static Theme, params: RequestBody) -> Render {
+    pub fn new_animation(themes: &'static Themes, params: RequestBody) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
         let default_delay = params.delay;
+        let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
+            font: themes.font(),
             buffer: vec![0; theme.height(bars) * theme.width()],
             comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
@@ -249,8 +254,8 @@ impl Render {
             y: height,
         };
 
-        let v_metrics = self.theme.font().v_metrics(scale);
-        let glyphs = self.theme.font().layout(
+        let v_metrics = self.font.v_metrics(scale);
+        let glyphs = self.font.layout(
             player_name,
             scale,
             rusttype::point(padding, padding + v_metrics.ascent),
