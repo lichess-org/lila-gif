@@ -1,6 +1,6 @@
-use std::{borrow::Cow, vec};
+use std::{borrow::Cow, iter::FusedIterator, vec};
 
-use bytes::{buf::Writer, BufMut, Bytes, BytesMut};
+use bytes::{buf::Writer, BufMut, BytesMut};
 use gif::{AnyExtension, DisposalMethod, Extension, Repeat};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::{Font, Scale};
@@ -10,6 +10,12 @@ use crate::{
     api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
     theme::{SpriteKey, Theme, Themes},
 };
+
+enum RenderState {
+    Preamble,
+    Frame(usize),
+    Complete,
+}
 
 enum PlayerBar {
     Top,
@@ -34,7 +40,7 @@ impl PlayerBars {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct RenderFrame {
     board: Board,
     highlighted: Bitboard,
@@ -56,9 +62,13 @@ impl RenderFrame {
     }
 }
 
+type GifEncoder = gif::Encoder<Writer<BytesMut>>;
+
 pub struct Render {
     theme: &'static Theme,
     font: &'static Font<'static>,
+    state: RenderState,
+    encoder: GifEncoder,
     buffer: Vec<u8>,
     comment: Option<Comment>,
     bars: Option<PlayerBars>,
@@ -68,13 +78,26 @@ pub struct Render {
 }
 
 impl Render {
+    fn make_encoder(theme: &Theme, bars: bool) -> GifEncoder {
+        let (image_width, image_height) = Render::get_image_dims(theme, bars);
+        gif::Encoder::new(
+            BytesMut::new().writer(),
+            image_width as u16,
+            image_height as u16,
+            theme.global_color_table(),
+        )
+        .expect("create encoder")
+    }
+
     pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
         let bars = params.white.is_some() || params.black.is_some();
         let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
             font: themes.font(),
+            encoder: Render::make_encoder(&theme, bars),
             buffer: vec![0; theme.height(bars) * theme.width()],
+            state: RenderState::Preamble,
             comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
@@ -95,7 +118,9 @@ impl Render {
         Render {
             theme,
             font: themes.font(),
+            encoder: Render::make_encoder(&theme, bars),
             buffer: vec![0; theme.height(bars) * theme.width()],
+            state: RenderState::Preamble,
             comment: params.comment,
             bars: PlayerBars::from(params.white, params.black),
             orientation: params.orientation,
@@ -113,88 +138,8 @@ impl Render {
         }
     }
 
-    /// Generates the GIF, returning a Bytes object
-    pub fn render(mut self) -> Bytes {
-        let (image_height, image_width) = self.image_dims();
-
-        // Create the GIF encoder and
-        let mut encoder = gif::Encoder::new(
-            BytesMut::new().writer(),
-            image_width as u16,
-            image_height as u16,
-            self.theme.global_color_table(),
-        )
-        .expect("create encoder");
-
-        encoder.set_repeat(Repeat::Infinite).expect("encode repeat");
-        self.render_comment(&mut encoder);
-        self.render_player_bar(PlayerBar::Top);
-        self.render_player_bar(PlayerBar::Bottom);
-
-        // Iterate over every RenderFrame and encode the diff between consecutive frames in the GIF
-        for frame_index in 0..self.frames.len() {
-            // Generates the diff frame and adds its contents to the buffer
-            let (board_left, board_top, w, h) = self.render_frame_diff(frame_index);
-
-            // For the first frame, the image block always begins at (0, 0) and spans the entire
-            // width and height of the image. For all other frames, the diff must be positioned
-            let (left, top, width, height) = if frame_index == 0 {
-                (0, 0, image_width, image_height)
-            } else {
-                let block_top = board_top + self.bar_pixel_offset();
-                (board_left, block_top, w, h)
-            };
-
-            encoder
-                .write_frame(&gif::Frame {
-                    delay: self.frames[frame_index].delay.unwrap_or(0),
-                    dispose: DisposalMethod::Keep,
-                    transparent: Option::Some(self.theme.transparent_color()),
-                    needs_user_input: false,
-                    top: top as u16,
-                    left: left as u16,
-                    width: width as u16,
-                    height: height as u16,
-                    interlaced: false,
-                    palette: None,
-                    buffer: Cow::Borrowed(&self.buffer),
-                })
-                .expect("write frame");
-        }
-
-        // Add a black frame at the end, to work around twitter cutting off the last frame.
-        if self.kork {
-            self.buffer.clear();
-            self.buffer
-                .resize(image_width * image_height, self.theme.bar_color());
-
-            encoder
-                .write_frame(&gif::Frame {
-                    delay: 1,
-                    dispose: DisposalMethod::Keep,
-                    transparent: Option::Some(self.theme.transparent_color()),
-                    needs_user_input: false,
-                    top: 0,
-                    left: 0,
-                    width: image_width as u16,
-                    height: image_height as u16,
-                    interlaced: false,
-                    palette: None,
-                    buffer: Cow::Borrowed(&self.buffer),
-                })
-                .expect("write frame");
-        }
-
-        encoder
-            .into_inner()
-            .expect("add trailer")
-            .get_ref()
-            .to_owned()
-            .freeze()
-    }
-
     /// Encodes a comment block. If no comment was requested, the repo URL is used
-    fn render_comment(&mut self, encoder: &mut gif::Encoder<Writer<BytesMut>>) {
+    fn render_comment(&mut self) {
         let comment = self
             .comment
             .as_ref()
@@ -203,7 +148,7 @@ impl Render {
             });
 
         let extension = AnyExtension::from(Extension::Comment);
-        encoder
+        self.encoder
             .write_raw_extension(extension, &[comment])
             .expect("write comment");
     }
@@ -286,12 +231,50 @@ impl Render {
         }
     }
 
+    fn render_frame(&mut self, frame_index: usize) {
+        let (image_width, image_height) = self.image_dims();
+
+        // Generates the diff frame and adds its contents to the buffer
+        let (board_left, board_top, w, h) = self.render_frame_diff(frame_index);
+
+        // For the first frame, the image block always begins at (0, 0) and spans the entire
+        // width and height of the image. For all other frames, the diff must be positioned
+        let (left, top, width, height) = if frame_index == 0 {
+            (0, 0, image_width, image_height)
+        } else {
+            let block_top = board_top + self.bar_pixel_offset();
+            (board_left, block_top, w, h)
+        };
+
+        self.state = RenderState::Frame(frame_index + 1);
+        self.encoder
+            .write_frame(&gif::Frame {
+                delay: self.frames[frame_index].delay.unwrap_or(0),
+                dispose: DisposalMethod::Keep,
+                transparent: Option::Some(self.theme.transparent_color()),
+                needs_user_input: false,
+                top: top as u16,
+                left: left as u16,
+                width: width as u16,
+                height: height as u16,
+                interlaced: false,
+                palette: None,
+                buffer: Cow::Borrowed(&self.buffer),
+            })
+            .expect("write frame");
+    }
+
     /// Renders the diff between consecutive frames. The `frame_index` parameter should be in the
     /// range [0, num_frames) and indicates which frame is being transitioned to. If `frame_index`
     /// is zero, there is no previous frame and the entire board will be rendered; otherwise, only
     /// the diff between the previous frame and the current frame is rendered.
     fn render_frame_diff(&mut self, frame_index: usize) -> (usize, usize, usize, usize) {
-        let frame = &self.frames[frame_index];
+        // An out-of-bounds frame index is allowed for index 0
+        let within_bounds = frame_index < self.frames.len();
+        let mut frame = &RenderFrame::default();
+        if within_bounds {
+            frame = &self.frames[frame_index];
+        }
 
         // When rendering the first frame, we must be careful not to overwrite the initial buffer
         // space used to render the top player bar. The `bar_offset` variable provides for this.
@@ -302,7 +285,7 @@ impl Render {
         };
 
         // Determine the min/max x and y coords involved in this frame
-        let diff = prev.map_or(Bitboard::FULL, |p| p.diff(frame));
+        let diff = prev.map_or(Bitboard::FULL, |p| p.diff(&frame));
         let x_coords: Vec<_> = diff.into_iter().map(|sq| self.orientation.x(sq)).collect();
         let y_coords: Vec<_> = diff.into_iter().map(|sq| self.orientation.y(sq)).collect();
         let x_min = x_coords.iter().min().unwrap_or(&0);
@@ -343,6 +326,38 @@ impl Render {
         (sq_len * x_min, sq_len * y_min, width, height)
     }
 
+    /// Adds a black frame at the end, to work around twitter cutting off the last frame. This also
+    /// writes the GIF trailer
+    fn render_last_frame(&mut self) {
+        let (image_width, image_height) = self.image_dims();
+
+        if self.kork {
+            self.buffer.clear();
+            self.buffer
+                .resize(image_width * image_height, self.theme.bar_color());
+
+            self.encoder
+                .write_frame(&gif::Frame {
+                    delay: 1,
+                    dispose: DisposalMethod::Keep,
+                    transparent: Option::Some(self.theme.transparent_color()),
+                    needs_user_input: false,
+                    top: 0,
+                    left: 0,
+                    width: image_width as u16,
+                    height: image_height as u16,
+                    interlaced: false,
+                    palette: None,
+                    buffer: Cow::Borrowed(&self.buffer),
+                })
+                .expect("write frame");
+        }
+
+        // Writes the GIF trailer
+        // self.encoder.into_inner().expect("add trailer");
+        self.state = RenderState::Complete;
+    }
+
     /// Returns the buffer size required to render one player bar
     fn bar_buffer_offset(&self) -> usize {
         if self.bars.is_some() {
@@ -363,9 +378,47 @@ impl Render {
 
     /// Returns a tuple of (image height, image width)
     fn image_dims(&self) -> (usize, usize) {
-        (self.theme.height(self.bars.is_some()), self.theme.width())
+        Render::get_image_dims(self.theme, self.bars.is_some())
+    }
+
+    fn get_image_dims(theme: &Theme, bars: bool) -> (usize, usize) {
+        (theme.width(), theme.height(bars))
     }
 }
+
+impl Iterator for Render {
+    type Item = BytesMut;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut bytes_start = self.encoder.get_ref().get_ref().len();
+
+        match self.state {
+            RenderState::Preamble => {
+                bytes_start = 0;
+                self.encoder
+                    .set_repeat(Repeat::Infinite)
+                    .expect("encode repeat");
+                self.render_comment();
+                self.render_player_bar(PlayerBar::Top);
+                self.render_player_bar(PlayerBar::Bottom);
+                self.render_frame(0);
+            }
+            RenderState::Frame(frame_index) => {
+                if frame_index < self.frames.len() {
+                    self.render_frame(frame_index);
+                } else {
+                    self.render_last_frame();
+                }
+            }
+            RenderState::Complete => return None,
+        };
+
+        let bytes = self.encoder.get_mut().get_mut();
+        Some(bytes.split_off(bytes_start))
+    }
+}
+
+impl FusedIterator for Render {}
 
 fn highlight_uci(uci: Option<Uci>) -> Bitboard {
     match uci {

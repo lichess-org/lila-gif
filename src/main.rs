@@ -1,7 +1,7 @@
-use std::net::SocketAddr;
+use std::{convert::Infallible, net::SocketAddr};
 
 use axum::{
-    body::Body,
+    body::StreamBody,
     extract::Query,
     http::header::CONTENT_TYPE,
     response::{IntoResponse, Response},
@@ -9,6 +9,7 @@ use axum::{
     Json, Router,
 };
 use clap::Parser;
+use futures::stream;
 
 mod api;
 mod assets;
@@ -29,14 +30,18 @@ struct Opt {
 async fn image(themes: &'static Themes, Query(req): Query<RequestParams>) -> impl IntoResponse {
     Response::builder()
         .header(CONTENT_TYPE, "image/gif")
-        .body(Body::from(Render::new_image(themes, req).render()))
+        .body(StreamBody::new(stream::iter(
+            Render::new_image(themes, req).map(Ok::<_, Infallible>),
+        )))
         .unwrap()
 }
 
 async fn game(themes: &'static Themes, Json(req): Json<RequestBody>) -> impl IntoResponse {
     Response::builder()
         .header(CONTENT_TYPE, "image/gif")
-        .body(Body::from(Render::new_animation(themes, req).render()))
+        .body(StreamBody::new(stream::iter(
+            Render::new_animation(themes, req).map(Ok::<_, Infallible>),
+        )))
         .unwrap()
 }
 
