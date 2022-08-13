@@ -390,11 +390,8 @@ impl Iterator for Render {
     type Item = BytesMut;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut bytes_start = self.encoder.get_ref().get_ref().len();
-
         match self.state {
             RenderState::Preamble => {
-                bytes_start = 0;
                 self.encoder
                     .set_repeat(Repeat::Infinite)
                     .expect("encode repeat");
@@ -413,8 +410,9 @@ impl Iterator for Render {
             RenderState::Complete => return None,
         };
 
-        let bytes = self.encoder.get_mut().get_mut();
-        Some(bytes.split_off(bytes_start))
+        // Return the bytes rendered during this frame. The `split_off` function resets the encoder
+        // buffer to have length 0 again
+        Some(self.encoder.get_mut().get_mut().split_off(0))
     }
 }
 
