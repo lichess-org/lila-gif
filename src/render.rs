@@ -259,7 +259,7 @@ impl Render {
                 height: height as u16,
                 interlaced: false,
                 palette: None,
-                buffer: Cow::Borrowed(&self.buffer),
+                buffer: Cow::Borrowed(&self.buffer[..width * height]),
             })
             .expect("write frame");
     }
