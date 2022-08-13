@@ -40,7 +40,7 @@ impl PlayerBars {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default)]
 struct RenderFrame {
     board: Board,
     highlighted: Bitboard,
