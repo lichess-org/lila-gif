@@ -216,7 +216,7 @@ def make_sprite(theme_name: str, piece_set_name: str):
         capture_output=True,
     )
 
-    image = Image.open(io.BytesIO(completed_process.stdout))
+    image = Image.open(io.BytesIO(completed_process.stdout)).quantize(64, dither=0)
     print(f"sprites/{theme_name}-{piece_set_name}.gif")
     image.save(
         f"sprites/{theme_name}-{piece_set_name}.gif", optimize=True, interlace=False
