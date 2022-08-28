@@ -3,10 +3,30 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum BoardTheme {
+    #[serde(alias = "blue2")]
+    #[serde(alias = "blue3")]
+    #[serde(alias = "blue-marble")]
+    #[serde(alias = "canvas")]
     Blue,
+    #[serde(alias = "wood")]
+    #[serde(alias = "wood2")]
+    #[serde(alias = "wood3")]
+    #[serde(alias = "wood4")]
+    #[serde(alias = "maple")]
+    #[serde(alias = "maple2")]
+    #[serde(alias = "marble")]
+    #[serde(alias = "grey")]
+    #[serde(alias = "metal")]
+    #[serde(alias = "olive")]
+    #[serde(alias = "newspaper")]
+    #[serde(alias = "pink")]
+    #[serde(alias = "horsey")]
     Brown,
+    #[serde(alias = "green-plastic")]
     Green,
+    #[serde(alias = "leather")]
     Ic,
+    #[serde(alias = "purple-diag")]
     Purple,
 }
 
