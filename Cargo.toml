@@ -21,6 +21,6 @@ serde_with = "2"
 ndarray = "0.15"
 bytes = "1"
 arrayvec = { version = "0.7", features = ["serde"] }
-clap = { version = "3", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 gift = "0.10"
 futures = "0.3"
