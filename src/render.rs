@@ -71,15 +71,15 @@ pub struct Render {
 
 impl Render {
     pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
-        let bars = params.white.is_some() || params.black.is_some();
+        let bars = PlayerBars::from(params.white, params.black);
         let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars) * theme.width()],
+            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
-            bars: PlayerBars::from(params.white, params.black),
+            bars,
             orientation: params.orientation,
             frames: vec![RenderFrame {
                 highlighted: highlight_uci(params.last_move),
@@ -93,16 +93,16 @@ impl Render {
     }
 
     pub fn new_animation(themes: &'static Themes, params: RequestBody) -> Render {
-        let bars = params.white.is_some() || params.black.is_some();
+        let bars = PlayerBars::from(params.white, params.black);
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars) * theme.width()],
+            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
-            bars: PlayerBars::from(params.white, params.black),
+            bars,
             orientation: params.orientation,
             frames: params
                 .frames
