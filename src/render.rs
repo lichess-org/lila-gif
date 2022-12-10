@@ -203,12 +203,6 @@ impl Iterator for Render {
                     self.orientation,
                     None,
                     &frame,
-                );
-
-                render_coordinates(
-                    board_view.slice_mut(s!(.., ..)),
-                    self.theme,
-                    self.orientation,
                     self.font,
                 );
 
@@ -244,6 +238,7 @@ impl Iterator for Render {
                         self.orientation,
                         Some(prev),
                         &frame,
+                        self.font,
                     );
 
                     let top = y + if self.bars.is_some() {
@@ -318,6 +313,7 @@ fn render_diff(
     orientation: Orientation,
     prev: Option<&RenderFrame>,
     frame: &RenderFrame,
+    font: &Font,
 ) -> ((usize, usize), (usize, usize)) {
     let diff = prev.map_or(Bitboard::FULL, |p| p.diff(frame));
 
@@ -364,11 +360,13 @@ fn render_diff(
         let left = (orientation.x(sq) - x_min) * theme.square();
         let top = (orientation.y(sq) - y_min) * theme.square();
 
-        view.slice_mut(s!(
+        let mut square = view.slice_mut(s!(
             top..(top + theme.square()),
             left..(left + theme.square())
-        ))
-        .assign(&theme.sprite(key));
+        ));
+
+        square.assign(&theme.sprite(key));
+        render_coordinates(square, theme, orientation, font)
     }
 
     (
