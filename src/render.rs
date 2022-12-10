@@ -205,6 +205,13 @@ impl Iterator for Render {
                     &frame,
                 );
 
+                render_coordinates(
+                    board_view.slice_mut(s!(.., ..)),
+                    self.theme,
+                    self.orientation,
+                    self.font,
+                );
+
                 blocks
                     .encode(
                         block::ImageDesc::default()
@@ -368,6 +375,50 @@ fn render_diff(
         (theme.square() * x_min, theme.square() * y_min),
         (width, height),
     )
+}
+
+fn render_coordinates(
+    mut buffer: ArrayViewMut2<u8>,
+    theme: &Theme,
+    orientation: Orientation,
+    font: &Font,
+) {
+    let height = 15.0;
+    let padding = 10.0;
+    let scale = Scale {
+        x: height,
+        y: height,
+    };
+
+    let v_metrics = font.v_metrics(scale);
+    let glyphs = font.layout(
+        "test",
+        scale,
+        rusttype::point(padding, padding + v_metrics.ascent),
+    );
+    let text_color = theme.text_color();
+
+    for g in glyphs {
+        if let Some(bb) = g.pixel_bounding_box() {
+            // Poor man's anti-aliasing.
+            g.draw(|left, top, intensity| {
+                let left = left as i32 + bb.min.x;
+                let top = top as i32 + bb.min.y;
+                if 0 <= left
+                    && left < theme.width() as i32
+                    && 0 <= top
+                    && top < theme.bar_height() as i32
+                    && intensity >= 0.01
+                {
+                    if intensity < 0.5 && text_color == theme.text_color() {
+                        buffer[(top as usize, left as usize)] = theme.med_text_color();
+                    } else {
+                        buffer[(top as usize, left as usize)] = text_color;
+                    }
+                }
+            });
+        };
+    }
 }
 
 fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_name: &str) {
