@@ -4,7 +4,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::{Font, Scale};
-use shakmaty::{uci::Uci, Bitboard, Board};
+use shakmaty::{uci::Uci, Bitboard, Board, File, Rank, Square};
 
 use crate::{
     api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
@@ -360,13 +360,18 @@ fn render_diff(
         let left = (orientation.x(sq) - x_min) * theme.square();
         let top = (orientation.y(sq) - y_min) * theme.square();
 
-        let mut square = view.slice_mut(s!(
+        let mut square_buffer = view.slice_mut(s!(
             top..(top + theme.square()),
             left..(left + theme.square())
         ));
 
-        square.assign(&theme.sprite(key));
-        render_coordinates(square, theme, orientation, font)
+        square_buffer.assign(&theme.sprite(key));
+        if sq.rank() == Rank::First {
+            render_file(&mut square_buffer, sq, theme, font)
+        };
+        if sq.file() == File::H {
+            render_rank(&mut square_buffer, sq, theme, font)
+        };
     }
 
     (
@@ -375,24 +380,20 @@ fn render_diff(
     )
 }
 
-fn render_coordinates(
-    mut buffer: ArrayViewMut2<u8>,
-    theme: &Theme,
-    orientation: Orientation,
-    font: &Font,
-) {
-    let height = 15.0;
-    let padding = 10.0;
+fn render_file(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme, font: &Font) {
+    let height = 30.0;
+    let padding = 5.0;
     let scale = Scale {
         x: height,
         y: height,
     };
 
     let v_metrics = font.v_metrics(scale);
+    let square_file = format!("{}", sq.file());
     let glyphs = font.layout(
-        "test",
+        &square_file,
         scale,
-        rusttype::point(padding, padding + v_metrics.ascent),
+        rusttype::point(padding, theme.square() as f32 + v_metrics.descent),
     );
     let text_color = theme.text_color();
 
@@ -402,16 +403,45 @@ fn render_coordinates(
             g.draw(|left, top, intensity| {
                 let left = left as i32 + bb.min.x;
                 let top = top as i32 + bb.min.y;
-                if 0 <= left
-                    && left < theme.width() as i32
-                    && 0 <= top
-                    && top < theme.bar_height() as i32
-                    && intensity >= 0.01
-                {
+                if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
                     if intensity < 0.5 && text_color == theme.text_color() {
-                        buffer[(top as usize, left as usize)] = theme.med_text_color();
+                        square_buffer[(top as usize, left as usize)] = theme.med_text_color();
                     } else {
-                        buffer[(top as usize, left as usize)] = text_color;
+                        square_buffer[(top as usize, left as usize)] = theme.text_color();
+                    }
+                }
+            });
+        };
+    }
+}
+
+fn render_rank(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme, font: &Font) {
+    let height = 30.0;
+    let scale = Scale {
+        x: height,
+        y: height,
+    };
+
+    let v_metrics = font.v_metrics(scale);
+    let square_rank = format!("{}", sq.rank());
+    let glyphs = font.layout(
+        &square_rank,
+        scale,
+        rusttype::point(theme.square() as f32 - 15.0, v_metrics.ascent),
+    );
+    let text_color = theme.text_color();
+
+    for g in glyphs {
+        if let Some(bb) = g.pixel_bounding_box() {
+            // Poor man's anti-aliasing.
+            g.draw(|left, top, intensity| {
+                let left = left as i32 + bb.min.x;
+                let top = top as i32 + bb.min.y;
+                if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
+                    if intensity < 0.5 && text_color == theme.text_color() {
+                        square_buffer[(top as usize, left as usize)] = theme.med_text_color();
+                    } else {
+                        square_buffer[(top as usize, left as usize)] = theme.text_color();
                     }
                 }
             });
