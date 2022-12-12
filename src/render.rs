@@ -366,12 +366,24 @@ fn render_diff(
         ));
 
         square_buffer.assign(&theme.sprite(key));
-        if sq.rank() == Rank::First {
-            render_file(&mut square_buffer, sq, theme, font)
-        };
-        if sq.file() == File::H {
-            render_rank(&mut square_buffer, sq, theme, font)
-        };
+        match orientation {
+            Orientation::White => {
+                if sq.rank() == Rank::First {
+                    render_file(&mut square_buffer, sq, theme, font)
+                };
+                if sq.file() == File::H {
+                    render_rank(&mut square_buffer, sq, theme, font)
+                };
+            }
+            Orientation::Black => {
+                if sq.rank() == Rank::Eighth {
+                    render_file(&mut square_buffer, sq, theme, font)
+                };
+                if sq.file() == File::A {
+                    render_rank(&mut square_buffer, sq, theme, font)
+                };
+            }
+        }
     }
 
     (
