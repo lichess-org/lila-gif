@@ -365,22 +365,22 @@ fn render_diff(
             left..(left + theme.square())
         ));
 
-        square_buffer.assign(&theme.sprite(key));
+        square_buffer.assign(&theme.sprite(&key));
         match orientation {
             Orientation::White => {
                 if sq.rank() == Rank::First {
-                    render_file(&mut square_buffer, sq, theme, font)
+                    render_file(&mut square_buffer, sq, &key, theme, font)
                 };
                 if sq.file() == File::H {
-                    render_rank(&mut square_buffer, sq, theme, font)
+                    render_rank(&mut square_buffer, sq, &key, theme, font)
                 };
             }
             Orientation::Black => {
                 if sq.rank() == Rank::Eighth {
-                    render_file(&mut square_buffer, sq, theme, font)
+                    render_file(&mut square_buffer, sq, &key, theme, font)
                 };
                 if sq.file() == File::A {
-                    render_rank(&mut square_buffer, sq, theme, font)
+                    render_rank(&mut square_buffer, sq, &key, theme, font)
                 };
             }
         }
@@ -392,7 +392,13 @@ fn render_diff(
     )
 }
 
-fn render_file(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme, font: &Font) {
+fn render_file(
+    square_buffer: &mut ArrayViewMut2<u8>,
+    sq: Square,
+    sprite_key: &SpriteKey,
+    theme: &Theme,
+    font: &Font,
+) {
     let height = 30.0;
     let padding = 5.0;
     let scale = Scale {
@@ -408,6 +414,16 @@ fn render_file(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme,
         rusttype::point(padding, theme.square() as f32 + v_metrics.descent),
     );
     let text_color = theme.text_color();
+    let background_color = match sprite_key.highlight {
+        true => match sq.is_dark() {
+            true => theme.square_highlighted_dark_color(),
+            false => theme.square_highlighted_light_color(),
+        },
+        false => match sq.is_dark() {
+            true => theme.square_dark_color(),
+            false => theme.square_light_color(),
+        },
+    };
 
     for g in glyphs {
         if let Some(bb) = g.pixel_bounding_box() {
@@ -417,7 +433,7 @@ fn render_file(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme,
                 let top = top as i32 + bb.min.y;
                 if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
                     if intensity < 0.5 && text_color == theme.text_color() {
-                        square_buffer[(top as usize, left as usize)] = theme.med_text_color();
+                        square_buffer[(top as usize, left as usize)] = background_color;
                     } else {
                         square_buffer[(top as usize, left as usize)] = theme.text_color();
                     }
@@ -427,7 +443,13 @@ fn render_file(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme,
     }
 }
 
-fn render_rank(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme, font: &Font) {
+fn render_rank(
+    square_buffer: &mut ArrayViewMut2<u8>,
+    sq: Square,
+    sprite_key: &SpriteKey,
+    theme: &Theme,
+    font: &Font,
+) {
     let height = 30.0;
     let scale = Scale {
         x: height,
@@ -442,6 +464,16 @@ fn render_rank(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme,
         rusttype::point(theme.square() as f32 - 15.0, v_metrics.ascent),
     );
     let text_color = theme.text_color();
+    let background_color = match sprite_key.highlight {
+        true => match sq.is_dark() {
+            true => theme.square_highlighted_dark_color(),
+            false => theme.square_highlighted_light_color(),
+        },
+        false => match sq.is_dark() {
+            true => theme.square_dark_color(),
+            false => theme.square_light_color(),
+        },
+    };
 
     for g in glyphs {
         if let Some(bb) = g.pixel_bounding_box() {
@@ -451,7 +483,7 @@ fn render_rank(square_buffer: &mut ArrayViewMut2<u8>, sq: Square, theme: &Theme,
                 let top = top as i32 + bb.min.y;
                 if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
                     if intensity < 0.5 && text_color == theme.text_color() {
-                        square_buffer[(top as usize, left as usize)] = theme.med_text_color();
+                        square_buffer[(top as usize, left as usize)] = background_color;
                     } else {
                         square_buffer[(top as usize, left as usize)] = theme.text_color();
                     }

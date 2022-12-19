@@ -99,6 +99,22 @@ impl Theme {
         self.square() * 8
     }
 
+    pub fn square_dark_color(&self) -> u8 {
+        self.sprite[(0, SQUARE)]
+    }
+
+    pub fn square_light_color(&self) -> u8 {
+        self.sprite[(0, 0)]
+    }
+
+    pub fn square_highlighted_dark_color(&self) -> u8 {
+        self.sprite[(0, SQUARE * 3)]
+    }
+
+    pub fn square_highlighted_light_color(&self) -> u8 {
+        self.sprite[(0, SQUARE * 2)]
+    }
+
     pub fn bar_height(&self) -> usize {
         60
     }
@@ -111,7 +127,7 @@ impl Theme {
         }
     }
 
-    pub fn sprite(&self, key: SpriteKey) -> ArrayView2<u8> {
+    pub fn sprite(&self, key: &SpriteKey) -> ArrayView2<u8> {
         let y = key.y();
         let x = key.x();
         self.sprite.slice(s!(
