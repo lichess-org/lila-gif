@@ -377,18 +377,18 @@ fn render_diff(
             match orientation {
                 Orientation::White => {
                     if sq.rank() == Rank::First {
-                        render_file(&mut square_buffer, sq, &key, theme, font, coords_scale)
+                        render_file(&mut square_buffer, &sq, &key, theme, font, coords_scale)
                     };
                     if sq.file() == File::H {
-                        render_rank(&mut square_buffer, sq, &key, theme, font, coords_scale)
+                        render_rank(&mut square_buffer, &sq, &key, theme, font, coords_scale)
                     };
                 }
                 Orientation::Black => {
                     if sq.rank() == Rank::Eighth {
-                        render_file(&mut square_buffer, sq, &key, theme, font, coords_scale)
+                        render_file(&mut square_buffer, &sq, &key, theme, font, coords_scale)
                     };
                     if sq.file() == File::A {
-                        render_rank(&mut square_buffer, sq, &key, theme, font, coords_scale)
+                        render_rank(&mut square_buffer, &sq, &key, theme, font, coords_scale)
                     };
                 }
             }
@@ -403,7 +403,7 @@ fn render_diff(
 
 fn render_file(
     square_buffer: &mut ArrayViewMut2<u8>,
-    sq: Square,
+    sq: &Square,
     sprite_key: &SpriteKey,
     theme: &Theme,
     font: &Font,
@@ -424,7 +424,7 @@ fn render_file(
 
 fn render_rank(
     square_buffer: &mut ArrayViewMut2<u8>,
-    sq: Square,
+    sq: &Square,
     sprite_key: &SpriteKey,
     theme: &Theme,
     font: &Font,
@@ -438,7 +438,7 @@ fn render_rank(
         rusttype::point(theme.square() as f32 - 15.0, v_metrics.ascent),
     );
     let text_color = theme.text_color();
-    let background_color = get_square_background_color(sprite_key, &sq, theme);
+    let background_color = get_square_background_color(sprite_key, sq, theme);
 
     render_coord(square_buffer, glyphs, theme, text_color, background_color)
 }
