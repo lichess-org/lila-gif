@@ -3,7 +3,7 @@ use std::{iter::FusedIterator, vec};
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
-use rusttype::{Font, Scale};
+use rusttype::{Font, LayoutIter, Scale};
 use shakmaty::{uci::Uci, Bitboard, Board, File, Rank, Square};
 
 use crate::{
@@ -373,21 +373,22 @@ fn render_diff(
 
         square_buffer.assign(&theme.sprite(&key));
         if coordinates == Coordinates::Yes {
+            let coords_scale: Scale = Scale { x: 30.0, y: 30.0 };
             match orientation {
                 Orientation::White => {
                     if sq.rank() == Rank::First {
-                        render_file(&mut square_buffer, sq, &key, theme, font)
+                        render_file(&mut square_buffer, sq, &key, theme, font, coords_scale)
                     };
                     if sq.file() == File::H {
-                        render_rank(&mut square_buffer, sq, &key, theme, font)
+                        render_rank(&mut square_buffer, sq, &key, theme, font, coords_scale)
                     };
                 }
                 Orientation::Black => {
                     if sq.rank() == Rank::Eighth {
-                        render_file(&mut square_buffer, sq, &key, theme, font)
+                        render_file(&mut square_buffer, sq, &key, theme, font, coords_scale)
                     };
                     if sq.file() == File::A {
-                        render_rank(&mut square_buffer, sq, &key, theme, font)
+                        render_rank(&mut square_buffer, sq, &key, theme, font, coords_scale)
                     };
                 }
             }
@@ -406,49 +407,19 @@ fn render_file(
     sprite_key: &SpriteKey,
     theme: &Theme,
     font: &Font,
+    font_scale: Scale,
 ) {
-    let height = 30.0;
-    let padding = 5.0;
-    let scale = Scale {
-        x: height,
-        y: height,
-    };
-
-    let v_metrics = font.v_metrics(scale);
+    let v_metrics = font.v_metrics(font_scale);
     let square_file = format!("{}", sq.file());
     let glyphs = font.layout(
         &square_file,
-        scale,
-        rusttype::point(padding, theme.square() as f32 + v_metrics.descent),
+        font_scale,
+        rusttype::point(5.0, theme.square() as f32 + v_metrics.descent),
     );
     let text_color = theme.text_color();
-    let background_color = match sprite_key.highlight {
-        true => match sq.is_dark() {
-            true => theme.square_highlighted_dark_color(),
-            false => theme.square_highlighted_light_color(),
-        },
-        false => match sq.is_dark() {
-            true => theme.square_dark_color(),
-            false => theme.square_light_color(),
-        },
-    };
+    let background_color = get_square_background_color(sprite_key, &sq, theme);
 
-    for g in glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            // Poor man's anti-aliasing.
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x;
-                let top = top as i32 + bb.min.y;
-                if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
-                    if intensity < 0.5 && text_color == theme.text_color() {
-                        square_buffer[(top as usize, left as usize)] = background_color;
-                    } else {
-                        square_buffer[(top as usize, left as usize)] = theme.text_color();
-                    }
-                }
-            });
-        };
-    }
+    render_coord(square_buffer, glyphs, theme, text_color, background_color)
 }
 
 fn render_rank(
@@ -457,48 +428,19 @@ fn render_rank(
     sprite_key: &SpriteKey,
     theme: &Theme,
     font: &Font,
+    font_scale: Scale,
 ) {
-    let height = 30.0;
-    let scale = Scale {
-        x: height,
-        y: height,
-    };
-
-    let v_metrics = font.v_metrics(scale);
+    let v_metrics = font.v_metrics(font_scale);
     let square_rank = format!("{}", sq.rank());
     let glyphs = font.layout(
         &square_rank,
-        scale,
+        font_scale,
         rusttype::point(theme.square() as f32 - 15.0, v_metrics.ascent),
     );
     let text_color = theme.text_color();
-    let background_color = match sprite_key.highlight {
-        true => match sq.is_dark() {
-            true => theme.square_highlighted_dark_color(),
-            false => theme.square_highlighted_light_color(),
-        },
-        false => match sq.is_dark() {
-            true => theme.square_dark_color(),
-            false => theme.square_light_color(),
-        },
-    };
+    let background_color = get_square_background_color(sprite_key, &sq, theme);
 
-    for g in glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            // Poor man's anti-aliasing.
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x;
-                let top = top as i32 + bb.min.y;
-                if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
-                    if intensity < 0.5 && text_color == theme.text_color() {
-                        square_buffer[(top as usize, left as usize)] = background_color;
-                    } else {
-                        square_buffer[(top as usize, left as usize)] = theme.text_color();
-                    }
-                }
-            });
-        };
-    }
+    render_coord(square_buffer, glyphs, theme, text_color, background_color)
 }
 
 fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_name: &str) {
@@ -563,5 +505,43 @@ fn highlight_uci(uci: Option<Uci>) -> Bitboard {
         Some(Uci::Normal { from, to, .. }) => Bitboard::from(from) | Bitboard::from(to),
         Some(Uci::Put { to, .. }) => Bitboard::from(to),
         _ => Bitboard::EMPTY,
+    }
+}
+
+fn render_coord(
+    square_buffer: &mut ArrayViewMut2<u8>,
+    glyphs: LayoutIter,
+    theme: &Theme,
+    text_color: u8,
+    background_color: u8,
+) {
+    for g in glyphs {
+        if let Some(bb) = g.pixel_bounding_box() {
+            // Poor man's anti-aliasing.
+            g.draw(|left, top, intensity| {
+                let left = left as i32 + bb.min.x;
+                let top = top as i32 + bb.min.y;
+                if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
+                    if intensity < 0.5 && text_color == theme.text_color() {
+                        square_buffer[(top as usize, left as usize)] = background_color;
+                    } else {
+                        square_buffer[(top as usize, left as usize)] = theme.text_color();
+                    }
+                }
+            });
+        };
+    }
+}
+
+fn get_square_background_color(sprite_key: &SpriteKey, sq: &Square, theme: &Theme) -> u8 {
+    match sprite_key.highlight {
+        true => match sq.is_dark() {
+            true => theme.square_highlighted_dark_color(),
+            false => theme.square_highlighted_light_color(),
+        },
+        false => match sq.is_dark() {
+            true => theme.square_dark_color(),
+            false => theme.square_light_color(),
+        },
     }
 }
