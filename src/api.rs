@@ -102,6 +102,58 @@ impl<'de> Deserialize<'de> for CheckSquare {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Coordinates {
+    No,
+    Yes,
+}
+
+impl Default for Coordinates {
+    fn default() -> Coordinates {
+        Coordinates::No
+    }
+}
+
+impl<'de> Deserialize<'de> for Coordinates {
+    fn deserialize<D>(deseralizer: D) -> Result<Coordinates, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        struct CoordinatesVisitor;
+
+        impl<'de> de::Visitor<'de> for CoordinatesVisitor {
+            type Value = Coordinates;
+
+            fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+                fmt.write_str("\"yes\", \"1\", \"no\" or bool")
+            }
+
+            fn visit_str<E>(self, name: &str) -> Result<Coordinates, E>
+            where
+                E: de::Error,
+            {
+                if name == "1" || name == "yes" || name == "true" {
+                    Ok(Coordinates::Yes)
+                } else {
+                    Ok(Coordinates::No)
+                }
+            }
+
+            fn visit_bool<E>(self, yes: bool) -> Result<Coordinates, E>
+            where
+                E: de::Error,
+            {
+                Ok(match yes {
+                    true => Coordinates::Yes,
+                    false => Coordinates::No,
+                })
+            }
+        }
+
+        deseralizer.deserialize_any(CoordinatesVisitor)
+    }
+}
+
 impl CheckSquare {
     pub fn to_square(self, setup: &Setup) -> Option<Square> {
         match self {
@@ -132,6 +184,8 @@ pub struct RequestParams {
     pub theme: BoardTheme,
     #[serde(default)]
     pub piece: PieceSet,
+    #[serde(default)]
+    pub coordinates: Coordinates,
 }
 
 #[derive(Deserialize)]
@@ -148,6 +202,8 @@ pub struct RequestBody {
     pub theme: BoardTheme,
     #[serde(default)]
     pub piece: PieceSet,
+    #[serde(default)]
+    pub coordinates: Coordinates,
 }
 
 #[serde_as]
@@ -214,6 +270,7 @@ impl RequestBody {
             frames,
             theme: BoardTheme::default(),
             piece: PieceSet::default(),
+            coordinates: Coordinates::default()
         }
     }
 }

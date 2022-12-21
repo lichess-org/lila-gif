@@ -7,7 +7,7 @@ use rusttype::{Font, Scale};
 use shakmaty::{uci::Uci, Bitboard, Board, File, Rank, Square};
 
 use crate::{
-    api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
+    api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
     theme::{SpriteKey, Theme, Themes},
 };
 
@@ -65,6 +65,7 @@ pub struct Render {
     comment: Option<Comment>,
     bars: Option<PlayerBars>,
     orientation: Orientation,
+    coordinates: Coordinates,
     frames: vec::IntoIter<RenderFrame>,
     kork: bool,
 }
@@ -81,6 +82,7 @@ impl Render {
             comment: params.comment,
             bars,
             orientation: params.orientation,
+            coordinates: params.coordinates,
             frames: vec![RenderFrame {
                 highlighted: highlight_uci(params.last_move),
                 checked: params.check.to_square(&params.fen.0).into_iter().collect(),
@@ -104,6 +106,7 @@ impl Render {
             comment: params.comment,
             bars,
             orientation: params.orientation,
+            coordinates: params.coordinates,
             frames: params
                 .frames
                 .into_iter()
@@ -201,6 +204,7 @@ impl Iterator for Render {
                     board_view.as_slice_mut().expect("continguous"),
                     self.theme,
                     self.orientation,
+                    self.coordinates,
                     None,
                     &frame,
                     self.font,
@@ -236,6 +240,7 @@ impl Iterator for Render {
                         &mut self.buffer,
                         self.theme,
                         self.orientation,
+                        self.coordinates,
                         Some(prev),
                         &frame,
                         self.font,
@@ -311,6 +316,7 @@ fn render_diff(
     buffer: &mut [u8],
     theme: &Theme,
     orientation: Orientation,
+    coordinates: Coordinates,
     prev: Option<&RenderFrame>,
     frame: &RenderFrame,
     font: &Font,
@@ -366,22 +372,24 @@ fn render_diff(
         ));
 
         square_buffer.assign(&theme.sprite(&key));
-        match orientation {
-            Orientation::White => {
-                if sq.rank() == Rank::First {
-                    render_file(&mut square_buffer, sq, &key, theme, font)
-                };
-                if sq.file() == File::H {
-                    render_rank(&mut square_buffer, sq, &key, theme, font)
-                };
-            }
-            Orientation::Black => {
-                if sq.rank() == Rank::Eighth {
-                    render_file(&mut square_buffer, sq, &key, theme, font)
-                };
-                if sq.file() == File::A {
-                    render_rank(&mut square_buffer, sq, &key, theme, font)
-                };
+        if coordinates == Coordinates::Yes {
+            match orientation {
+                Orientation::White => {
+                    if sq.rank() == Rank::First {
+                        render_file(&mut square_buffer, sq, &key, theme, font)
+                    };
+                    if sq.file() == File::H {
+                        render_rank(&mut square_buffer, sq, &key, theme, font)
+                    };
+                }
+                Orientation::Black => {
+                    if sq.rank() == Rank::Eighth {
+                        render_file(&mut square_buffer, sq, &key, theme, font)
+                    };
+                    if sq.file() == File::A {
+                        render_rank(&mut square_buffer, sq, &key, theme, font)
+                    };
+                }
             }
         }
     }
