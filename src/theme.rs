@@ -17,12 +17,9 @@ pub struct SpriteKey {
 
 impl SpriteKey {
     fn x(&self) -> usize {
-        (if self.piece.map_or(false, |p| p.color.is_white()) {
-            4
-        } else {
-            0
-        }) + (if self.highlight { 2 } else { 0 })
-            + (if self.dark_square { 1 } else { 0 })
+        4 * usize::from(self.piece.map_or(false, |p| p.color.is_white()))
+            + 2 * usize::from(self.highlight)
+            + usize::from(self.dark_square)
     }
 
     fn y(&self) -> usize {
