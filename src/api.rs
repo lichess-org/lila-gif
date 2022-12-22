@@ -125,7 +125,7 @@ impl<'de> Deserialize<'de> for Coordinates {
             type Value = Coordinates;
 
             fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-                fmt.write_str("\"yes\", \"1\", \"no\" or bool")
+                fmt.write_str("\"1\", \"yes\", \"true\", \"0\", \"no\", \"false\" or bool")
             }
 
             fn visit_str<E>(self, name: &str) -> Result<Coordinates, E>
@@ -134,8 +134,10 @@ impl<'de> Deserialize<'de> for Coordinates {
             {
                 if name == "1" || name == "yes" || name == "true" {
                     Ok(Coordinates::Yes)
-                } else {
+                } else if name == "0" || name == "no" || name == "false" {
                     Ok(Coordinates::No)
+                } else {
+                    Err(de::Error::custom("invalid coordinates value"))
                 }
             }
 
@@ -270,7 +272,7 @@ impl RequestBody {
             frames,
             theme: BoardTheme::default(),
             piece: PieceSet::default(),
-            coordinates: Coordinates::default()
+            coordinates: Coordinates::default(),
         }
     }
 }
