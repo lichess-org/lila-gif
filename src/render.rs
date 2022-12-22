@@ -3,11 +3,11 @@ use std::{iter::FusedIterator, vec};
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
-use rusttype::{Font, Scale};
-use shakmaty::{uci::Uci, Bitboard, Board};
+use rusttype::{Font, LayoutIter, Scale};
+use shakmaty::{uci::Uci, Bitboard, Board, File, Rank, Square};
 
 use crate::{
-    api::{Comment, Orientation, PlayerName, RequestBody, RequestParams},
+    api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
     theme::{SpriteKey, Theme, Themes},
 };
 
@@ -65,22 +65,24 @@ pub struct Render {
     comment: Option<Comment>,
     bars: Option<PlayerBars>,
     orientation: Orientation,
+    coordinates: Coordinates,
     frames: vec::IntoIter<RenderFrame>,
     kork: bool,
 }
 
 impl Render {
     pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
-        let bars = params.white.is_some() || params.black.is_some();
+        let bars = PlayerBars::from(params.white, params.black);
         let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars) * theme.width()],
+            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
-            bars: PlayerBars::from(params.white, params.black),
+            bars,
             orientation: params.orientation,
+            coordinates: params.coordinates,
             frames: vec![RenderFrame {
                 highlighted: highlight_uci(params.last_move),
                 checked: params.check.to_square(&params.fen.0).into_iter().collect(),
@@ -93,17 +95,18 @@ impl Render {
     }
 
     pub fn new_animation(themes: &'static Themes, params: RequestBody) -> Render {
-        let bars = params.white.is_some() || params.black.is_some();
+        let bars = PlayerBars::from(params.white, params.black);
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars) * theme.width()],
+            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
-            bars: PlayerBars::from(params.white, params.black),
+            bars,
             orientation: params.orientation,
+            coordinates: params.coordinates,
             frames: params
                 .frames
                 .into_iter()
@@ -201,8 +204,10 @@ impl Iterator for Render {
                     board_view.as_slice_mut().expect("continguous"),
                     self.theme,
                     self.orientation,
+                    self.coordinates,
                     None,
                     &frame,
+                    self.font,
                 );
 
                 blocks
@@ -235,8 +240,10 @@ impl Iterator for Render {
                         &mut self.buffer,
                         self.theme,
                         self.orientation,
+                        self.coordinates,
                         Some(prev),
                         &frame,
+                        self.font,
                     );
 
                     let top = y + if self.bars.is_some() {
@@ -309,8 +316,10 @@ fn render_diff(
     buffer: &mut [u8],
     theme: &Theme,
     orientation: Orientation,
+    coordinates: Coordinates,
     prev: Option<&RenderFrame>,
     frame: &RenderFrame,
+    font: &Font,
 ) -> ((usize, usize), (usize, usize)) {
     let diff = prev.map_or(Bitboard::FULL, |p| p.diff(frame));
 
@@ -357,17 +366,81 @@ fn render_diff(
         let left = (orientation.x(sq) - x_min) * theme.square();
         let top = (orientation.y(sq) - y_min) * theme.square();
 
-        view.slice_mut(s!(
+        let mut square_buffer = view.slice_mut(s!(
             top..(top + theme.square()),
             left..(left + theme.square())
-        ))
-        .assign(&theme.sprite(key));
+        ));
+
+        square_buffer.assign(&theme.sprite(&key));
+        if coordinates == Coordinates::Yes {
+            let coords_scale: Scale = Scale { x: 30.0, y: 30.0 };
+            match orientation {
+                Orientation::White => {
+                    if sq.rank() == Rank::First {
+                        render_file(&mut square_buffer, &sq, &key, theme, font, coords_scale)
+                    };
+                    if sq.file() == File::H {
+                        render_rank(&mut square_buffer, &sq, &key, theme, font, coords_scale)
+                    };
+                }
+                Orientation::Black => {
+                    if sq.rank() == Rank::Eighth {
+                        render_file(&mut square_buffer, &sq, &key, theme, font, coords_scale)
+                    };
+                    if sq.file() == File::A {
+                        render_rank(&mut square_buffer, &sq, &key, theme, font, coords_scale)
+                    };
+                }
+            }
+        }
     }
 
     (
         (theme.square() * x_min, theme.square() * y_min),
         (width, height),
     )
+}
+
+fn render_file(
+    square_buffer: &mut ArrayViewMut2<u8>,
+    sq: &Square,
+    sprite_key: &SpriteKey,
+    theme: &Theme,
+    font: &Font,
+    font_scale: Scale,
+) {
+    let v_metrics = font.v_metrics(font_scale);
+    let square_file = format!("{}", sq.file());
+    let glyphs = font.layout(
+        &square_file,
+        font_scale,
+        rusttype::point(5.0, theme.square() as f32 + v_metrics.descent),
+    );
+    let text_color = get_square_background_color(sprite_key.highlight, sq.is_light(), theme);
+    let background_color = get_square_background_color(sprite_key.highlight, sq.is_dark(), theme);
+
+    render_coord(square_buffer, glyphs, theme, text_color, background_color)
+}
+
+fn render_rank(
+    square_buffer: &mut ArrayViewMut2<u8>,
+    sq: &Square,
+    sprite_key: &SpriteKey,
+    theme: &Theme,
+    font: &Font,
+    font_scale: Scale,
+) {
+    let v_metrics = font.v_metrics(font_scale);
+    let square_rank = format!("{}", sq.rank());
+    let glyphs = font.layout(
+        &square_rank,
+        font_scale,
+        rusttype::point(theme.square() as f32 - 15.0, v_metrics.ascent),
+    );
+    let text_color = get_square_background_color(sprite_key.highlight, sq.is_light(), theme);
+    let background_color = get_square_background_color(sprite_key.highlight, sq.is_dark(), theme);
+
+    render_coord(square_buffer, glyphs, theme, text_color, background_color)
 }
 
 fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_name: &str) {
@@ -432,5 +505,44 @@ fn highlight_uci(uci: Option<Uci>) -> Bitboard {
         Some(Uci::Normal { from, to, .. }) => Bitboard::from(from) | Bitboard::from(to),
         Some(Uci::Put { to, .. }) => Bitboard::from(to),
         _ => Bitboard::EMPTY,
+    }
+}
+
+fn render_coord(
+    square_buffer: &mut ArrayViewMut2<u8>,
+    glyphs: LayoutIter,
+    theme: &Theme,
+    text_color: u8,
+    background_color: u8,
+) {
+    for g in glyphs {
+        if let Some(bb) = g.pixel_bounding_box() {
+            // Poor man's anti-aliasing.
+            g.draw(|left, top, intensity| {
+                let left = left as i32 + bb.min.x;
+                let top = top as i32 + bb.min.y;
+                if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
+                    if intensity < 0.5 {
+                        square_buffer[(top as usize, left as usize)] = background_color;
+                    } else {
+                        square_buffer[(top as usize, left as usize)] = text_color;
+                    }
+                }
+            });
+        };
+    }
+}
+
+
+fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Theme) -> u8 {
+    match is_highlighted {
+        true => match is_dark {
+            true => theme.square_highlighted_dark_color(),
+            false => theme.square_highlighted_light_color(),
+        },
+        false => match is_dark {
+            true => theme.square_dark_color(),
+            false => theme.square_light_color(),
+        },
     }
 }
