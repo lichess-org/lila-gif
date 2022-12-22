@@ -372,26 +372,19 @@ fn render_diff(
         ));
 
         square_buffer.assign(&theme.sprite(&key));
+
         if coordinates == Coordinates::Yes {
             let coords_scale: Scale = Scale { x: 30.0, y: 30.0 };
-            match orientation {
-                Orientation::White => {
-                    if sq.rank() == Rank::First {
-                        render_file(&mut square_buffer, &sq, &key, theme, font, coords_scale)
-                    };
-                    if sq.file() == File::H {
-                        render_rank(&mut square_buffer, &sq, &key, theme, font, coords_scale)
-                    };
-                }
-                Orientation::Black => {
-                    if sq.rank() == Rank::Eighth {
-                        render_file(&mut square_buffer, &sq, &key, theme, font, coords_scale)
-                    };
-                    if sq.file() == File::A {
-                        render_rank(&mut square_buffer, &sq, &key, theme, font, coords_scale)
-                    };
-                }
-            }
+            let (coords_rank, coords_file) = match orientation {
+                Orientation::White => (Rank::First, File::H),
+                Orientation::Black => (Rank::Eighth, File::A),
+            };
+            if sq.rank() == coords_rank {
+                render_file(&mut square_buffer, &sq, &key, theme, font, coords_scale)
+            };
+            if sq.file() == coords_file {
+                render_rank(&mut square_buffer, &sq, &key, theme, font, coords_scale)
+            };
         }
     }
 
@@ -532,7 +525,6 @@ fn render_coord(
         };
     }
 }
-
 
 fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Theme) -> u8 {
     match is_highlighted {
