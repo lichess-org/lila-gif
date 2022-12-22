@@ -94,8 +94,8 @@ impl<'de> Deserialize<'de> for CheckSquare {
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub enum Coordinates {
-    #[default]
     No,
+    #[default]
     Yes,
 }
 
