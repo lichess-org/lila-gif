@@ -416,8 +416,8 @@ fn render_file(
         font_scale,
         rusttype::point(5.0, theme.square() as f32 + v_metrics.descent),
     );
-    let text_color = theme.text_color();
-    let background_color = get_square_background_color(sprite_key, &sq, theme);
+    let text_color = get_square_background_color(sprite_key.highlight, sq.is_light(), theme);
+    let background_color = get_square_background_color(sprite_key.highlight, sq.is_dark(), theme);
 
     render_coord(square_buffer, glyphs, theme, text_color, background_color)
 }
@@ -437,8 +437,8 @@ fn render_rank(
         font_scale,
         rusttype::point(theme.square() as f32 - 15.0, v_metrics.ascent),
     );
-    let text_color = theme.text_color();
-    let background_color = get_square_background_color(sprite_key, sq, theme);
+    let text_color = get_square_background_color(sprite_key.highlight, sq.is_light(), theme);
+    let background_color = get_square_background_color(sprite_key.highlight, sq.is_dark(), theme);
 
     render_coord(square_buffer, glyphs, theme, text_color, background_color)
 }
@@ -522,10 +522,10 @@ fn render_coord(
                 let left = left as i32 + bb.min.x;
                 let top = top as i32 + bb.min.y;
                 if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
-                    if intensity < 0.5 && text_color == theme.text_color() {
+                    if intensity < 0.5 {
                         square_buffer[(top as usize, left as usize)] = background_color;
                     } else {
-                        square_buffer[(top as usize, left as usize)] = theme.text_color();
+                        square_buffer[(top as usize, left as usize)] = text_color;
                     }
                 }
             });
@@ -533,13 +533,14 @@ fn render_coord(
     }
 }
 
-fn get_square_background_color(sprite_key: &SpriteKey, sq: &Square, theme: &Theme) -> u8 {
-    match sprite_key.highlight {
-        true => match sq.is_dark() {
+
+fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Theme) -> u8 {
+    match is_highlighted {
+        true => match is_dark {
             true => theme.square_highlighted_dark_color(),
             false => theme.square_highlighted_light_color(),
         },
-        false => match sq.is_dark() {
+        false => match is_dark {
             true => theme.square_dark_color(),
             false => theme.square_light_color(),
         },
