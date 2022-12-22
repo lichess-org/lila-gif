@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum BoardTheme {
     #[serde(alias = "blue2")]
@@ -21,6 +21,7 @@ pub enum BoardTheme {
     #[serde(alias = "newspaper")]
     #[serde(alias = "pink")]
     #[serde(alias = "horsey")]
+    #[default]
     Brown,
     #[serde(alias = "green-plastic")]
     Green,
@@ -50,19 +51,14 @@ impl<T> ByBoardTheme<T> {
     }
 }
 
-impl Default for BoardTheme {
-    fn default() -> BoardTheme {
-        BoardTheme::Brown
-    }
-}
-
-#[derive(Deserialize, Debug, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum PieceSet {
     Alpha,
     Anarcandy,
     California,
     Cardinal,
+    #[default]
     Cburnett,
     Chess7,
     Chessnut,
@@ -88,12 +84,6 @@ pub enum PieceSet {
     Spatial,
     Staunty,
     Tatiana,
-}
-
-impl Default for PieceSet {
-    fn default() -> PieceSet {
-        PieceSet::Cburnett
-    }
 }
 
 pub struct ByPieceSet<T> {

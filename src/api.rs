@@ -9,18 +9,13 @@ use shakmaty::{
 
 use crate::assets::{BoardTheme, PieceSet};
 
-#[derive(Deserialize, Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, PartialEq, Eq, Copy, Clone)]
 pub enum Orientation {
     #[serde(rename = "white")]
+    #[default]
     White,
     #[serde(rename = "black")]
     Black,
-}
-
-impl Default for Orientation {
-    fn default() -> Orientation {
-        Orientation::White
-    }
 }
 
 impl Orientation {
@@ -44,17 +39,12 @@ pub type PlayerName = ArrayString<100>; // length limited to prevent dos
 
 pub type Comment = ArrayString<255>; // strict length limit for gif comments
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub enum CheckSquare {
+    #[default]
     No,
     Yes,
     Square(Square),
-}
-
-impl Default for CheckSquare {
-    fn default() -> CheckSquare {
-        CheckSquare::No
-    }
 }
 
 impl<'de> Deserialize<'de> for CheckSquare {
@@ -102,16 +92,11 @@ impl<'de> Deserialize<'de> for CheckSquare {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub enum Coordinates {
+    #[default]
     No,
     Yes,
-}
-
-impl Default for Coordinates {
-    fn default() -> Coordinates {
-        Coordinates::No
-    }
 }
 
 impl<'de> Deserialize<'de> for Coordinates {
