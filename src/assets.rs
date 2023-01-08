@@ -51,7 +51,7 @@ impl<T> ByBoardTheme<T> {
     }
 }
 
-#[derive(Deserialize, Debug, Default, Copy, Clone)]
+#[derive(Deserialize, Debug, Default, Copy, Clone, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum PieceSet {
     Alpha,
@@ -302,5 +302,20 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Staunty => include_bytes!("../theme/sprites/purple-staunty.gif"),
             Tatiana => include_bytes!("../theme/sprites/purple-tatiana.gif"),
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::convert::identity;
+
+    use super::*;
+
+    #[test]
+    fn test_by_piece_set() {
+        assert_eq!(
+            ByPieceSet::new(identity).by_piece_set(PieceSet::Tatiana),
+            &PieceSet::Tatiana
+        );
     }
 }
