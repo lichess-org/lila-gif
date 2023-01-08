@@ -88,7 +88,7 @@ pub enum PieceSet {
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 29],
+    inner: [T; 30],
 }
 
 impl<T> ByPieceSet<T> {
@@ -107,6 +107,7 @@ impl<T> ByPieceSet<T> {
                 Chess7,
                 Chessnut,
                 Companion,
+                Disguised,
                 Dubrovny,
                 Fantasy,
                 Fresca,
