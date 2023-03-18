@@ -28,7 +28,7 @@ We currently only create sprites for board themes that are SVGs - not for those 
 python3 make-sprites.py
 ```
 
-This command will use `rsvg-convert` to generate many GIFs in the `theme/sprites` directory, of the form `{boardtheme}-{pieceset}.gif`. It may take 15-30s depending on your computer.
+This command will use `resvg` to generate many GIFs in the `theme/sprites` directory, of the form `{boardtheme}-{pieceset}.gif`. It may take 15-30s depending on your computer.
 
 ## Todo
 

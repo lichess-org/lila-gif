@@ -208,16 +208,14 @@ def make_sprite(theme_name: str, piece_set_name: str):
                 },
             )
 
-    # Note: I originally implemented the SVG to PNG conversion with CairoSVG, but it proved unable to
-    # render all of the SVGs properly (fantasy, spatial). Hence this somewhat hacky usage of librsvg.
-    open("temp.svg", "wb").write(ET.tostring(svg))
-    completed_process = subprocess.run(
-        f"rsvg-convert -h {SQUARE_SIZE * 8 * 2} temp.svg",
+    resvg = subprocess.run(
+        "resvg --resources-dir . --zoom 2 - -c",
         shell=True,
+        input=ET.tostring(svg),
         capture_output=True,
     )
 
-    image = Image.open(io.BytesIO(completed_process.stdout)).quantize(64, dither=0)
+    image = Image.open(io.BytesIO(resvg.stdout), formats=["PNG"]).quantize(64, dither=0)
     print(f"sprites/{theme_name}-{piece_set_name}.gif")
     image.save(
         f"sprites/{theme_name}-{piece_set_name}.gif", optimize=True, interlace=False
