@@ -19,7 +19,6 @@ pub enum BoardTheme {
     #[serde(alias = "metal")]
     #[serde(alias = "olive")]
     #[serde(alias = "newspaper")]
-    #[serde(alias = "pink")]
     #[serde(alias = "horsey")]
     #[default]
     Brown,
@@ -33,7 +32,7 @@ pub enum BoardTheme {
 }
 
 pub struct ByBoardTheme<T> {
-    inner: [T; 5],
+    inner: [T; 6],
 }
 
 impl<T> ByBoardTheme<T> {

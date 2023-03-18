@@ -41,7 +41,7 @@ curl http://localhost:6175/image.gif?fen=4k3/6KP/8/8/8/8/7p/8 --output image.gif
 | lastMove    | ascii | _none_                                    | Last move in UCI notation (like `e2e4`).                                                     |
 | check       | ascii | _none_                                    | Square of king in check (like `e1`).                                                         |
 | orientation |       | `white`                                   | Pass `black` to flip the board.                                                              |
-| theme       |       | `brown`                                   | Board theme. `blue`, `brown`, `green`, `ic`, `pink`, or `purple`.                                    |
+| theme       |       | `brown`                                   | Board theme. `blue`, `brown`, `green`, `ic`, `pink`, or `purple`.                            |
 | piece       |       | `cburnett`                                | Piece set from this [list](https://github.com/lichess-org/lila-gif/tree/master/theme/piece). |
 
 ### `POST /game.gif`
