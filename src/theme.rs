@@ -141,7 +141,7 @@ pub struct Themes {
 
 impl Themes {
     pub fn new() -> Themes {
-        let font_data = include_bytes!("../theme/NotoSans-Regular.ttf") as &[u8];
+        let font_data = include_bytes!("../theme/font/NotoSans-Regular.ttf") as &[u8];
         let font = Font::try_from_bytes(font_data).expect("parse font");
 
         Themes {
