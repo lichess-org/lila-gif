@@ -27,6 +27,7 @@ pub enum BoardTheme {
     Green,
     #[serde(alias = "leather")]
     Ic,
+    Pink,
     #[serde(alias = "purple-diag")]
     Purple,
 }
@@ -42,7 +43,7 @@ impl<T> ByBoardTheme<T> {
     {
         use BoardTheme::*;
         ByBoardTheme {
-            inner: [Blue, Brown, Green, Ic, Purple].map(f),
+            inner: [Blue, Brown, Green, Ic, Pink, Purple].map(f),
         }
     }
 
@@ -269,6 +270,38 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Spatial => include_bytes!("../theme/sprites/ic-spatial.gif"),
             Staunty => include_bytes!("../theme/sprites/ic-staunty.gif"),
             Tatiana => include_bytes!("../theme/sprites/ic-tatiana.gif"),
+        },
+        BoardTheme::Pink => match pieces {
+            Alpha => include_bytes!("../theme/sprites/pink-alpha.gif"),
+            Anarcandy => include_bytes!("../theme/sprites/pink-anarcandy.gif"),
+            California => include_bytes!("../theme/sprites/pink-california.gif"),
+            Cardinal => include_bytes!("../theme/sprites/pink-cardinal.gif"),
+            Cburnett => include_bytes!("../theme/sprites/pink-cburnett.gif"),
+            Chess7 => include_bytes!("../theme/sprites/pink-chess7.gif"),
+            Chessnut => include_bytes!("../theme/sprites/pink-chessnut.gif"),
+            Companion => include_bytes!("../theme/sprites/pink-companion.gif"),
+            Disguised => include_bytes!("../theme/sprites/pink-disguised.gif"),
+            Dubrovny => include_bytes!("../theme/sprites/pink-dubrovny.gif"),
+            Fantasy => include_bytes!("../theme/sprites/pink-fantasy.gif"),
+            Fresca => include_bytes!("../theme/sprites/pink-fresca.gif"),
+            Gioco => include_bytes!("../theme/sprites/pink-gioco.gif"),
+            Governor => include_bytes!("../theme/sprites/pink-governor.gif"),
+            Horsey => include_bytes!("../theme/sprites/pink-horsey.gif"),
+            IcPieces => include_bytes!("../theme/sprites/pink-icpieces.gif"),
+            Kosal => include_bytes!("../theme/sprites/pink-kosal.gif"),
+            Leipzig => include_bytes!("../theme/sprites/pink-leipzig.gif"),
+            Letter => include_bytes!("../theme/sprites/pink-letter.gif"),
+            Libra => include_bytes!("../theme/sprites/pink-libra.gif"),
+            Maestro => include_bytes!("../theme/sprites/pink-maestro.gif"),
+            Merida => include_bytes!("../theme/sprites/pink-merida.gif"),
+            Pirouetti => include_bytes!("../theme/sprites/pink-pirouetti.gif"),
+            Pixel => include_bytes!("../theme/sprites/pink-pixel.gif"),
+            ReillyCraig => include_bytes!("../theme/sprites/pink-reillycraig.gif"),
+            Riohacha => include_bytes!("../theme/sprites/pink-riohacha.gif"),
+            Shapes => include_bytes!("../theme/sprites/pink-shapes.gif"),
+            Spatial => include_bytes!("../theme/sprites/pink-spatial.gif"),
+            Staunty => include_bytes!("../theme/sprites/pink-staunty.gif"),
+            Tatiana => include_bytes!("../theme/sprites/pink-tatiana.gif"),
         },
         BoardTheme::Purple => match pieces {
             Alpha => include_bytes!("../theme/sprites/purple-alpha.gif"),

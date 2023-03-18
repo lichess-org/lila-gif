@@ -39,6 +39,7 @@ THEMES = {
     "brown": include_highlight_colors({"light": "#f0d9b5", "dark": "#b58863"}),
     "green": include_highlight_colors({"light": "#ffffdd", "dark": "#86a666"}),
     "ic": include_highlight_colors({"light": "#ececec", "dark": "#c1c18e"}),
+    "pink": include_highlight_colors({"light": "#f1f1c9", "dark": "#f07272"}),
     "purple": include_highlight_colors({"light": "#9f90b0", "dark": "#7d4a8d"}),
 }
 
