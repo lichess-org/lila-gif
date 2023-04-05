@@ -1,4 +1,4 @@
-use std::{iter::FusedIterator, vec};
+use std::{io::Write, iter::FusedIterator, vec};
 
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
@@ -15,6 +15,11 @@ enum RenderState {
     Preamble,
     Frame(RenderFrame),
     Complete,
+}
+
+pub enum RenderFormat {
+    GIF,
+    SVG,
 }
 
 struct PlayerBars {
@@ -58,6 +63,7 @@ impl RenderFrame {
 }
 
 pub struct Render {
+    render_format: RenderFormat,
     theme: &'static Theme,
     font: &'static Font<'static>,
     state: RenderState,
@@ -71,13 +77,22 @@ pub struct Render {
 }
 
 impl Render {
-    pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
+    pub fn new_image(
+        themes: &'static Themes,
+        params: RequestParams,
+        render_format: RenderFormat,
+    ) -> Render {
         let bars = PlayerBars::from(params.white, params.black);
         let theme = themes.get(params.theme, params.piece);
+        let buffer = match render_format {
+            RenderFormat::GIF => vec![0; theme.height(bars.is_some()) * theme.width()],
+            RenderFormat::SVG => vec![],
+        };
         Render {
+            render_format,
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
+            buffer,
             state: RenderState::Preamble,
             comment: params.comment,
             bars,
@@ -99,6 +114,7 @@ impl Render {
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
         Render {
+            render_format: RenderFormat::GIF,
             theme,
             font: themes.font(),
             buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
@@ -123,188 +139,217 @@ impl Render {
     }
 }
 
+const SVG_RESULT: &'static str = "
+<svg viewBox=\"0 0 2048 2048\"
+    xmlns=\"http://www.w3.org/2000/svg\">
+  <rect x=\"10\" y=\"10\" width=\"80\" height=\"80\" style=\"fill:blue;stroke:pink;stroke-width:5;opacity:0.5\" />
+</svg>
+";
+
 impl Iterator for Render {
     type Item = Bytes;
 
     fn next(&mut self) -> Option<Bytes> {
         let mut output = BytesMut::new().writer();
-        match self.state {
-            RenderState::Preamble => {
-                let mut blocks = Encoder::new(&mut output).into_block_enc();
+        match self.render_format {
+            RenderFormat::GIF => {
+                match self.state {
+                    RenderState::Preamble => {
+                        let mut blocks = Encoder::new(&mut output).into_block_enc();
 
-                blocks.encode(block::Header::default()).expect("enc header");
+                        blocks.encode(block::Header::default()).expect("enc header");
 
-                blocks
-                    .encode(
-                        block::LogicalScreenDesc::default()
-                            .with_screen_height(self.theme.height(self.bars.is_some()) as u16)
-                            .with_screen_width(self.theme.width() as u16)
-                            .with_color_table_config(self.theme.color_table_config()),
-                    )
-                    .expect("enc logical screen desc");
+                        blocks
+                            .encode(
+                                block::LogicalScreenDesc::default()
+                                    .with_screen_height(
+                                        self.theme.height(self.bars.is_some()) as u16
+                                    )
+                                    .with_screen_width(self.theme.width() as u16)
+                                    .with_color_table_config(self.theme.color_table_config()),
+                            )
+                            .expect("enc logical screen desc");
 
-                blocks
-                    .encode(self.theme.global_color_table().clone())
-                    .expect("enc global color table");
+                        blocks
+                            .encode(self.theme.global_color_table().clone())
+                            .expect("enc global color table");
 
-                blocks
-                    .encode(block::Application::with_loop_count(0))
-                    .expect("enc application");
+                        blocks
+                            .encode(block::Application::with_loop_count(0))
+                            .expect("enc application");
 
-                let comment = self
-                    .comment
-                    .as_ref()
-                    .map_or("https://github.com/lichess-org/lila-gif".as_bytes(), |c| {
-                        c.as_bytes()
-                    });
-                if !comment.is_empty() {
-                    let mut comments = block::Comment::default();
-                    comments.add_comment(comment);
-                    blocks.encode(comments).expect("enc comment");
-                }
+                        let comment =
+                            self.comment.as_ref().map_or(
+                                "https://github.com/lichess-org/lila-gif".as_bytes(),
+                                |c| c.as_bytes(),
+                            );
+                        if !comment.is_empty() {
+                            let mut comments = block::Comment::default();
+                            comments.add_comment(comment);
+                            blocks.encode(comments).expect("enc comment");
+                        }
 
-                let mut view = ArrayViewMut2::from_shape(
-                    (self.theme.height(self.bars.is_some()), self.theme.width()),
-                    &mut self.buffer,
-                )
-                .expect("shape");
-
-                let mut board_view = if let Some(ref bars) = self.bars {
-                    render_bar(
-                        view.slice_mut(s!(..self.theme.bar_height(), ..)),
-                        self.theme,
-                        self.font,
-                        self.orientation.fold(&bars.black, &bars.white),
-                    );
-
-                    render_bar(
-                        view.slice_mut(s!((self.theme.bar_height() + self.theme.width()).., ..)),
-                        self.theme,
-                        self.font,
-                        self.orientation.fold(&bars.white, &bars.black),
-                    );
-
-                    view.slice_mut(s!(
-                        self.theme.bar_height()..(self.theme.bar_height() + self.theme.width()),
-                        ..
-                    ))
-                } else {
-                    view
-                };
-
-                let frame = self.frames.next().unwrap_or_default();
-
-                if let Some(delay) = frame.delay {
-                    let mut ctrl = block::GraphicControl::default();
-                    ctrl.set_delay_time_cs(delay);
-                    blocks.encode(ctrl).expect("enc graphic control");
-                }
-
-                render_diff(
-                    board_view.as_slice_mut().expect("continguous"),
-                    self.theme,
-                    self.orientation,
-                    self.coordinates,
-                    None,
-                    &frame,
-                    self.font,
-                );
-
-                blocks
-                    .encode(
-                        block::ImageDesc::default()
-                            .with_height(self.theme.height(self.bars.is_some()) as u16)
-                            .with_width(self.theme.width() as u16),
-                    )
-                    .expect("enc image desc");
-
-                let mut image_data = block::ImageData::new(self.buffer.len());
-                image_data.data_mut().extend_from_slice(&self.buffer);
-                blocks.encode(image_data).expect("enc image data");
-
-                self.state = RenderState::Frame(frame);
-            }
-            RenderState::Frame(ref prev) => {
-                let mut blocks = Encoder::new(&mut output).into_block_enc();
-
-                if let Some(frame) = self.frames.next() {
-                    let mut ctrl = block::GraphicControl::default();
-                    ctrl.set_disposal_method(block::DisposalMethod::Keep);
-                    ctrl.set_transparent_color_idx(self.theme.transparent_color());
-                    if let Some(delay) = frame.delay {
-                        ctrl.set_delay_time_cs(delay);
-                    }
-                    blocks.encode(ctrl).expect("enc graphic control");
-
-                    let ((left, y), (w, h)) = render_diff(
-                        &mut self.buffer,
-                        self.theme,
-                        self.orientation,
-                        self.coordinates,
-                        Some(prev),
-                        &frame,
-                        self.font,
-                    );
-
-                    let top = y + if self.bars.is_some() {
-                        self.theme.bar_height()
-                    } else {
-                        0
-                    };
-
-                    blocks
-                        .encode(
-                            block::ImageDesc::default()
-                                .with_left(left as u16)
-                                .with_top(top as u16)
-                                .with_height(h as u16)
-                                .with_width(w as u16),
+                        let mut view = ArrayViewMut2::from_shape(
+                            (self.theme.height(self.bars.is_some()), self.theme.width()),
+                            &mut self.buffer,
                         )
-                        .expect("enc image desc");
+                        .expect("shape");
 
-                    let mut image_data = block::ImageData::new(w * h);
-                    image_data
-                        .data_mut()
-                        .extend_from_slice(&self.buffer[..(w * h)]);
-                    blocks.encode(image_data).expect("enc image data");
+                        let mut board_view = if let Some(ref bars) = self.bars {
+                            render_bar(
+                                view.slice_mut(s!(..self.theme.bar_height(), ..)),
+                                self.theme,
+                                self.font,
+                                self.orientation.fold(&bars.black, &bars.white),
+                            );
 
-                    self.state = RenderState::Frame(frame);
-                } else {
-                    // Add a black frame at the end, to work around twitter
-                    // cutting off the last frame.
-                    if self.kork {
-                        let mut ctrl = block::GraphicControl::default();
-                        ctrl.set_disposal_method(block::DisposalMethod::Keep);
-                        ctrl.set_transparent_color_idx(self.theme.transparent_color());
-                        ctrl.set_delay_time_cs(1);
-                        blocks.encode(ctrl).expect("enc graphic control");
+                            render_bar(
+                                view.slice_mut(s!(
+                                    (self.theme.bar_height() + self.theme.width())..,
+                                    ..
+                                )),
+                                self.theme,
+                                self.font,
+                                self.orientation.fold(&bars.white, &bars.black),
+                            );
 
-                        let height = self.theme.height(self.bars.is_some());
-                        let width = self.theme.width();
+                            view.slice_mut(s!(
+                                self.theme.bar_height()
+                                    ..(self.theme.bar_height() + self.theme.width()),
+                                ..
+                            ))
+                        } else {
+                            view
+                        };
+
+                        let frame = self.frames.next().unwrap_or_default();
+
+                        if let Some(delay) = frame.delay {
+                            let mut ctrl = block::GraphicControl::default();
+                            ctrl.set_delay_time_cs(delay);
+                            blocks.encode(ctrl).expect("enc graphic control");
+                        }
+
+                        render_diff(
+                            board_view.as_slice_mut().expect("continguous"),
+                            self.theme,
+                            self.orientation,
+                            self.coordinates,
+                            None,
+                            &frame,
+                            self.font,
+                        );
+
                         blocks
                             .encode(
                                 block::ImageDesc::default()
-                                    .with_left(0)
-                                    .with_top(0)
-                                    .with_height(height as u16)
-                                    .with_width(width as u16),
+                                    .with_height(self.theme.height(self.bars.is_some()) as u16)
+                                    .with_width(self.theme.width() as u16),
                             )
                             .expect("enc image desc");
 
-                        let mut image_data = block::ImageData::new(height * width);
-                        image_data
-                            .data_mut()
-                            .resize(height * width, self.theme.bar_color());
+                        let mut image_data = block::ImageData::new(self.buffer.len());
+                        image_data.data_mut().extend_from_slice(&self.buffer);
                         blocks.encode(image_data).expect("enc image data");
-                    }
 
-                    blocks
-                        .encode(block::Trailer::default())
-                        .expect("enc trailer");
-                    self.state = RenderState::Complete;
+                        self.state = RenderState::Frame(frame);
+                    }
+                    RenderState::Frame(ref prev) => {
+                        let mut blocks = Encoder::new(&mut output).into_block_enc();
+
+                        if let Some(frame) = self.frames.next() {
+                            let mut ctrl = block::GraphicControl::default();
+                            ctrl.set_disposal_method(block::DisposalMethod::Keep);
+                            ctrl.set_transparent_color_idx(self.theme.transparent_color());
+                            if let Some(delay) = frame.delay {
+                                ctrl.set_delay_time_cs(delay);
+                            }
+                            blocks.encode(ctrl).expect("enc graphic control");
+
+                            let ((left, y), (w, h)) = render_diff(
+                                &mut self.buffer,
+                                self.theme,
+                                self.orientation,
+                                self.coordinates,
+                                Some(prev),
+                                &frame,
+                                self.font,
+                            );
+
+                            let top = y + if self.bars.is_some() {
+                                self.theme.bar_height()
+                            } else {
+                                0
+                            };
+
+                            blocks
+                                .encode(
+                                    block::ImageDesc::default()
+                                        .with_left(left as u16)
+                                        .with_top(top as u16)
+                                        .with_height(h as u16)
+                                        .with_width(w as u16),
+                                )
+                                .expect("enc image desc");
+
+                            let mut image_data = block::ImageData::new(w * h);
+                            image_data
+                                .data_mut()
+                                .extend_from_slice(&self.buffer[..(w * h)]);
+                            blocks.encode(image_data).expect("enc image data");
+
+                            self.state = RenderState::Frame(frame);
+                        } else {
+                            // Add a black frame at the end, to work around twitter
+                            // cutting off the last frame.
+                            if self.kork {
+                                let mut ctrl = block::GraphicControl::default();
+                                ctrl.set_disposal_method(block::DisposalMethod::Keep);
+                                ctrl.set_transparent_color_idx(self.theme.transparent_color());
+                                ctrl.set_delay_time_cs(1);
+                                blocks.encode(ctrl).expect("enc graphic control");
+
+                                let height = self.theme.height(self.bars.is_some());
+                                let width = self.theme.width();
+                                blocks
+                                    .encode(
+                                        block::ImageDesc::default()
+                                            .with_left(0)
+                                            .with_top(0)
+                                            .with_height(height as u16)
+                                            .with_width(width as u16),
+                                    )
+                                    .expect("enc image desc");
+
+                                let mut image_data = block::ImageData::new(height * width);
+                                image_data
+                                    .data_mut()
+                                    .resize(height * width, self.theme.bar_color());
+                                blocks.encode(image_data).expect("enc image data");
+                            }
+
+                            blocks
+                                .encode(block::Trailer::default())
+                                .expect("enc trailer");
+                            self.state = RenderState::Complete;
+                        }
+                    }
+                    RenderState::Complete => return None,
                 }
             }
-            RenderState::Complete => return None,
+            RenderFormat::SVG => {
+                match self.state {
+                    RenderState::Preamble => {
+
+                        output.write(SVG_RESULT.as_bytes()).unwrap();
+                        self.state = RenderState::Complete;
+                    }
+                    RenderState::Complete => {
+                        return None;
+                    }
+                    RenderState::Frame(_) => todo!()
+                }
+            }
         }
         Some(output.into_inner().freeze())
     }

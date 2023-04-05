@@ -31,7 +31,7 @@ async fn image(themes: &'static Themes, Query(req): Query<RequestParams>) -> imp
     Response::builder()
         .header(CONTENT_TYPE, "image/gif")
         .body(StreamBody::new(stream::iter(
-            Render::new_image(themes, req).map(Ok::<_, Infallible>),
+            Render::new_image(themes, req, render::RenderFormat::GIF).map(Ok::<_, Infallible>),
         )))
         .unwrap()
 }
@@ -49,6 +49,18 @@ async fn example(themes: &'static Themes) -> impl IntoResponse {
     game(themes, Json(RequestBody::example())).await
 }
 
+async fn example_svg(
+    themes: &'static Themes,
+    Query(req): Query<RequestParams>,
+) -> impl IntoResponse {
+    Response::builder()
+        .header(CONTENT_TYPE, "image/svg+xml")
+        .body(StreamBody::new(stream::iter(
+            Render::new_image(themes, req, render::RenderFormat::SVG).map(Ok::<_, Infallible>),
+        )))
+        .unwrap()
+}
+
 #[tokio::main]
 async fn main() {
     let opt = Opt::parse();
@@ -58,7 +70,8 @@ async fn main() {
     let app = Router::new()
         .route("/image.gif", get(move |req| image(themes, req)))
         .route("/game.gif", post(move |req| game(themes, req)))
-        .route("/example.gif", get(move || example(themes)));
+        .route("/example.gif", get(move || example(themes)))
+        .route("/example.svg", get(move |req| example_svg(themes, req)));
 
     axum::Server::bind(&opt.bind)
         .serve(app.into_make_service())
