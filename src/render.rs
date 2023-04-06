@@ -1,6 +1,6 @@
 use std::{io::Write, iter::FusedIterator, vec};
 
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{buf::Writer, BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::{Font, LayoutIter, Scale};
@@ -40,7 +40,7 @@ impl PlayerBars {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct RenderFrame {
     board: Board,
     highlighted: Bitboard,
@@ -139,12 +139,8 @@ impl Render {
     }
 }
 
-const SVG_RESULT: &'static str = "
-<svg viewBox=\"0 0 2048 2048\"
-    xmlns=\"http://www.w3.org/2000/svg\">
-  <rect x=\"10\" y=\"10\" width=\"80\" height=\"80\" style=\"fill:blue;stroke:pink;stroke-width:5;opacity:0.5\" />
-</svg>
-";
+const SVG_PREAMBLE: &'static str =
+    "<svg viewBox=\"0 0 640 640\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"lightgray\"/>";
 
 impl Iterator for Render {
     type Item = Bytes;
@@ -337,19 +333,23 @@ impl Iterator for Render {
                     RenderState::Complete => return None,
                 }
             }
-            RenderFormat::SVG => {
-                match self.state {
-                    RenderState::Preamble => {
-
-                        output.write(SVG_RESULT.as_bytes()).unwrap();
-                        self.state = RenderState::Complete;
-                    }
-                    RenderState::Complete => {
-                        return None;
-                    }
-                    RenderState::Frame(_) => todo!()
+            RenderFormat::SVG => match self.state {
+                RenderState::Preamble => {
+                    output.write(SVG_PREAMBLE.as_bytes()).unwrap();
+                    let frame = self.frames.next().unwrap_or_default();
+                    self.state = RenderState::Frame(frame);
                 }
-            }
+                RenderState::Frame(ref prev) => {
+                    println!("{:?}", prev);
+                    render_chessboard(&mut output);
+
+                    output.write("</svg>".as_bytes()).unwrap();
+                    self.state = RenderState::Complete;
+                }
+                RenderState::Complete => {
+                    return None;
+                }
+            },
         }
         Some(output.into_inner().freeze())
     }
@@ -581,5 +581,39 @@ fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Them
             true => theme.square_dark_color(),
             false => theme.square_light_color(),
         },
+    }
+}
+
+const SQUARE_SIZE: u32 = 80;
+
+fn render_chessboard(output: &mut Writer<BytesMut>) {
+    println!("render_chessboard");
+    for sq in Square::ALL {
+        let square_color = match sq.is_dark() {
+            true => "black",
+            false => "white",
+        };
+
+        let x = ((sq.file().char() as u32) - ('a' as u32)) * SQUARE_SIZE;
+        let y = (sq.rank().char() as u32 - (b'1' as u32)) * SQUARE_SIZE;
+
+        println!("coords x: {x} y: {y}");
+
+        output
+            .write(
+                format!(
+                    "<rect x=\"{x}\" y=\"{y}\" width=\"80\" height=\"80\" fill=\"{square_color}\" />",
+                )
+                .as_bytes(),
+            )
+            .unwrap();
+
+        println!(
+            "{}:{} = {}:{}",
+            sq.file(),
+            sq.rank(),
+            sq.file(),
+            sq.rank().char(),
+        );
     }
 }
