@@ -594,26 +594,22 @@ fn render_chessboard(output: &mut Writer<BytesMut>) {
             false => "white",
         };
 
-        let x = ((sq.file().char() as u32) - ('a' as u32)) * SQUARE_SIZE;
-        let y = (sq.rank().char() as u32 - (b'1' as u32)) * SQUARE_SIZE;
-
-        println!("coords x: {x} y: {y}");
+        let x = ((sq.file().char() as u32) - (b'a' as u32)) * SQUARE_SIZE;
+        let y = 640 - (((sq.rank().char() as u32) - (b'1' as u32) + 1) * SQUARE_SIZE);
+        println!("coords x: {x} y: {y} {sq} {square_color}");
+        
+        let text_x = x;
+        let text_y = y+80;
 
         output
             .write(
                 format!(
-                    "<rect x=\"{x}\" y=\"{y}\" width=\"80\" height=\"80\" fill=\"{square_color}\" />",
+                    "<rect x=\"{x}\" y=\"{y}\" width=\"{SQUARE_SIZE}\" height=\"{SQUARE_SIZE}\" fill=\"{square_color}\" />
+                    <text x=\"{text_x}\" y=\"{text_y}\" fill=\"red\">{sq}</text>
+                    ",
                 )
                 .as_bytes(),
             )
             .unwrap();
-
-        println!(
-            "{}:{} = {}:{}",
-            sq.file(),
-            sq.rank(),
-            sq.file(),
-            sq.rank().char(),
-        );
     }
 }
