@@ -46,6 +46,8 @@ impl<T> ByPieceRole<T> {
     }
 }
 
+const SQUARE_SIZE: usize = 90;
+
 impl SvgTheme {
     pub fn new() -> SvgTheme {
         SvgTheme {
@@ -70,6 +72,12 @@ impl SvgTheme {
                 })
             }),
         }
+    }
+    pub fn square_size(&self) -> usize {
+        SQUARE_SIZE
+    }
+    pub fn chessboard_size(&self) -> usize {
+        self.square_size() * 8
     }
     pub fn get_piece(&self, piece: Piece) -> &Vec<u8> {
         self.map
