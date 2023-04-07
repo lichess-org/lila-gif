@@ -8,6 +8,7 @@ use shakmaty::{uci::Uci, Bitboard, Board, File, Rank, Square};
 
 use crate::{
     api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
+    assets::PieceSet,
     svg_theme::SvgTheme,
     theme::{SpriteKey, Theme, Themes},
 };
@@ -64,6 +65,7 @@ impl RenderFrame {
 }
 
 pub struct Render {
+    piece_set: PieceSet,
     render_format: RenderFormat,
     theme: &'static Theme,
     font: &'static Font<'static>,
@@ -90,6 +92,7 @@ impl Render {
             RenderFormat::SVG => vec![],
         };
         Render {
+            piece_set: params.piece,
             render_format,
             theme,
             font: themes.font(),
@@ -115,6 +118,7 @@ impl Render {
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
         Render {
+            piece_set: params.piece,
             render_format: RenderFormat::GIF,
             theme,
             font: themes.font(),
@@ -332,7 +336,7 @@ impl Iterator for Render {
                 }
             }
             RenderFormat::SVG => {
-                let theme = SvgTheme::new();
+                let theme = SvgTheme::new(self.piece_set);
                 let chessboard_size = theme.chessboard_size();
                 let svg_preamble = format!("<svg viewBox=\"0 0 {chessboard_size} {chessboard_size}\" xmlns=\"http://www.w3.org/2000/svg\">");
                 match self.state {
