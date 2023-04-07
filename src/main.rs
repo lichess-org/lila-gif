@@ -14,6 +14,7 @@ use futures::stream;
 mod api;
 mod assets;
 mod render;
+mod svg_theme;
 mod theme;
 
 use api::{RequestBody, RequestParams};
