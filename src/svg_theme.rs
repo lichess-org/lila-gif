@@ -75,40 +75,88 @@ impl SvgTheme {
                 PieceSet::Anarcandy => ByPieceColor::new(|color| {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/anarcandy/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/anarcandy/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/anarcandy/bB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/anarcandy/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/anarcandy/bQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/anarcandy/bK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/anarcandy/bP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/anarcandy/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/anarcandy/bB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/anarcandy/bR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/anarcandy/bQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/anarcandy/bK.svg").to_vec()
+                            }
                         },
                         Color::White => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/anarcandy/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/anarcandy/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/anarcandy/wB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/anarcandy/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/anarcandy/wQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/anarcandy/wK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/anarcandy/wP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/anarcandy/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/anarcandy/wB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/anarcandy/wR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/anarcandy/wQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/anarcandy/wK.svg").to_vec()
+                            }
                         },
                     })
                 }),
                 PieceSet::California => ByPieceColor::new(|color| {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/california/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/california/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/california/bB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/california/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/california/bQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/california/bK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/california/bP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/california/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/california/bB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/california/bR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/california/bQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/california/bK.svg").to_vec()
+                            }
                         },
                         Color::White => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/california/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/california/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/california/wB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/california/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/california/wQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/california/wK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/california/wP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/california/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/california/wB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/california/wR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/california/wQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/california/wK.svg").to_vec()
+                            }
                         },
                     })
                 }),
@@ -116,18 +164,30 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/cardinal/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/cardinal/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/cardinal/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/cardinal/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/cardinal/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/cardinal/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/cardinal/bQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/cardinal/bQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/cardinal/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/cardinal/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/cardinal/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/cardinal/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/cardinal/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/cardinal/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/cardinal/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/cardinal/wQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/cardinal/wQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/cardinal/wK.svg").to_vec(),
                         },
                     })
@@ -136,18 +196,30 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/cburnett/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/cburnett/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/cburnett/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/cburnett/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/cburnett/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/cburnett/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/cburnett/bQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/cburnett/bQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/cburnett/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/cburnett/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/cburnett/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/cburnett/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/cburnett/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/cburnett/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/cburnett/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/cburnett/wQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/cburnett/wQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/cburnett/wK.svg").to_vec(),
                         },
                     })
@@ -176,18 +248,30 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/chessnut/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/chessnut/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/chessnut/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/chessnut/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/chessnut/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/chessnut/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/chessnut/bQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/chessnut/bQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/chessnut/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/chessnut/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/chessnut/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/chessnut/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/chessnut/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/chessnut/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/chessnut/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/chessnut/wQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/chessnut/wQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/chessnut/wK.svg").to_vec(),
                         },
                     })
@@ -195,40 +279,88 @@ impl SvgTheme {
                 PieceSet::Companion => ByPieceColor::new(|color| {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/companion/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/companion/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/companion/bB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/companion/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/companion/bQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/companion/bK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/companion/bP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/companion/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/companion/bB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/companion/bR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/companion/bQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/companion/bK.svg").to_vec()
+                            }
                         },
                         Color::White => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/companion/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/companion/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/companion/wB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/companion/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/companion/wQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/companion/wK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/companion/wP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/companion/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/companion/wB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/companion/wR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/companion/wQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/companion/wK.svg").to_vec()
+                            }
                         },
                     })
                 }),
                 PieceSet::Disguised => ByPieceColor::new(|color| {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/disguised/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/disguised/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/disguised/bB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/disguised/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/disguised/bQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/disguised/bK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/disguised/bP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/disguised/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/disguised/bB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/disguised/bR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/disguised/bQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/disguised/bK.svg").to_vec()
+                            }
                         },
                         Color::White => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/disguised/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/disguised/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/disguised/wB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/disguised/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/disguised/wQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/disguised/wK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/disguised/wP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/disguised/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/disguised/wB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/disguised/wR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/disguised/wQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/disguised/wK.svg").to_vec()
+                            }
                         },
                     })
                 }),
@@ -236,18 +368,30 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/dubrovny/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/dubrovny/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/dubrovny/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/dubrovny/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/dubrovny/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/dubrovny/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/dubrovny/bQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/dubrovny/bQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/dubrovny/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/dubrovny/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/dubrovny/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/dubrovny/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/dubrovny/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/dubrovny/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/dubrovny/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/dubrovny/wQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/dubrovny/wQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/dubrovny/wK.svg").to_vec(),
                         },
                     })
@@ -256,16 +400,24 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/fantasy/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/fantasy/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/fantasy/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/fantasy/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/fantasy/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/fantasy/bR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/fantasy/bQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/fantasy/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/fantasy/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/fantasy/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/fantasy/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/fantasy/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/fantasy/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/fantasy/wR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/fantasy/wQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/fantasy/wK.svg").to_vec(),
@@ -316,18 +468,30 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/governor/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/governor/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/governor/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/governor/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/governor/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/governor/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/governor/bQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/governor/bQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/governor/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/governor/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/governor/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/governor/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/governor/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/governor/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/governor/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/governor/wQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/governor/wQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/governor/wK.svg").to_vec(),
                         },
                     })
@@ -356,18 +520,30 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/icpieces/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/icpieces/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/icpieces/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/icpieces/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/icpieces/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/icpieces/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/icpieces/bQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/icpieces/bQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/icpieces/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/icpieces/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/icpieces/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/icpieces/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/icpieces/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/icpieces/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/icpieces/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/icpieces/wQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/icpieces/wQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/icpieces/wK.svg").to_vec(),
                         },
                     })
@@ -396,16 +572,24 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/leipzig/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/leipzig/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/leipzig/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/leipzig/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/leipzig/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/leipzig/bR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/leipzig/bQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/leipzig/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/leipzig/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/leipzig/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/leipzig/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/leipzig/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/leipzig/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/leipzig/wR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/leipzig/wQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/leipzig/wK.svg").to_vec(),
@@ -456,16 +640,24 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/maestro/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/maestro/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/maestro/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/maestro/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/maestro/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/maestro/bR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/maestro/bQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/maestro/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/maestro/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/maestro/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/maestro/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/maestro/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/maestro/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/maestro/wR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/maestro/wQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/maestro/wK.svg").to_vec(),
@@ -495,20 +687,44 @@ impl SvgTheme {
                 PieceSet::Pirouetti => ByPieceColor::new(|color| {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/pirouetti/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/pirouetti/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/pirouetti/bB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/pirouetti/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/pirouetti/bQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/pirouetti/bK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/pirouetti/bP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/pirouetti/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/pirouetti/bB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/pirouetti/bR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/pirouetti/bQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/pirouetti/bK.svg").to_vec()
+                            }
                         },
                         Color::White => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/pirouetti/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/pirouetti/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/pirouetti/wB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/pirouetti/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/pirouetti/wQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/pirouetti/wK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/pirouetti/wP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/pirouetti/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/pirouetti/wB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/pirouetti/wR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/pirouetti/wQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/pirouetti/wK.svg").to_vec()
+                            }
                         },
                     })
                 }),
@@ -535,20 +751,44 @@ impl SvgTheme {
                 PieceSet::ReillyCraig => ByPieceColor::new(|color| {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/reillycraig/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/reillycraig/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/reillycraig/bB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/reillycraig/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/reillycraig/bQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/reillycraig/bK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/reillycraig/bP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/reillycraig/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/reillycraig/bB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/reillycraig/bR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/reillycraig/bQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/reillycraig/bK.svg").to_vec()
+                            }
                         },
                         Color::White => match role {
-                            Role::Pawn => include_bytes!("../theme/piece/reillycraig/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/reillycraig/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/reillycraig/wB.svg").to_vec(),
-                            Role::Rook => include_bytes!("../theme/piece/reillycraig/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/reillycraig/wQ.svg").to_vec(),
-                            Role::King => include_bytes!("../theme/piece/reillycraig/wK.svg").to_vec(),
+                            Role::Pawn => {
+                                include_bytes!("../theme/piece/reillycraig/wP.svg").to_vec()
+                            }
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/reillycraig/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/reillycraig/wB.svg").to_vec()
+                            }
+                            Role::Rook => {
+                                include_bytes!("../theme/piece/reillycraig/wR.svg").to_vec()
+                            }
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/reillycraig/wQ.svg").to_vec()
+                            }
+                            Role::King => {
+                                include_bytes!("../theme/piece/reillycraig/wK.svg").to_vec()
+                            }
                         },
                     })
                 }),
@@ -556,18 +796,30 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/riohacha/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/riohacha/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/riohacha/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/riohacha/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/riohacha/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/riohacha/bR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/riohacha/bQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/riohacha/bQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/riohacha/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/riohacha/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/riohacha/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/riohacha/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/riohacha/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/riohacha/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/riohacha/wR.svg").to_vec(),
-                            Role::Queen => include_bytes!("../theme/piece/riohacha/wQ.svg").to_vec(),
+                            Role::Queen => {
+                                include_bytes!("../theme/piece/riohacha/wQ.svg").to_vec()
+                            }
                             Role::King => include_bytes!("../theme/piece/riohacha/wK.svg").to_vec(),
                         },
                     })
@@ -596,16 +848,24 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/spatial/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/spatial/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/spatial/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/spatial/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/spatial/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/spatial/bR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/spatial/bQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/spatial/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/spatial/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/spatial/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/spatial/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/spatial/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/spatial/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/spatial/wR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/spatial/wQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/spatial/wK.svg").to_vec(),
@@ -616,16 +876,24 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/staunty/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/staunty/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/staunty/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/staunty/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/staunty/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/staunty/bR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/staunty/bQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/staunty/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/staunty/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/staunty/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/staunty/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/staunty/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/staunty/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/staunty/wR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/staunty/wQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/staunty/wK.svg").to_vec(),
@@ -636,16 +904,24 @@ impl SvgTheme {
                     ByPieceRole::new(|role| match color {
                         Color::Black => match role {
                             Role::Pawn => include_bytes!("../theme/piece/tatiana/bP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/tatiana/bK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/tatiana/bB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/tatiana/bK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/tatiana/bB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/tatiana/bR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/tatiana/bQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/tatiana/bK.svg").to_vec(),
                         },
                         Color::White => match role {
                             Role::Pawn => include_bytes!("../theme/piece/tatiana/wP.svg").to_vec(),
-                            Role::Knight => include_bytes!("../theme/piece/tatiana/wK.svg").to_vec(),
-                            Role::Bishop => include_bytes!("../theme/piece/tatiana/wB.svg").to_vec(),
+                            Role::Knight => {
+                                include_bytes!("../theme/piece/tatiana/wK.svg").to_vec()
+                            }
+                            Role::Bishop => {
+                                include_bytes!("../theme/piece/tatiana/wB.svg").to_vec()
+                            }
                             Role::Rook => include_bytes!("../theme/piece/tatiana/wR.svg").to_vec(),
                             Role::Queen => include_bytes!("../theme/piece/tatiana/wQ.svg").to_vec(),
                             Role::King => include_bytes!("../theme/piece/tatiana/wK.svg").to_vec(),
