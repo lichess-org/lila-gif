@@ -1,4 +1,4 @@
-use shakmaty::{uci::Uci, Bitboard, Board};
+use shakmaty::{uci::Uci, Bitboard, Board, Piece, Role};
 
 pub enum RenderState {
     Preamble,
@@ -33,5 +33,29 @@ pub fn highlight_uci(uci: Option<Uci>) -> Bitboard {
         Some(Uci::Normal { from, to, .. }) => Bitboard::from(from) | Bitboard::from(to),
         Some(Uci::Put { to, .. }) => Bitboard::from(to),
         _ => Bitboard::EMPTY,
+    }
+}
+
+
+pub struct SpriteKey {
+    pub piece: Option<Piece>,
+    pub dark_square: bool,
+    pub highlight: bool,
+    pub check: bool,
+}
+
+impl SpriteKey {
+   pub fn x(&self) -> usize {
+        4 * usize::from(self.piece.map_or(false, |p| p.color.is_white()))
+            + 2 * usize::from(self.highlight)
+            + usize::from(self.dark_square)
+    }
+
+    pub fn y(&self) -> usize {
+        match self.piece {
+            Some(piece) if self.check && piece.role == Role::King => 7,
+            Some(piece) => piece.role as usize,
+            None => 0,
+        }
     }
 }

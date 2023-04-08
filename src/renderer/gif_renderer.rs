@@ -6,10 +6,10 @@ use ndarray::{s, ArrayViewMut2};
 use rusttype::{Font, LayoutIter, Scale};
 use shakmaty::{Bitboard, File, Rank, Square};
 
-use super::renderer::{highlight_uci, RenderFrame, RenderState};
+use super::renderer::{highlight_uci, RenderFrame, RenderState, SpriteKey};
 use crate::{
     api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{SpriteKey, Theme, Themes},
+    theme::{Theme, Themes},
 };
 
 pub struct GIFRenderer {
