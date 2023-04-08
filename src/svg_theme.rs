@@ -1,6 +1,6 @@
 use shakmaty::{Color, Piece, Role};
 
-use crate::assets::{PieceSet};
+use crate::assets::PieceSet;
 
 pub struct SvgTheme {
     map: ByPieceColor<ByPieceRole<Vec<u8>>>,

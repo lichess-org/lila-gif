@@ -2,7 +2,10 @@ use gift::block::{ColorTableConfig, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
 
-use crate::{assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet}, renderer::renderer::SpriteKey};
+use crate::{
+    assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet},
+    renderer::renderer::SpriteKey,
+};
 
 const SQUARE: usize = 90;
 const COLOR_WIDTH: usize = 90 * 2 / 3;

@@ -45,6 +45,8 @@ impl Iterator for SVGRenderer {
         match self.state {
             RenderState::Preamble => {
                 output.write(svg_preamble.as_bytes()).unwrap();
+                render_defs(&mut output);
+
                 let frame = self.frames.next().unwrap_or_default();
                 render_chessboard(&mut output, &frame, &self.theme, &self.orientation);
                 render_pieces(&mut output, &frame, &self.theme, &self.orientation);
@@ -63,13 +65,20 @@ impl Iterator for SVGRenderer {
     }
 }
 
+fn render_defs(output: &mut Writer<BytesMut>) {
+    output.write("
+    <defs>
+    <radialGradient id=\"check_gradient\" r=\"0.5\"><stop offset=\"0%\" stop-color=\"#ff0000\" stop-opacity=\"1.0\" /><stop offset=\"50%\" stop-color=\"#e70000\" stop-opacity=\"1.0\" /><stop offset=\"100%\" stop-color=\"#9e0000\" stop-opacity=\"0.0\" /></radialGradient>
+    </defs>".as_bytes()).unwrap();
+}
+
 fn render_chessboard(
     output: &mut Writer<BytesMut>,
     frame: &RenderFrame,
     theme: &SvgTheme,
     orientation: &Orientation,
 ) {
-    println!("render_chessboard {:?}", orientation);
+    println!("render_chessboard {:?} frame: {:?}", orientation, frame);
     for sq in Bitboard::FULL {
         let key = SpriteKey {
             piece: frame.board.piece_at(sq),
@@ -81,7 +90,7 @@ fn render_chessboard(
         let square_color = match key.highlight {
             true => match key.dark_square {
                 true => "#b9ae4a",
-                false => "#d6d77d"
+                false => "#d6d77d",
             },
             false => match key.dark_square {
                 true => "#b58863",
@@ -108,6 +117,19 @@ fn render_chessboard(
               .as_bytes(),
           )
           .unwrap();
+        if key.check {
+            output
+                .write(
+                    format!(
+                        "<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"url(#check_gradient)\" />",
+                        x + (square_size/2),
+                        (y +  square_size) / 2,
+                        square_size/2
+                    )
+                    .as_bytes(),
+                )
+                .unwrap();
+        }
     }
 }
 

@@ -36,7 +36,6 @@ pub fn highlight_uci(uci: Option<Uci>) -> Bitboard {
     }
 }
 
-
 pub struct SpriteKey {
     pub piece: Option<Piece>,
     pub dark_square: bool,
@@ -45,7 +44,7 @@ pub struct SpriteKey {
 }
 
 impl SpriteKey {
-   pub fn x(&self) -> usize {
+    pub fn x(&self) -> usize {
         4 * usize::from(self.piece.map_or(false, |p| p.color.is_white()))
             + 2 * usize::from(self.highlight)
             + usize::from(self.dark_square)
