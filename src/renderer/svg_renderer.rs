@@ -4,11 +4,15 @@ use bytes::{buf::Writer, BufMut, Bytes, BytesMut};
 use shakmaty::Bitboard;
 
 use super::renderer::{highlight_uci, RenderFrame, RenderState};
-use crate::{api::RequestParams, svg_theme::SvgTheme};
+use crate::{
+    api::{Orientation, RequestParams},
+    svg_theme::SvgTheme,
+};
 
 pub struct SVGRenderer {
     theme: SvgTheme,
     state: RenderState,
+    orientation: Orientation,
     frames: vec::IntoIter<RenderFrame>,
 }
 
@@ -17,6 +21,7 @@ impl SVGRenderer {
         SVGRenderer {
             theme: SvgTheme::new(params.piece),
             state: RenderState::Preamble,
+            orientation: params.orientation,
             frames: vec![RenderFrame {
                 highlighted: highlight_uci(params.last_move),
                 checked: params.check.to_square(&params.fen.0).into_iter().collect(),
@@ -43,8 +48,8 @@ impl Iterator for SVGRenderer {
                 self.state = RenderState::Frame(frame);
             }
             RenderState::Frame(ref frame) => {
-                render_chessboard(&mut output, &self.theme);
-                render_pieces(&mut output, frame, &self.theme);
+                render_chessboard(&mut output, &self.theme, &self.orientation);
+                render_pieces(&mut output, frame, &self.theme,&self.orientation);
 
                 output.write("</svg>".as_bytes()).unwrap();
                 self.state = RenderState::Complete;
@@ -57,8 +62,8 @@ impl Iterator for SVGRenderer {
     }
 }
 
-fn render_chessboard(output: &mut Writer<BytesMut>, theme: &SvgTheme) {
-    println!("render_chessboard");
+fn render_chessboard(output: &mut Writer<BytesMut>, theme: &SvgTheme, orientation: &Orientation) {
+    println!("render_chessboard {:?}", orientation);
     for sq in Bitboard::FULL {
         let square_color = match sq.is_dark() {
             true => "#b58863",
@@ -67,9 +72,8 @@ fn render_chessboard(output: &mut Writer<BytesMut>, theme: &SvgTheme) {
 
         let square_size = theme.square_size();
 
-        let x = ((sq.file().char() as usize) - (b'a' as usize)) * square_size;
-        let y = theme.chessboard_size()
-            - (((sq.rank().char() as usize) - (b'1' as usize) + 1) * square_size);
+        let x = orientation.x(sq) * square_size;
+        let y = orientation.y(sq) * square_size;
         println!("coords x: {x} y: {y} {sq} {square_color}");
 
         let text_x = x;
@@ -88,15 +92,14 @@ fn render_chessboard(output: &mut Writer<BytesMut>, theme: &SvgTheme) {
     }
 }
 
-fn render_pieces(output: &mut Writer<BytesMut>, frame: &RenderFrame, theme: &SvgTheme) {
+fn render_pieces(output: &mut Writer<BytesMut>, frame: &RenderFrame, theme: &SvgTheme, orientation: &Orientation) {
     for (sq, piece) in frame.board.clone() {
         let square_size = theme.square_size();
         println!("render pieces {sq} {:?}", piece);
         let sprite = theme.get_piece(piece);
 
-        let x = ((sq.file().char() as usize) - (b'a' as usize)) * square_size;
-        let y = theme.chessboard_size()
-            - (((sq.rank().char() as usize) - (b'1' as usize) + 1) * square_size);
+        let x = orientation.x(sq) * square_size;
+        let y = orientation.y(sq) * square_size;
         output
             .write(
                 format!(
