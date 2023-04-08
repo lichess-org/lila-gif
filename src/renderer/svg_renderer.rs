@@ -3,7 +3,7 @@ use std::{io::Write, vec};
 use bytes::{buf::Writer, BufMut, Bytes, BytesMut};
 use shakmaty::{Bitboard, Color, Piece, Role};
 
-use super::renderer::{highlight_uci, RenderFrame, RenderState};
+use super::renderer::{highlight_uci, LocalPiece, RenderFrame, RenderState};
 use crate::{
     api::{Orientation, RequestParams},
     renderer::renderer::SpriteKey,
@@ -71,18 +71,16 @@ fn render_defs(output: &mut Writer<BytesMut>, theme: &SvgTheme) {
     <radialGradient id=\"check_gradient\" r=\"0.5\"><stop offset=\"0%\" stop-color=\"#ff0000\" stop-opacity=\"1.0\" /><stop offset=\"50%\" stop-color=\"#e70000\" stop-opacity=\"1.0\" /><stop offset=\"100%\" stop-color=\"#9e0000\" stop-opacity=\"0.0\" /></radialGradient>".as_bytes()).unwrap();
     for piece_color in Color::ALL {
         for piece_role in Role::ALL {
-            let piece = Piece {
+            let piece = LocalPiece::new(Piece {
                 color: piece_color,
                 role: piece_role,
-            };
-            let piece_sprite = theme.get_piece(piece);
+            });
+            let piece_sprite = theme.get_piece(*piece);
             let square_size = theme.square_size();
             output
                 .write(
                     format!(
-                        "<svg id=\"{}{}\" width=\"{square_size}\" height=\"{square_size}\">",
-                        piece.color.char(),
-                        piece.char()
+                        "<svg id=\"{piece}\" width=\"{square_size}\" height=\"{square_size}\">",
                     )
                     .as_bytes(),
                 )
@@ -162,15 +160,14 @@ fn render_pieces(
     orientation: &Orientation,
 ) {
     for (sq, piece) in frame.board.clone() {
+        let piece = LocalPiece::new(piece);
         let square_size = theme.square_size();
         println!("render pieces {sq} {:?}", piece);
 
         let x = orientation.x(sq) * square_size;
         let y = orientation.y(sq) * square_size;
         let sprite = format!(
-            "<use href=\"#{}{}\" x=\"{x}\" y=\"{y}\" />",
-            piece.color.char(),
-            piece.char()
+            "<use href=\"#{piece}\" x=\"{x}\" y=\"{y}\" />",
         );
         output.write(sprite.as_bytes()).unwrap();
     }

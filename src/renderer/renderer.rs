@@ -1,3 +1,5 @@
+use std::{fmt, ops::Deref};
+
 use shakmaty::{uci::Uci, Bitboard, Board, Piece, Role};
 
 pub enum RenderState {
@@ -56,5 +58,27 @@ impl SpriteKey {
             Some(piece) => piece.role as usize,
             None => 0,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct LocalPiece(Piece);
+
+impl LocalPiece {
+    pub fn new(piece: Piece) -> LocalPiece {
+        LocalPiece(piece)
+    }
+}
+
+impl Deref for LocalPiece {
+    type Target = Piece;
+    fn deref(&self) -> &Piece {
+        &self.0
+    }
+}
+
+impl fmt::Display for LocalPiece {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "piece-{}{}", self.color.char(), self.char())
     }
 }
