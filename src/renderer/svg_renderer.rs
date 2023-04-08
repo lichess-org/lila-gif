@@ -143,7 +143,7 @@ fn render_chessboard(
                     format!(
                         "<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"url(#check_gradient)\" />",
                         x + (square_size / 2),
-                        (y + square_size) / 2,
+                        y + (square_size / 2),
                         square_size / 2
                     )
                     .as_bytes(),
@@ -166,9 +166,7 @@ fn render_pieces(
 
         let x = orientation.x(sq) * square_size;
         let y = orientation.y(sq) * square_size;
-        let sprite = format!(
-            "<use href=\"#{piece}\" x=\"{x}\" y=\"{y}\" />",
-        );
+        let sprite = format!("<use href=\"#{piece}\" x=\"{x}\" y=\"{y}\" />",);
         output.write(sprite.as_bytes()).unwrap();
     }
 }
