@@ -92,6 +92,28 @@ fn render_defs(output: &mut Writer<BytesMut>, theme: &SvgTheme) {
     output.write("</defs>".as_bytes()).unwrap();
 }
 
+const BOARD: &'static str = "
+<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:x=\"http://www.w3.org/1999/xlink\"
+     viewBox=\"0 0 8 8\" shape-rendering=\"crispEdges\">
+<g id=\"a\">
+  <g id=\"b\">
+    <g id=\"c\">
+      <g id=\"d\">
+        <rect width=\"1\" height=\"1\" fill=\"#f0d9b5\" id=\"e\"/>
+        <use x=\"1\" y=\"1\" href=\"#e\" x:href=\"#e\"/>
+        <rect y=\"1\" width=\"1\" height=\"1\" fill=\"#b58863\" id=\"f\"/>
+        <use x=\"1\" y=\"-1\" href=\"#f\" x:href=\"#f\"/>
+      </g>
+      <use x=\"2\" href=\"#d\" x:href=\"#d\"/>
+    </g>
+    <use x=\"4\" href=\"#c\" x:href=\"#c\"/>
+  </g>
+  <use y=\"2\" href=\"#b\" x:href=\"#b\"/>
+</g>
+<use y=\"4\" href=\"#a\" x:href=\"#a\"/>
+</svg>
+"; 
+
 fn render_chessboard(
     output: &mut Writer<BytesMut>,
     frame: &RenderFrame,
@@ -99,6 +121,7 @@ fn render_chessboard(
     orientation: &Orientation,
 ) {
     println!("render_chessboard {:?} frame: {:?}", orientation, frame);
+    output.write(BOARD.as_bytes()).unwrap();
     for sq in Bitboard::FULL {
         let key = SpriteKey {
             piece: frame.board.piece_at(sq),
@@ -130,7 +153,7 @@ fn render_chessboard(
         output
           .write(
               format!(
-                  "<rect x=\"{x}\" y=\"{y}\" width=\"{square_size}\" height=\"{square_size}\" fill=\"{square_color}\" />
+                  "
                   <text x=\"{text_x}\" y=\"{text_y}\" fill=\"red\">{sq}</text>
                   ",
               )
