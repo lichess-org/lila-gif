@@ -6,6 +6,7 @@ use shakmaty::Bitboard;
 use super::renderer::{highlight_uci, RenderFrame, RenderState};
 use crate::{
     api::{Orientation, RequestParams},
+    renderer::renderer::SpriteKey,
     svg_theme::SvgTheme,
 };
 
@@ -45,13 +46,13 @@ impl Iterator for SVGRenderer {
             RenderState::Preamble => {
                 output.write(svg_preamble.as_bytes()).unwrap();
                 let frame = self.frames.next().unwrap_or_default();
-                self.state = RenderState::Frame(frame);
-            }
-            RenderState::Frame(ref frame) => {
-                render_chessboard(&mut output, &self.theme, &self.orientation);
-                render_pieces(&mut output, frame, &self.theme,&self.orientation);
+                render_chessboard(&mut output, &frame, &self.theme, &self.orientation);
+                render_pieces(&mut output, &frame, &self.theme, &self.orientation);
 
                 output.write("</svg>".as_bytes()).unwrap();
+                self.state = RenderState::Complete;
+            }
+            RenderState::Frame(_) => {
                 self.state = RenderState::Complete;
             }
             RenderState::Complete => {
@@ -62,12 +63,30 @@ impl Iterator for SVGRenderer {
     }
 }
 
-fn render_chessboard(output: &mut Writer<BytesMut>, theme: &SvgTheme, orientation: &Orientation) {
+fn render_chessboard(
+    output: &mut Writer<BytesMut>,
+    frame: &RenderFrame,
+    theme: &SvgTheme,
+    orientation: &Orientation,
+) {
     println!("render_chessboard {:?}", orientation);
     for sq in Bitboard::FULL {
-        let square_color = match sq.is_dark() {
-            true => "#b58863",
-            false => "#f0d9b5",
+        let key = SpriteKey {
+            piece: frame.board.piece_at(sq),
+            dark_square: sq.is_dark(),
+            highlight: frame.highlighted.contains(sq),
+            check: frame.checked.contains(sq),
+        };
+
+        let square_color = match key.highlight {
+            true => match key.dark_square {
+                true => "#b9ae4a",
+                false => "#d6d77d"
+            },
+            false => match key.dark_square {
+                true => "#b58863",
+                false => "#f0d9b5",
+            },
         };
 
         let square_size = theme.square_size();
@@ -92,7 +111,12 @@ fn render_chessboard(output: &mut Writer<BytesMut>, theme: &SvgTheme, orientatio
     }
 }
 
-fn render_pieces(output: &mut Writer<BytesMut>, frame: &RenderFrame, theme: &SvgTheme, orientation: &Orientation) {
+fn render_pieces(
+    output: &mut Writer<BytesMut>,
+    frame: &RenderFrame,
+    theme: &SvgTheme,
+    orientation: &Orientation,
+) {
     for (sq, piece) in frame.board.clone() {
         let square_size = theme.square_size();
         println!("render pieces {sq} {:?}", piece);
