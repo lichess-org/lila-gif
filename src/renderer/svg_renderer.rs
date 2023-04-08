@@ -61,8 +61,8 @@ fn render_chessboard(output: &mut Writer<BytesMut>, theme: &SvgTheme) {
     println!("render_chessboard");
     for sq in Bitboard::FULL {
         let square_color = match sq.is_dark() {
-            true => "#f0d9b5",
-            false => "#b58863",
+            true => "#b58863",
+            false => "#f0d9b5",
         };
 
         let square_size = theme.square_size();
