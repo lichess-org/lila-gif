@@ -1,5 +1,10 @@
 use serde::Deserialize;
 
+pub struct BoardColors {
+    pub color_light: &'static str,
+    pub color_dark: &'static str,
+}
+
 #[derive(Deserialize, Debug, Default, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum BoardTheme {
@@ -29,6 +34,38 @@ pub enum BoardTheme {
     Pink,
     #[serde(alias = "purple-diag")]
     Purple,
+}
+
+// Values are taken form THEMES const located in make-sprites.py file.
+impl BoardTheme {
+    pub fn get_board_colors(&self) -> BoardColors {
+        match self {
+            BoardTheme::Blue => BoardColors {
+                color_dark: "#dee3e6",
+                color_light: "#8ca2ad",
+            },
+            BoardTheme::Brown => BoardColors {
+                color_light: "#f0d9b5",
+                color_dark: "#b58863",
+            },
+            BoardTheme::Green => BoardColors {
+                color_light: "#ffffdd",
+                color_dark: "#86a666",
+            },
+            BoardTheme::Ic => BoardColors {
+                color_light: "#ececec",
+                color_dark: "#c1c18e",
+            },
+            BoardTheme::Pink => BoardColors {
+                color_light: "#f1f1c9",
+                color_dark: "#f07272",
+            },
+            BoardTheme::Purple => BoardColors {
+                color_light: "#9f90b0",
+                color_dark: "#7d4a8d",
+            },
+        }
+    }
 }
 
 pub struct ByBoardTheme<T> {

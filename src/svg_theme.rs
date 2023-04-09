@@ -1,8 +1,9 @@
 use shakmaty::{Color, Piece, Role};
 
-use crate::assets::PieceSet;
+use crate::assets::{BoardTheme, PieceSet};
 
 pub struct SvgTheme {
+    pub board_theme: BoardTheme,
     map: ByPieceColor<ByPieceRole<Vec<u8>>>,
 }
 
@@ -49,8 +50,9 @@ impl<T> ByPieceRole<T> {
 const SQUARE_SIZE: usize = 90;
 
 impl SvgTheme {
-    pub fn new(piece_set: PieceSet) -> SvgTheme {
+    pub fn new(board_theme: BoardTheme, piece_set: PieceSet) -> SvgTheme {
         SvgTheme {
+            board_theme,
             map: match piece_set {
                 PieceSet::Alpha => ByPieceColor::new(|color| {
                     ByPieceRole::new(|role| match color {

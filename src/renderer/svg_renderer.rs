@@ -20,7 +20,7 @@ pub struct SVGRenderer {
 impl SVGRenderer {
     pub fn new_image(params: RequestParams) -> SVGRenderer {
         SVGRenderer {
-            theme: SvgTheme::new(params.piece),
+            theme: SvgTheme::new(params.theme, params.piece),
             state: RenderState::Preamble,
             orientation: params.orientation,
             frames: vec![RenderFrame {
@@ -92,28 +92,6 @@ fn render_defs(output: &mut Writer<BytesMut>, theme: &SvgTheme) {
     output.write("</defs>".as_bytes()).unwrap();
 }
 
-const BOARD: &'static str = "
-<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:x=\"http://www.w3.org/1999/xlink\"
-     viewBox=\"0 0 8 8\" shape-rendering=\"crispEdges\">
-<g id=\"a\">
-  <g id=\"b\">
-    <g id=\"c\">
-      <g id=\"d\">
-        <rect width=\"1\" height=\"1\" fill=\"#f0d9b5\" id=\"e\"/>
-        <use x=\"1\" y=\"1\" href=\"#e\" x:href=\"#e\"/>
-        <rect y=\"1\" width=\"1\" height=\"1\" fill=\"#b58863\" id=\"f\"/>
-        <use x=\"1\" y=\"-1\" href=\"#f\" x:href=\"#f\"/>
-      </g>
-      <use x=\"2\" href=\"#d\" x:href=\"#d\"/>
-    </g>
-    <use x=\"4\" href=\"#c\" x:href=\"#c\"/>
-  </g>
-  <use y=\"2\" href=\"#b\" x:href=\"#b\"/>
-</g>
-<use y=\"4\" href=\"#a\" x:href=\"#a\"/>
-</svg>
-"; 
-
 fn render_chessboard(
     output: &mut Writer<BytesMut>,
     frame: &RenderFrame,
@@ -121,7 +99,32 @@ fn render_chessboard(
     orientation: &Orientation,
 ) {
     println!("render_chessboard {:?} frame: {:?}", orientation, frame);
-    output.write(BOARD.as_bytes()).unwrap();
+    let board_colors = theme.board_theme.get_board_colors();
+    let board = format!(
+        "
+    <svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:x=\"http://www.w3.org/1999/xlink\"
+         viewBox=\"0 0 8 8\" shape-rendering=\"crispEdges\">
+    <g id=\"a\">
+      <g id=\"b\">
+        <g id=\"c\">
+          <g id=\"d\">
+            <rect width=\"1\" height=\"1\" fill=\"{}\" id=\"e\"/>
+            <use x=\"1\" y=\"1\" href=\"#e\" x:href=\"#e\"/>
+            <rect y=\"1\" width=\"1\" height=\"1\" fill=\"{}\" id=\"f\"/>
+            <use x=\"1\" y=\"-1\" href=\"#f\" x:href=\"#f\"/>
+          </g>
+          <use x=\"2\" href=\"#d\" x:href=\"#d\"/>
+        </g>
+        <use x=\"4\" href=\"#c\" x:href=\"#c\"/>
+      </g>
+      <use y=\"2\" href=\"#b\" x:href=\"#b\"/>
+    </g>
+    <use y=\"4\" href=\"#a\" x:href=\"#a\"/>
+    </svg>
+    ",
+        board_colors.color_light, board_colors.color_dark
+    );
+    output.write(board.as_bytes()).unwrap();
     for sq in Bitboard::FULL {
         let key = SpriteKey {
             piece: frame.board.piece_at(sq),
@@ -151,15 +154,15 @@ fn render_chessboard(
         let text_y = y + 80;
 
         output
-          .write(
-              format!(
-                  "
+            .write(
+                format!(
+                    "
                   <text x=\"{text_x}\" y=\"{text_y}\" fill=\"red\">{sq}</text>
                   ",
-              )
-              .as_bytes(),
-          )
-          .unwrap();
+                )
+                .as_bytes(),
+            )
+            .unwrap();
         if key.check {
             output
                 .write(
