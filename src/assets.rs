@@ -79,6 +79,7 @@ pub enum PieceSet {
     Libra,
     Maestro,
     Merida,
+    Mpchess,
     Pirouetti,
     Pixel,
     ReillyCraig,
@@ -90,7 +91,7 @@ pub enum PieceSet {
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 31],
+    inner: [T; 32],
 }
 
 impl<T> ByPieceSet<T> {
@@ -124,6 +125,7 @@ impl<T> ByPieceSet<T> {
                 Libra,
                 Maestro,
                 Merida,
+                Mpchess,
                 Pirouetti,
                 Pixel,
                 ReillyCraig,
@@ -169,6 +171,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Libra => include_bytes!("../theme/sprites/blue-libra.gif"),
             Maestro => include_bytes!("../theme/sprites/blue-maestro.gif"),
             Merida => include_bytes!("../theme/sprites/blue-merida.gif"),
+            Mpchess => include_bytes!("../theme/sprites/blue-mpchess.gif"),
             Pirouetti => include_bytes!("../theme/sprites/blue-pirouetti.gif"),
             Pixel => include_bytes!("../theme/sprites/blue-pixel.gif"),
             ReillyCraig => include_bytes!("../theme/sprites/blue-reillycraig.gif"),
@@ -202,6 +205,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Libra => include_bytes!("../theme/sprites/brown-libra.gif"),
             Maestro => include_bytes!("../theme/sprites/brown-maestro.gif"),
             Merida => include_bytes!("../theme/sprites/brown-merida.gif"),
+            Mpchess => include_bytes!("../theme/sprites/brown-mpchess.gif"),
             Pirouetti => include_bytes!("../theme/sprites/brown-pirouetti.gif"),
             Pixel => include_bytes!("../theme/sprites/brown-pixel.gif"),
             ReillyCraig => include_bytes!("../theme/sprites/brown-reillycraig.gif"),
@@ -235,6 +239,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Libra => include_bytes!("../theme/sprites/green-libra.gif"),
             Maestro => include_bytes!("../theme/sprites/green-maestro.gif"),
             Merida => include_bytes!("../theme/sprites/green-merida.gif"),
+            Mpchess => include_bytes!("../theme/sprites/green-mpchess.gif"),
             Pirouetti => include_bytes!("../theme/sprites/green-pirouetti.gif"),
             Pixel => include_bytes!("../theme/sprites/green-pixel.gif"),
             ReillyCraig => include_bytes!("../theme/sprites/green-reillycraig.gif"),
@@ -268,6 +273,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Libra => include_bytes!("../theme/sprites/ic-libra.gif"),
             Maestro => include_bytes!("../theme/sprites/ic-maestro.gif"),
             Merida => include_bytes!("../theme/sprites/ic-merida.gif"),
+            Mpchess => include_bytes!("../theme/sprites/ic-mpchess.gif"),
             Pirouetti => include_bytes!("../theme/sprites/ic-pirouetti.gif"),
             Pixel => include_bytes!("../theme/sprites/ic-pixel.gif"),
             ReillyCraig => include_bytes!("../theme/sprites/ic-reillycraig.gif"),
@@ -301,6 +307,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Libra => include_bytes!("../theme/sprites/pink-libra.gif"),
             Maestro => include_bytes!("../theme/sprites/pink-maestro.gif"),
             Merida => include_bytes!("../theme/sprites/pink-merida.gif"),
+            Mpchess => include_bytes!("../theme/sprites/pink-mpchess.gif"),
             Pirouetti => include_bytes!("../theme/sprites/pink-pirouetti.gif"),
             Pixel => include_bytes!("../theme/sprites/pink-pixel.gif"),
             ReillyCraig => include_bytes!("../theme/sprites/pink-reillycraig.gif"),
@@ -334,6 +341,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Libra => include_bytes!("../theme/sprites/purple-libra.gif"),
             Maestro => include_bytes!("../theme/sprites/purple-maestro.gif"),
             Merida => include_bytes!("../theme/sprites/purple-merida.gif"),
+            Mpchess => include_bytes!("../theme/sprites/purple-mpchess.gif"),
             Pirouetti => include_bytes!("../theme/sprites/purple-pirouetti.gif"),
             Pixel => include_bytes!("../theme/sprites/purple-pixel.gif"),
             ReillyCraig => include_bytes!("../theme/sprites/purple-reillycraig.gif"),

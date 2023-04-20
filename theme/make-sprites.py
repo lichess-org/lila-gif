@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from chess.svg import SQUARE_SIZE
 from genericpath import isdir
 from os import listdir
