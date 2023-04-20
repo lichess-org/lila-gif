@@ -16,7 +16,7 @@ axum = "0.6"
 tokio = { version = "1", features = ["full"] }
 rusttype = "0.9"
 serde = { version = "1.0", features = ["derive"] }
-shakmaty = "0.23"
+shakmaty = "0.24"
 serde_with = "2"
 ndarray = "0.15"
 bytes = "1"
