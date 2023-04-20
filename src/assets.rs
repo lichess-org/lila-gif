@@ -71,6 +71,8 @@ pub enum PieceSet {
     Governor,
     Horsey,
     IcPieces,
+    #[serde(rename = "kiwen-suwi")]
+    KiwenSuwi,
     Kosal,
     Leipzig,
     Letter,
@@ -88,7 +90,7 @@ pub enum PieceSet {
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 30],
+    inner: [T; 31],
 }
 
 impl<T> ByPieceSet<T> {
@@ -115,6 +117,7 @@ impl<T> ByPieceSet<T> {
                 Governor,
                 Horsey,
                 IcPieces,
+                KiwenSuwi,
                 Kosal,
                 Leipzig,
                 Letter,
@@ -159,6 +162,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Governor => include_bytes!("../theme/sprites/blue-governor.gif"),
             Horsey => include_bytes!("../theme/sprites/blue-horsey.gif"),
             IcPieces => include_bytes!("../theme/sprites/blue-icpieces.gif"),
+            KiwenSuwi => include_bytes!("../theme/sprites/blue-kiwen-suwi.gif"),
             Kosal => include_bytes!("../theme/sprites/blue-kosal.gif"),
             Leipzig => include_bytes!("../theme/sprites/blue-leipzig.gif"),
             Letter => include_bytes!("../theme/sprites/blue-letter.gif"),
@@ -191,6 +195,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Governor => include_bytes!("../theme/sprites/brown-governor.gif"),
             Horsey => include_bytes!("../theme/sprites/brown-horsey.gif"),
             IcPieces => include_bytes!("../theme/sprites/brown-icpieces.gif"),
+            KiwenSuwi => include_bytes!("../theme/sprites/brown-kiwen-suwi.gif"),
             Kosal => include_bytes!("../theme/sprites/brown-kosal.gif"),
             Leipzig => include_bytes!("../theme/sprites/brown-leipzig.gif"),
             Letter => include_bytes!("../theme/sprites/brown-letter.gif"),
@@ -223,6 +228,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Governor => include_bytes!("../theme/sprites/green-governor.gif"),
             Horsey => include_bytes!("../theme/sprites/green-horsey.gif"),
             IcPieces => include_bytes!("../theme/sprites/green-icpieces.gif"),
+            KiwenSuwi => include_bytes!("../theme/sprites/green-kiwen-suwi.gif"),
             Kosal => include_bytes!("../theme/sprites/green-kosal.gif"),
             Leipzig => include_bytes!("../theme/sprites/green-leipzig.gif"),
             Letter => include_bytes!("../theme/sprites/green-letter.gif"),
@@ -255,6 +261,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Governor => include_bytes!("../theme/sprites/ic-governor.gif"),
             Horsey => include_bytes!("../theme/sprites/ic-horsey.gif"),
             IcPieces => include_bytes!("../theme/sprites/ic-icpieces.gif"),
+            KiwenSuwi => include_bytes!("../theme/sprites/ic-kiwen-suwi.gif"),
             Kosal => include_bytes!("../theme/sprites/ic-kosal.gif"),
             Leipzig => include_bytes!("../theme/sprites/ic-leipzig.gif"),
             Letter => include_bytes!("../theme/sprites/ic-letter.gif"),
@@ -287,6 +294,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Governor => include_bytes!("../theme/sprites/pink-governor.gif"),
             Horsey => include_bytes!("../theme/sprites/pink-horsey.gif"),
             IcPieces => include_bytes!("../theme/sprites/pink-icpieces.gif"),
+            KiwenSuwi => include_bytes!("../theme/sprites/pink-kiwen-suwi.gif"),
             Kosal => include_bytes!("../theme/sprites/pink-kosal.gif"),
             Leipzig => include_bytes!("../theme/sprites/pink-leipzig.gif"),
             Letter => include_bytes!("../theme/sprites/pink-letter.gif"),
@@ -319,6 +327,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Governor => include_bytes!("../theme/sprites/purple-governor.gif"),
             Horsey => include_bytes!("../theme/sprites/purple-horsey.gif"),
             IcPieces => include_bytes!("../theme/sprites/purple-icpieces.gif"),
+            KiwenSuwi => include_bytes!("../theme/sprites/purple-kiwen-suwi.gif"),
             Kosal => include_bytes!("../theme/sprites/purple-kosal.gif"),
             Leipzig => include_bytes!("../theme/sprites/purple-leipzig.gif"),
             Letter => include_bytes!("../theme/sprites/purple-letter.gif"),
