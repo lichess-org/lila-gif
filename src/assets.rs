@@ -92,7 +92,7 @@ pub enum PieceSet {
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 32],
+    inner: [T; 33],
 }
 
 impl<T> ByPieceSet<T> {
