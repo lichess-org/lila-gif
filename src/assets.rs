@@ -56,6 +56,7 @@ impl<T> ByBoardTheme<T> {
 pub enum PieceSet {
     Alpha,
     Anarcandy,
+    Caliente,
     California,
     Cardinal,
     #[default]
@@ -92,7 +93,7 @@ pub enum PieceSet {
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 33],
+    inner: [T; 34],
 }
 
 impl<T> ByPieceSet<T> {
@@ -105,6 +106,7 @@ impl<T> ByPieceSet<T> {
             inner: [
                 Alpha,
                 Anarcandy,
+                Caliente,
                 California,
                 Cardinal,
                 Cburnett,
@@ -152,6 +154,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
         BoardTheme::Blue => match pieces {
             Alpha => include_bytes!("../theme/sprites/blue-alpha.gif"),
             Anarcandy => include_bytes!("../theme/sprites/blue-anarcandy.gif"),
+            Caliente => include_bytes!("../theme/sprites/blue-caliente.gif"),
             California => include_bytes!("../theme/sprites/blue-california.gif"),
             Cardinal => include_bytes!("../theme/sprites/blue-cardinal.gif"),
             Cburnett => include_bytes!("../theme/sprites/blue-cburnett.gif"),
@@ -187,6 +190,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
         BoardTheme::Brown => match pieces {
             Alpha => include_bytes!("../theme/sprites/brown-alpha.gif"),
             Anarcandy => include_bytes!("../theme/sprites/brown-anarcandy.gif"),
+            Caliente => include_bytes!("../theme/sprites/brown-caliente.gif"),
             California => include_bytes!("../theme/sprites/brown-california.gif"),
             Cardinal => include_bytes!("../theme/sprites/brown-cardinal.gif"),
             Cburnett => include_bytes!("../theme/sprites/brown-cburnett.gif"),
@@ -222,6 +226,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
         BoardTheme::Green => match pieces {
             Alpha => include_bytes!("../theme/sprites/green-alpha.gif"),
             Anarcandy => include_bytes!("../theme/sprites/green-anarcandy.gif"),
+            Caliente => include_bytes!("../theme/sprites/green-caliente.gif"),
             California => include_bytes!("../theme/sprites/green-california.gif"),
             Cardinal => include_bytes!("../theme/sprites/green-cardinal.gif"),
             Cburnett => include_bytes!("../theme/sprites/green-cburnett.gif"),
@@ -257,6 +262,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
         BoardTheme::Ic => match pieces {
             Alpha => include_bytes!("../theme/sprites/ic-alpha.gif"),
             Anarcandy => include_bytes!("../theme/sprites/ic-anarcandy.gif"),
+            Caliente => include_bytes!("../theme/sprites/ic-caliente.gif"),
             California => include_bytes!("../theme/sprites/ic-california.gif"),
             Cardinal => include_bytes!("../theme/sprites/ic-cardinal.gif"),
             Cburnett => include_bytes!("../theme/sprites/ic-cburnett.gif"),
@@ -292,6 +298,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
         BoardTheme::Pink => match pieces {
             Alpha => include_bytes!("../theme/sprites/pink-alpha.gif"),
             Anarcandy => include_bytes!("../theme/sprites/pink-anarcandy.gif"),
+            Caliente => include_bytes!("../theme/sprites/pink-caliente.gif"),
             California => include_bytes!("../theme/sprites/pink-california.gif"),
             Cardinal => include_bytes!("../theme/sprites/pink-cardinal.gif"),
             Cburnett => include_bytes!("../theme/sprites/pink-cburnett.gif"),
@@ -327,6 +334,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
         BoardTheme::Purple => match pieces {
             Alpha => include_bytes!("../theme/sprites/purple-alpha.gif"),
             Anarcandy => include_bytes!("../theme/sprites/purple-anarcandy.gif"),
+            Caliente => include_bytes!("../theme/sprites/purple-caliente.gif"),
             California => include_bytes!("../theme/sprites/purple-california.gif"),
             Cardinal => include_bytes!("../theme/sprites/purple-cardinal.gif"),
             Cburnett => include_bytes!("../theme/sprites/purple-cburnett.gif"),
