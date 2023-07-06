@@ -1,63 +1,18 @@
-use std::{iter::FusedIterator, vec};
+use std::vec;
 
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::{Font, LayoutIter, Scale};
-use shakmaty::{uci::Uci, Bitboard, Board, File, Rank, Square};
+use shakmaty::{Bitboard, File, Rank, Square};
 
+use super::renderer::{highlight_uci, RenderFrame, RenderState, SpriteKey};
 use crate::{
     api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{SpriteKey, Theme, Themes},
+    theme::{Theme, Themes},
 };
 
-enum RenderState {
-    Preamble,
-    Frame(RenderFrame),
-    Complete,
-}
-
-struct PlayerBars {
-    white: PlayerName,
-    black: PlayerName,
-}
-
-impl PlayerBars {
-    fn from(white: Option<PlayerName>, black: Option<PlayerName>) -> Option<PlayerBars> {
-        if white.is_some() || black.is_some() {
-            Some(PlayerBars {
-                white: white.unwrap_or_default(),
-                black: black.unwrap_or_default(),
-            })
-        } else {
-            None
-        }
-    }
-}
-
-#[derive(Default)]
-struct RenderFrame {
-    board: Board,
-    highlighted: Bitboard,
-    checked: Bitboard,
-    delay: Option<u16>,
-}
-
-impl RenderFrame {
-    fn diff(&self, prev: &RenderFrame) -> Bitboard {
-        (prev.checked ^ self.checked)
-            | (prev.highlighted ^ self.highlighted)
-            | (prev.board.white() ^ self.board.white())
-            | (prev.board.pawns() ^ self.board.pawns())
-            | (prev.board.knights() ^ self.board.knights())
-            | (prev.board.bishops() ^ self.board.bishops())
-            | (prev.board.rooks() ^ self.board.rooks())
-            | (prev.board.queens() ^ self.board.queens())
-            | (prev.board.kings() ^ self.board.kings())
-    }
-}
-
-pub struct Render {
+pub struct GIFRenderer {
     theme: &'static Theme,
     font: &'static Font<'static>,
     state: RenderState,
@@ -70,14 +25,15 @@ pub struct Render {
     kork: bool,
 }
 
-impl Render {
-    pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
+impl GIFRenderer {
+    pub fn new_image(themes: &'static Themes, params: RequestParams) -> GIFRenderer {
         let bars = PlayerBars::from(params.white, params.black);
         let theme = themes.get(params.theme, params.piece);
-        Render {
+        let buffer = vec![0; theme.height(bars.is_some()) * theme.width()];
+        GIFRenderer {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
+            buffer,
             state: RenderState::Preamble,
             comment: params.comment,
             bars,
@@ -93,12 +49,11 @@ impl Render {
             kork: false,
         }
     }
-
-    pub fn new_animation(themes: &'static Themes, params: RequestBody) -> Render {
+    pub fn new_animation(themes: &'static Themes, params: RequestBody) -> GIFRenderer {
         let bars = PlayerBars::from(params.white, params.black);
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
-        Render {
+        GIFRenderer {
             theme,
             font: themes.font(),
             buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
@@ -123,7 +78,7 @@ impl Render {
     }
 }
 
-impl Iterator for Render {
+impl Iterator for GIFRenderer {
     type Item = Bytes;
 
     fn next(&mut self) -> Option<Bytes> {
@@ -310,7 +265,23 @@ impl Iterator for Render {
     }
 }
 
-impl FusedIterator for Render {}
+pub struct PlayerBars {
+    white: PlayerName,
+    black: PlayerName,
+}
+
+impl PlayerBars {
+    fn from(white: Option<PlayerName>, black: Option<PlayerName>) -> Option<PlayerBars> {
+        if white.is_some() || black.is_some() {
+            Some(PlayerBars {
+                white: white.unwrap_or_default(),
+                black: black.unwrap_or_default(),
+            })
+        } else {
+            None
+        }
+    }
+}
 
 fn render_diff(
     buffer: &mut [u8],
@@ -490,14 +461,6 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_na
         } else {
             text_color = theme.text_color();
         }
-    }
-}
-
-fn highlight_uci(uci: Option<Uci>) -> Bitboard {
-    match uci {
-        Some(Uci::Normal { from, to, .. }) => Bitboard::from(from) | Bitboard::from(to),
-        Some(Uci::Put { to, .. }) => Bitboard::from(to),
-        _ => Bitboard::EMPTY,
     }
 }
 

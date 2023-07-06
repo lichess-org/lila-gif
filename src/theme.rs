@@ -1,35 +1,14 @@
 use gift::block::{ColorTableConfig, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
-use shakmaty::{Piece, Role};
 
-use crate::assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet};
+use crate::{
+    assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet},
+    renderer::renderer::SpriteKey,
+};
 
 const SQUARE: usize = 90;
 const COLOR_WIDTH: usize = 90 * 2 / 3;
-
-pub struct SpriteKey {
-    pub piece: Option<Piece>,
-    pub dark_square: bool,
-    pub highlight: bool,
-    pub check: bool,
-}
-
-impl SpriteKey {
-    fn x(&self) -> usize {
-        4 * usize::from(self.piece.map_or(false, |p| p.color.is_white()))
-            + 2 * usize::from(self.highlight)
-            + usize::from(self.dark_square)
-    }
-
-    fn y(&self) -> usize {
-        match self.piece {
-            Some(piece) if self.check && piece.role == Role::King => 7,
-            Some(piece) => piece.role as usize,
-            None => 0,
-        }
-    }
-}
 
 pub struct Theme {
     color_table_config: ColorTableConfig,
