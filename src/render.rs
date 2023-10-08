@@ -230,7 +230,7 @@ impl Iterator for Render {
                 if let Some(frame) = self.frames.next() {
                     let mut ctrl = block::GraphicControl::default();
                     ctrl.set_disposal_method(block::DisposalMethod::Keep);
-                    ctrl.set_transparent_color_idx(self.theme.transparent_color());
+                    ctrl.set_transparent_color(Some(self.theme.transparent_color()));
                     if let Some(delay) = frame.delay {
                         ctrl.set_delay_time_cs(delay);
                     }
@@ -275,7 +275,7 @@ impl Iterator for Render {
                     if self.kork {
                         let mut ctrl = block::GraphicControl::default();
                         ctrl.set_disposal_method(block::DisposalMethod::Keep);
-                        ctrl.set_transparent_color_idx(self.theme.transparent_color());
+                        ctrl.set_transparent_color(Some(self.theme.transparent_color()));
                         ctrl.set_delay_time_cs(1);
                         blocks.encode(ctrl).expect("enc graphic control");
 
