@@ -85,7 +85,7 @@ def make_sprite(light, dark, pieces, check_gradient):
     for x in range(8):
         # Background
         fill = light if x % 2 == 0 else dark
-        rect = (x * SQUARE_SIZE, 0, (x + 1) * SQUARE_SIZE, SQUARE_SIZE * 8)
+        rect = (x * SQUARE_SIZE, 0, (x + 1) * SQUARE_SIZE - 1, SQUARE_SIZE * 8 - 1)
         draw.rectangle(rect, fill=fill)
         if x in [2, 3, 6, 7]:
             draw.rectangle(rect, fill=HIGHLIGHT)
@@ -107,7 +107,7 @@ def make_sprite(light, dark, pieces, check_gradient):
 
     for i, color in enumerate(NONTHEME_COLORS):
         width = 4 * SQUARE_SIZE / len(NONTHEME_COLORS)
-        draw.rectangle((4 * SQUARE_SIZE + i * width, 0, 4 * SQUARE_SIZE + (i + 1) * width, SQUARE_SIZE), fill=color)
+        draw.rectangle((4 * SQUARE_SIZE + i * width, 0, 4 * SQUARE_SIZE + (i + 1) * width - 1, SQUARE_SIZE - 1), fill=color)
 
     return image.quantize(64, dither=0)
 
