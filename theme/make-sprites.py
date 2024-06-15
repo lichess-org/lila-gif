@@ -28,6 +28,7 @@ PIECE_SETS = [
     "celtic",
     "chess7",
     "chessnut",
+    "cooke",
     "companion",
     "disguised",
     "dubrovny",

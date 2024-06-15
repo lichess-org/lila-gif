@@ -64,6 +64,7 @@ pub enum PieceSet {
     Celtic,
     Chess7,
     Chessnut,
+    Cooke,
     Companion,
     Disguised,
     Dubrovny,
@@ -93,7 +94,7 @@ pub enum PieceSet {
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 34],
+    inner: [T; 35],
 }
 
 impl<T> ByPieceSet<T> {
@@ -113,6 +114,7 @@ impl<T> ByPieceSet<T> {
                 Celtic,
                 Chess7,
                 Chessnut,
+                Cooke,
                 Companion,
                 Disguised,
                 Dubrovny,
@@ -161,6 +163,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Celtic => include_bytes!("../theme/sprites/blue-celtic.gif"),
             Chess7 => include_bytes!("../theme/sprites/blue-chess7.gif"),
             Chessnut => include_bytes!("../theme/sprites/blue-chessnut.gif"),
+            Cooke => include_bytes!("../theme/sprites/blue-cooke.gif"),
             Companion => include_bytes!("../theme/sprites/blue-companion.gif"),
             Dubrovny => include_bytes!("../theme/sprites/blue-dubrovny.gif"),
             Disguised => include_bytes!("../theme/sprites/blue-disguised.gif"),
@@ -197,6 +200,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Celtic => include_bytes!("../theme/sprites/brown-celtic.gif"),
             Chess7 => include_bytes!("../theme/sprites/brown-chess7.gif"),
             Chessnut => include_bytes!("../theme/sprites/brown-chessnut.gif"),
+            Cooke => include_bytes!("../theme/sprites/brown-cooke.gif"),
             Companion => include_bytes!("../theme/sprites/brown-companion.gif"),
             Disguised => include_bytes!("../theme/sprites/brown-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/brown-dubrovny.gif"),
@@ -233,6 +237,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Celtic => include_bytes!("../theme/sprites/green-celtic.gif"),
             Chess7 => include_bytes!("../theme/sprites/green-chess7.gif"),
             Chessnut => include_bytes!("../theme/sprites/green-chessnut.gif"),
+            Cooke => include_bytes!("../theme/sprites/green-cooke.gif"),
             Companion => include_bytes!("../theme/sprites/green-companion.gif"),
             Disguised => include_bytes!("../theme/sprites/green-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/green-dubrovny.gif"),
@@ -269,6 +274,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Celtic => include_bytes!("../theme/sprites/ic-celtic.gif"),
             Chess7 => include_bytes!("../theme/sprites/ic-chess7.gif"),
             Chessnut => include_bytes!("../theme/sprites/ic-chessnut.gif"),
+            Cooke => include_bytes!("../theme/sprites/ic-cooke.gif"),
             Companion => include_bytes!("../theme/sprites/ic-companion.gif"),
             Disguised => include_bytes!("../theme/sprites/ic-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/ic-dubrovny.gif"),
@@ -305,6 +311,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Celtic => include_bytes!("../theme/sprites/pink-celtic.gif"),
             Chess7 => include_bytes!("../theme/sprites/pink-chess7.gif"),
             Chessnut => include_bytes!("../theme/sprites/pink-chessnut.gif"),
+            Cooke => include_bytes!("../theme/sprites/pink-cooke.gif"),
             Companion => include_bytes!("../theme/sprites/pink-companion.gif"),
             Disguised => include_bytes!("../theme/sprites/pink-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/pink-dubrovny.gif"),
@@ -341,6 +348,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Celtic => include_bytes!("../theme/sprites/purple-celtic.gif"),
             Chess7 => include_bytes!("../theme/sprites/purple-chess7.gif"),
             Chessnut => include_bytes!("../theme/sprites/purple-chessnut.gif"),
+            Cooke => include_bytes!("../theme/sprites/purple-cooke.gif"),
             Companion => include_bytes!("../theme/sprites/purple-companion.gif"),
             Disguised => include_bytes!("../theme/sprites/purple-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/purple-dubrovny.gif"),
