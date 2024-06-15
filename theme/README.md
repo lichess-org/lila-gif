@@ -6,10 +6,10 @@
 pip install -r requirements.txt
 ```
 
-You will also need to install the CLI tool [`librsvg`](https://gitlab.gnome.org/GNOME/librsvg). On Mac:
+You will also need to install the CLI tool [`resvg`](https://github.com/RazrFalcon/resvg):
 
 ```bash
-brew install librsvg
+cargo install resvg
 ```
 
 ## Input assets
@@ -28,9 +28,8 @@ We currently only create sprites for board themes that are SVGs - not for those 
 python3 make-sprites.py
 ```
 
-This command will use `resvg` to generate many GIFs in the `theme/sprites` directory, of the form `{boardtheme}-{pieceset}.gif`. It may take 15-30s depending on your computer.
+This command will use `resvg` to generate many GIFs in the `theme/sprites` directory, of the form `{boardtheme}-{pieceset}.gif`.
 
 ## Todo
 
-- Preprocess SVGs with SVGO to namespace ids and class names more robustly
 - Create sprites for non-SVG board themes

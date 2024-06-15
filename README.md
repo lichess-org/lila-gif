@@ -82,7 +82,7 @@ on every possible background. This allows preparing a minimal color palette
 ahead of time. (Pieces are not just black and white, but need other colors
 for anti-aliasing on the different background colors).
 
-![Sprite](/theme/sprite.gif)
+![Sprite](/theme/sprites/brown-cburnett.gif)
 
 All thats left to do at runtime, is copying sprites and Gif encoding.
 More than 95% of the rendering time is spent in LZW compression.
