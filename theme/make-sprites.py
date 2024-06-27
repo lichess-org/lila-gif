@@ -45,6 +45,7 @@ PIECE_SETS = [
     "libra",
     "maestro",
     "merida",
+    "monarchy",
     "mpchess",
     "pirouetti",
     "pixel",
