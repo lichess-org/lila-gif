@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import subprocess
 import io
 from PIL import Image, ImageDraw
@@ -17,45 +18,6 @@ BOARD_THEMES = {
     "pink":   ("#f1f1c9", "#f07272"),
     "purple": ("#9f90b0", "#7d4a8d"),
 }
-
-PIECE_SETS = [
-    "alpha",
-    "anarcandy",
-    "caliente",
-    "california",
-    "cardinal",
-    "cburnett",
-    "celtic",
-    "chess7",
-    "chessnut",
-    "cooke",
-    "companion",
-    "disguised",
-    "dubrovny",
-    "fantasy",
-    "fresca",
-    "gioco",
-    "governor",
-    "horsey",
-    "icpieces",
-    "kiwen-suwi",
-    "kosal",
-    "leipzig",
-    "letter",
-    "libra",
-    "maestro",
-    "merida",
-    "monarchy",
-    "mpchess",
-    "pirouetti",
-    "pixel",
-    "reillycraig",
-    "riohacha",
-    "shapes",
-    "spatial",
-    "staunty",
-    "tatiana",
-]
 
 NONTHEME_COLORS = [
     "#262421",   # dark background
@@ -114,7 +76,9 @@ def make_sprite(light, dark, pieces, check_gradient):
 
 def main():
     check_gradient = resvg("check-gradient.svg")
-    piece_sets = {piece_set: resvg_pieces(piece_set) for piece_set in PIECE_SETS}
+
+    piece_dirs = [ os.path.basename(f.path) for f in os.scandir("piece") if f.is_dir() ]
+    piece_sets = {piece_set: resvg_pieces(piece_set) for piece_set in piece_dirs}
 
     for board_theme, (light, dark) in BOARD_THEMES.items():
         print(f"Generating sprites for {board_theme}...")
@@ -122,6 +86,44 @@ def main():
             image = make_sprite(light=light, dark=dark, pieces=pieces, check_gradient=check_gradient)
             image.save(f"sprites/{board_theme}-{piece_set}.gif", optimize=True, interlace=False, transparency=image.getpixel((SQUARE_SIZE * 8 - 1, 0)))
 
+    rust_code_updates(piece_dirs)
+
+
+def to_pascal_case(name: str) -> str:
+    return "".join(x.capitalize() for x in name.lower().split("-"))
+
+
+def rust_code_updates(piece_dirs):
+    print("🦀 Update `src/assets.rs` with these:")
+    print("#" * 80)
+
+    rust_enum = "pub enum PieceSet {\n"
+    for piece_set in sorted(piece_dirs):
+        if piece_set == "cburnett":
+            rust_enum += f"    #[default]\n"
+        elif "-" in piece_set:
+            rust_enum += f"    #[serde(rename = \"{piece_set}\")]\n"
+        rust_enum += f"    {to_pascal_case(piece_set)},\n"
+    rust_enum += "}"
+    print(rust_enum)
+
+    print("#" * 80)
+    inner_data = "inner: [\n"
+    for piece_set in sorted(piece_dirs):
+        inner_data += f"    {to_pascal_case(piece_set)},\n"
+    inner_data += "]"
+    print(inner_data)
+
+    print("#" * 80)
+    colors = ["blue", "brown", "green", "ic", "pink", "purple"]
+    sprite_data = "match board {"
+    for color in colors:
+        sprite_data += f"\n    BoardTheme::{color.capitalize()} => match pieces {{\n"
+        for piece_set in sorted(piece_dirs):
+            sprite_data += f"        {to_pascal_case(piece_set)} => include_bytes!(\"../theme/sprites/{color}-{piece_set}.gif\"),\n"
+        sprite_data += "    },\n"
+    sprite_data += "}"
+    print(sprite_data)
 
 if __name__ == "__main__":
     main()
