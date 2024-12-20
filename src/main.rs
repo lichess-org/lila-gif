@@ -10,7 +10,9 @@ use axum::{
 };
 use clap::Parser;
 use futures::stream;
+use listenfd::ListenFd;
 use tikv_jemallocator::Jemalloc;
+use tokio::net::TcpListener;
 
 mod api;
 mod assets;
@@ -64,8 +66,16 @@ async fn main() {
         .route("/game.gif", post(move |req| game(themes, req)))
         .route("/example.gif", get(move || example(themes)));
 
-    axum::Server::bind(&opt.bind)
-        .serve(app.into_make_service())
-        .await
-        .expect("bind");
+    let listener = match ListenFd::from_env()
+        .take_tcp_listener(0)
+        .expect("tcp listener")
+    {
+        Some(std_listener) => {
+            std_listener.set_nonblocking(true).expect("set nonblocking");
+            TcpListener::from_std(std_listener).expect("listener")
+        }
+        None => TcpListener::bind(&opt.bind).await.expect("bind"),
+    };
+
+    axum::serve(listener, app).await.expect("serve");
 }

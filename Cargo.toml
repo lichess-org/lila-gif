@@ -12,7 +12,7 @@ keywords = ["chess", "gif", "lichess"]
 edition = "2021"
 
 [dependencies]
-axum = "0.6"
+axum = "0.8.0-rc.1"
 tokio = { version = "1", features = ["full"] }
 rusttype = "0.9"
 serde = { version = "1.0", features = ["derive"] }
@@ -25,6 +25,7 @@ clap = { version = "4", features = ["derive", "deprecated"] }
 gift = "0.10"
 futures = "0.3"
 tikv-jemallocator = { version = "0.6", features = ["unprefixed_malloc_on_supported_platforms"] }
+listenfd = "1"
 
 [profile.release]
 lto = true
