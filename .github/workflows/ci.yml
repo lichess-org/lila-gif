@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment for deployment
+        required: true
+        type: choice
+        options:
+          - rubik
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04 # matching rubik
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lila-gif
+          path: target/release/lila-gif
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+    concurrency:
+      group: ${{ inputs.environment }}
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: lila-gif
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          touch ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          echo "$SSH_KEY" > ~/.ssh/id_deploy
+          echo "$SSH_HOST $SSH_HOST_KEY" > ~/.ssh/known_hosts
+          cat >>~/.ssh/config <<END
+          Host deploy-host
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/id_deploy
+            StrictHostKeyChecking yes
+          END
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST_KEY: ${{ secrets.SSH_HOST_KEY }}
+      - name: Deploy via SSH
+        run: cat lila-gif | ssh deploy-host "mv /usr/local/bin/lila-gif /usr/local/bin/lila-gif.bak && cat - > /usr/local/bin/lila-gif && chmod +x /usr/local/bin/lila-gif && systemctl restart lila-gif"
