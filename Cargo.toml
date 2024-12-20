@@ -18,7 +18,7 @@ rusttype = "0.9"
 serde = { version = "1.0", features = ["derive"] }
 shakmaty = "0.26"
 serde_with = "3"
-ndarray = "0.15"
+ndarray = "0.16"
 bytes = "1"
 arrayvec = { version = "0.7", features = ["serde"] }
 clap = { version = "4", features = ["derive", "deprecated"] }
