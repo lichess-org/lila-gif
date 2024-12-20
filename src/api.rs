@@ -4,7 +4,7 @@ use arrayvec::ArrayString;
 use serde::{de, Deserialize};
 use serde_with::{serde_as, DisplayFromStr};
 use shakmaty::{
-    fen::Fen, san::San, uci::Uci, CastlingMode, Chess, EnPassantMode, Position, Setup, Square,
+    fen::Fen, san::San, uci::UciMove, CastlingMode, Chess, EnPassantMode, Position, Setup, Square,
 };
 
 use crate::assets::{BoardTheme, PieceSet};
@@ -162,7 +162,7 @@ pub struct RequestParams {
     pub fen: Fen,
     #[serde_as(as = "Option<DisplayFromStr>")]
     #[serde(default, rename = "lastMove")]
-    pub last_move: Option<Uci>,
+    pub last_move: Option<UciMove>,
     #[serde(default)]
     pub check: CheckSquare,
     #[serde(default)]
@@ -203,7 +203,7 @@ pub struct RequestFrame {
     pub delay: Option<u16>,
     #[serde_as(as = "Option<DisplayFromStr>")]
     #[serde(default, rename = "lastMove")]
-    pub last_move: Option<Uci>,
+    pub last_move: Option<UciMove>,
     #[serde(default)]
     pub check: CheckSquare,
 }
@@ -241,7 +241,7 @@ impl RequestBody {
                 } else {
                     CheckSquare::No
                 },
-                last_move: Some(Uci::from_move(&m, CastlingMode::Standard)),
+                last_move: Some(UciMove::from_move(&m, CastlingMode::Standard)),
                 delay: None,
             })
         }

@@ -4,7 +4,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
 use ndarray::{s, ArrayViewMut2};
 use rusttype::{Font, LayoutIter, Scale};
-use shakmaty::{uci::Uci, Bitboard, Board, File, Rank, Square};
+use shakmaty::{uci::UciMove, Bitboard, Board, File, Rank, Square};
 
 use crate::{
     api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
@@ -493,10 +493,10 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_na
     }
 }
 
-fn highlight_uci(uci: Option<Uci>) -> Bitboard {
+fn highlight_uci(uci: Option<UciMove>) -> Bitboard {
     match uci {
-        Some(Uci::Normal { from, to, .. }) => Bitboard::from(from) | Bitboard::from(to),
-        Some(Uci::Put { to, .. }) => Bitboard::from(to),
+        Some(UciMove::Normal { from, to, .. }) => Bitboard::from(from) | Bitboard::from(to),
+        Some(UciMove::Put { to, .. }) => Bitboard::from(to),
         _ => Bitboard::EMPTY,
     }
 }
