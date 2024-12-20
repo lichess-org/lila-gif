@@ -27,7 +27,7 @@ OPTIONS:
 ### `GET /image.gif`
 
 ```
-curl http://localhost:6175/image.gif?fen=4k3/6KP/8/8/8/8/7p/8 --output image.gif
+curl "http://localhost:6175/image.gif?fen=4k3/6KP/8/8/8/8/7p/8" --output image.gif
 ```
 
 | name        | type  | default                                   | description                                                                                  |
