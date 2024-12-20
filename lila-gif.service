@@ -1,0 +1,11 @@
+[Unit]
+Description=lila-gif
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/lila-gif --bind 172.16.0.28:6175
+PrivateDevices=true
+ProtectSystem=strict
+CapabilityBoundingSet=
+NoNewPrivileges=true
+Restart=always

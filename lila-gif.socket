@@ -1,0 +1,9 @@
+[Unit]
+Description=lila-gif socket
+BindToDevice=sys-subsystem-net-devices-eth1.device
+
+[Socket]
+ListenStream=172.16.0.28:6175
+
+[Install]
+WantedBy=sockets.target
