@@ -10,6 +10,7 @@ use axum::{
 };
 use clap::Parser;
 use futures::stream;
+use tikv_jemallocator::Jemalloc;
 
 mod api;
 mod assets;
@@ -19,6 +20,9 @@ mod theme;
 use api::{RequestBody, RequestParams};
 use render::Render;
 use theme::Themes;
+
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 #[derive(Parser)]
 struct Opt {
