@@ -1,7 +1,7 @@
 use std::{convert::Infallible, net::SocketAddr};
 
 use axum::{
-    body::StreamBody,
+    body::Body,
     extract::Query,
     http::header::CONTENT_TYPE,
     response::{IntoResponse, Response},
@@ -36,7 +36,7 @@ struct Opt {
 async fn image(themes: &'static Themes, Query(req): Query<RequestParams>) -> impl IntoResponse {
     Response::builder()
         .header(CONTENT_TYPE, "image/gif")
-        .body(StreamBody::new(stream::iter(
+        .body(Body::from_stream(stream::iter(
             Render::new_image(themes, req).map(Ok::<_, Infallible>),
         )))
         .unwrap()
@@ -45,7 +45,7 @@ async fn image(themes: &'static Themes, Query(req): Query<RequestParams>) -> imp
 async fn game(themes: &'static Themes, Json(req): Json<RequestBody>) -> impl IntoResponse {
     Response::builder()
         .header(CONTENT_TYPE, "image/gif")
-        .body(StreamBody::new(stream::iter(
+        .body(Body::from_stream(stream::iter(
             Render::new_animation(themes, req).map(Ok::<_, Infallible>),
         )))
         .unwrap()
