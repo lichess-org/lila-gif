@@ -1,12 +1,10 @@
 [package]
 name = "lila-gif"
-version = "1.0.0"
 publish = false
 description = "Webservice to render gifs of chess positions and games"
 repository = "https://github.com/lichess-org/lila-gif"
 readme = "README.md"
 license = "AGPL-3.0+"
-authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "multimedia"]
 keywords = ["chess", "gif", "lichess"]
 edition = "2021"
