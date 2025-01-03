@@ -12,7 +12,7 @@ use clap::Parser;
 use futures::stream;
 use listenfd::ListenFd;
 use tikv_jemallocator::Jemalloc;
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, UnixListener};
 
 mod api;
 mod assets;
@@ -66,16 +66,17 @@ async fn main() {
         .route("/game.gif", post(move |req| game(themes, req)))
         .route("/example.gif", get(move || example(themes)));
 
-    let listener = match ListenFd::from_env()
-        .take_tcp_listener(0)
-        .expect("tcp listener")
-    {
-        Some(std_listener) => {
-            std_listener.set_nonblocking(true).expect("set nonblocking");
-            TcpListener::from_std(std_listener).expect("listener")
-        }
-        None => TcpListener::bind(&opt.bind).await.expect("bind"),
-    };
-
-    axum::serve(listener, app).await.expect("serve");
+    let mut fds = ListenFd::from_env();
+    if let Ok(Some(uds)) = fds.take_unix_listener(0) {
+        uds.set_nonblocking(true).expect("set nonblocking");
+        let listener = UnixListener::from_std(uds).expect("listener");
+        axum::serve(listener, app).await.expect("serve");
+    } else if let Ok(Some(tcp)) = fds.take_tcp_listener(0) {
+        tcp.set_nonblocking(true).expect("set nonblocking");
+        let listener = TcpListener::from_std(tcp).expect("listener");
+        axum::serve(listener, app).await.expect("serve");
+    } else {
+        let listener = TcpListener::bind(&opt.bind).await.expect("bind");
+        axum::serve(listener, app).await.expect("serve");
+    }
 }
