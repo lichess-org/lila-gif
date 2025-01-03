@@ -54,7 +54,7 @@ impl<'de> Deserialize<'de> for CheckSquare {
     {
         struct CheckSquareVisitor;
 
-        impl<'de> de::Visitor<'de> for CheckSquareVisitor {
+        impl de::Visitor<'_> for CheckSquareVisitor {
             type Value = CheckSquare;
 
             fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
@@ -106,7 +106,7 @@ impl<'de> Deserialize<'de> for Coordinates {
     {
         struct CoordinatesVisitor;
 
-        impl<'de> de::Visitor<'de> for CoordinatesVisitor {
+        impl de::Visitor<'_> for CoordinatesVisitor {
             type Value = Coordinates;
 
             fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
