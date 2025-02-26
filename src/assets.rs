@@ -91,10 +91,11 @@ pub enum PieceSet {
     Spatial,
     Staunty,
     Tatiana,
+    Xkcd,
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 35],
+    inner: [T; 36],
 }
 
 impl<T> ByPieceSet<T> {
@@ -140,6 +141,7 @@ impl<T> ByPieceSet<T> {
                 Spatial,
                 Staunty,
                 Tatiana,
+                Xkcd,
             ]
             .map(f),
         }
@@ -189,6 +191,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Spatial => include_bytes!("../theme/sprites/blue-spatial.gif"),
             Staunty => include_bytes!("../theme/sprites/blue-staunty.gif"),
             Tatiana => include_bytes!("../theme/sprites/blue-tatiana.gif"),
+            Xkcd => include_bytes!("../theme/sprites/blue-xkcd.gif"),
         },
 
         BoardTheme::Brown => match pieces {
@@ -227,6 +230,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Spatial => include_bytes!("../theme/sprites/brown-spatial.gif"),
             Staunty => include_bytes!("../theme/sprites/brown-staunty.gif"),
             Tatiana => include_bytes!("../theme/sprites/brown-tatiana.gif"),
+            Xkcd => include_bytes!("../theme/sprites/brown-xkcd.gif"),
         },
 
         BoardTheme::Green => match pieces {
@@ -265,6 +269,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Spatial => include_bytes!("../theme/sprites/green-spatial.gif"),
             Staunty => include_bytes!("../theme/sprites/green-staunty.gif"),
             Tatiana => include_bytes!("../theme/sprites/green-tatiana.gif"),
+            Xkcd => include_bytes!("../theme/sprites/green-xkcd.gif"),
         },
 
         BoardTheme::Ic => match pieces {
@@ -303,6 +308,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Spatial => include_bytes!("../theme/sprites/ic-spatial.gif"),
             Staunty => include_bytes!("../theme/sprites/ic-staunty.gif"),
             Tatiana => include_bytes!("../theme/sprites/ic-tatiana.gif"),
+            Xkcd => include_bytes!("../theme/sprites/ic-xkcd.gif"),
         },
 
         BoardTheme::Pink => match pieces {
@@ -341,6 +347,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Spatial => include_bytes!("../theme/sprites/pink-spatial.gif"),
             Staunty => include_bytes!("../theme/sprites/pink-staunty.gif"),
             Tatiana => include_bytes!("../theme/sprites/pink-tatiana.gif"),
+            Xkcd => include_bytes!("../theme/sprites/pink-xkcd.gif"),
         },
 
         BoardTheme::Purple => match pieces {
@@ -379,6 +386,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Spatial => include_bytes!("../theme/sprites/purple-spatial.gif"),
             Staunty => include_bytes!("../theme/sprites/purple-staunty.gif"),
             Tatiana => include_bytes!("../theme/sprites/purple-tatiana.gif"),
+            Xkcd => include_bytes!("../theme/sprites/purple-xkcd.gif"),
         },
     }
 }
