@@ -96,7 +96,7 @@ pub enum PieceSet {
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 36],
+    inner: [T; 37],
 }
 
 impl<T> ByPieceSet<T> {
@@ -136,6 +136,7 @@ impl<T> ByPieceSet<T> {
                 Mpchess,
                 Pirouetti,
                 Pixel,
+                Rhosgfx,
                 Reillycraig,
                 Riohacha,
                 Shapes,
