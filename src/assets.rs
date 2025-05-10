@@ -69,6 +69,7 @@ pub enum PieceSet {
     Disguised,
     Dubrovny,
     Fantasy,
+    Firi,
     Fresca,
     Gioco,
     Governor,
@@ -96,7 +97,7 @@ pub enum PieceSet {
 }
 
 pub struct ByPieceSet<T> {
-    inner: [T; 37],
+    inner: [T; 38],
 }
 
 impl<T> ByPieceSet<T> {
@@ -121,6 +122,7 @@ impl<T> ByPieceSet<T> {
                 Disguised,
                 Dubrovny,
                 Fantasy,
+                Firi,
                 Fresca,
                 Gioco,
                 Governor,
@@ -136,8 +138,8 @@ impl<T> ByPieceSet<T> {
                 Mpchess,
                 Pirouetti,
                 Pixel,
-                Rhosgfx,
                 Reillycraig,
+                Rhosgfx,
                 Riohacha,
                 Shapes,
                 Spatial,
@@ -172,6 +174,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Disguised => include_bytes!("../theme/sprites/blue-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/blue-dubrovny.gif"),
             Fantasy => include_bytes!("../theme/sprites/blue-fantasy.gif"),
+            Firi => include_bytes!("../theme/sprites/blue-firi.gif"),
             Fresca => include_bytes!("../theme/sprites/blue-fresca.gif"),
             Gioco => include_bytes!("../theme/sprites/blue-gioco.gif"),
             Governor => include_bytes!("../theme/sprites/blue-governor.gif"),
@@ -212,6 +215,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Disguised => include_bytes!("../theme/sprites/brown-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/brown-dubrovny.gif"),
             Fantasy => include_bytes!("../theme/sprites/brown-fantasy.gif"),
+            Firi => include_bytes!("../theme/sprites/brown-firi.gif"),
             Fresca => include_bytes!("../theme/sprites/brown-fresca.gif"),
             Gioco => include_bytes!("../theme/sprites/brown-gioco.gif"),
             Governor => include_bytes!("../theme/sprites/brown-governor.gif"),
@@ -252,6 +256,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Disguised => include_bytes!("../theme/sprites/green-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/green-dubrovny.gif"),
             Fantasy => include_bytes!("../theme/sprites/green-fantasy.gif"),
+            Firi => include_bytes!("../theme/sprites/green-firi.gif"),
             Fresca => include_bytes!("../theme/sprites/green-fresca.gif"),
             Gioco => include_bytes!("../theme/sprites/green-gioco.gif"),
             Governor => include_bytes!("../theme/sprites/green-governor.gif"),
@@ -292,6 +297,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Disguised => include_bytes!("../theme/sprites/ic-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/ic-dubrovny.gif"),
             Fantasy => include_bytes!("../theme/sprites/ic-fantasy.gif"),
+            Firi => include_bytes!("../theme/sprites/ic-firi.gif"),
             Fresca => include_bytes!("../theme/sprites/ic-fresca.gif"),
             Gioco => include_bytes!("../theme/sprites/ic-gioco.gif"),
             Governor => include_bytes!("../theme/sprites/ic-governor.gif"),
@@ -332,6 +338,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Disguised => include_bytes!("../theme/sprites/pink-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/pink-dubrovny.gif"),
             Fantasy => include_bytes!("../theme/sprites/pink-fantasy.gif"),
+            Firi => include_bytes!("../theme/sprites/pink-firi.gif"),
             Fresca => include_bytes!("../theme/sprites/pink-fresca.gif"),
             Gioco => include_bytes!("../theme/sprites/pink-gioco.gif"),
             Governor => include_bytes!("../theme/sprites/pink-governor.gif"),
@@ -372,6 +379,7 @@ pub fn sprite_data(board: BoardTheme, pieces: PieceSet) -> &'static [u8] {
             Disguised => include_bytes!("../theme/sprites/purple-disguised.gif"),
             Dubrovny => include_bytes!("../theme/sprites/purple-dubrovny.gif"),
             Fantasy => include_bytes!("../theme/sprites/purple-fantasy.gif"),
+            Firi => include_bytes!("../theme/sprites/purple-firi.gif"),
             Fresca => include_bytes!("../theme/sprites/purple-fresca.gif"),
             Gioco => include_bytes!("../theme/sprites/purple-gioco.gif"),
             Governor => include_bytes!("../theme/sprites/purple-governor.gif"),
