@@ -186,9 +186,9 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "btoi"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dd6407f73a9b8b6162d8a2ef999fe6afd7cc15902ebf42c5cd296addf17e0ad"
+checksum = "3b5ab9db53bcda568284df0fd39f6eac24ad6f7ba7ff1168b9e76eba6576b976"
 dependencies = [
  "num-traits",
 ]
@@ -1035,9 +1035,9 @@ dependencies = [
 
 [[package]]
 name = "shakmaty"
-version = "0.27.3"
+version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f414cadc4e727893d1a3b0dca62aaef4c1c821dcbd969f0b10a92e12d684d53a"
+checksum = "14bbfca7b4f9c8e044957a1988c2998a831d90f7632d1e7ba0f0525d370ef742"
 dependencies = [
  "arrayvec",
  "bitflags",
