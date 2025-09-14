@@ -124,7 +124,7 @@ impl Theme {
         }
     }
 
-    pub fn sprite(&self, key: &SpriteKey) -> ArrayView2<u8> {
+    pub fn sprite(&self, key: &SpriteKey) -> ArrayView2<'_, u8> {
         let y = key.y();
         let x = key.x();
         self.sprite.slice(s!(
@@ -152,7 +152,7 @@ impl Themes {
         }
     }
 
-    pub fn font(&self) -> &Font {
+    pub fn font(&self) -> &Font<'_> {
         &self.font
     }
 
