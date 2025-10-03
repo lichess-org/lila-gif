@@ -232,16 +232,16 @@ impl RequestBody {
 
             let san: San = pgn_move.parse().unwrap();
             let m = san.to_move(&pos).unwrap();
-            pos.play_unchecked(&m);
+            pos.play_unchecked(m);
 
             frames.push(RequestFrame {
-                fen: Fen(pos.clone().into_setup(EnPassantMode::Always)),
+                fen: Fen::from_position(&pos, EnPassantMode::Always),
                 check: if pos.is_check() {
                     CheckSquare::Yes
                 } else {
                     CheckSquare::No
                 },
-                last_move: Some(UciMove::from_move(&m, CastlingMode::Standard)),
+                last_move: Some(UciMove::from_move(m, CastlingMode::Standard)),
                 delay: None,
             })
         }
