@@ -6,7 +6,7 @@ RUN apt-get update && apt-get upgrade --yes && apt-get install --yes git wget cl
 ADD --chmod=755 https://sh.rustup.rs rustup.sh
 ENV CARGO_HOME=/usr/local/cargo
 ENV PATH=/usr/local/cargo/bin:$PATH
-RUN ./rustup.sh -y --no-modify-path --profile minimal --default-toolchain 1.86.0 && rustc --version
+RUN ./rustup.sh -y --no-modify-path --profile minimal --default-toolchain 1.90.0 && rustc --version
 
 # Prepare working directory
 WORKDIR /lila-gif
