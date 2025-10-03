@@ -12,6 +12,9 @@ on:
         options:
           - rubik
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
