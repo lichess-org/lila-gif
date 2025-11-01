@@ -26,7 +26,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha
           outputs: type=local,dest=dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: lila-gif
           path: dist/usr/local/bin/lila-gif
