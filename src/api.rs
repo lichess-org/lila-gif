@@ -151,6 +151,78 @@ impl CheckSquare {
     }
 }
 
+#[derive(Deserialize, Debug, Clone, Default)]
+pub struct Clocks {
+    #[serde(default)]
+    pub white: Vec<u32>,
+    #[serde(default)]
+    pub black: Vec<u32>,
+}
+
+#[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(u8)]
+pub enum MoveGlyph {
+    #[serde(rename = "!")]
+    Good = 1,
+    #[serde(rename = "!!")]
+    Brilliant,
+    #[serde(rename = "?")]
+    Mistake,
+    #[serde(rename = "??")]
+    Blunder,
+    #[serde(rename = "!?")]
+    Interesting,
+    #[serde(rename = "?!")]
+    Dubious,
+    #[serde(rename = "□")]
+    OnlyMove,
+    #[serde(rename = "⨀")]
+    Zugzwang,
+}
+
+impl MoveGlyph {
+    pub const ALL: &[Self] = &[
+        Self::Good,
+        Self::Brilliant,
+        Self::Mistake,
+        Self::Blunder,
+        Self::Interesting,
+        Self::Dubious,
+        Self::OnlyMove,
+        Self::Zugzwang,
+    ];
+
+    pub const fn index(self) -> u8 {
+        self as u8
+    }
+
+    pub const fn symbol(self) -> &'static str {
+        match self {
+            Self::Good => "!",
+            Self::Brilliant => "!!",
+            Self::Mistake => "?",
+            Self::Blunder => "??",
+            Self::Interesting => "!?",
+            Self::Dubious => "?!",
+            Self::OnlyMove => "□",
+            Self::Zugzwang => "O",
+        }
+    }
+
+    pub const fn color(self) -> [u8; 3] {
+        match self {
+            Self::Good => [0x22, 0xac, 0x38],        // green
+            Self::Brilliant => [0x16, 0x82, 0x26],   // dark green
+            Self::Mistake => [0xe6, 0x9f, 0x00],     // orange
+            Self::Blunder => [0xdf, 0x53, 0x53],     // red
+            Self::Interesting => [0xea, 0x45, 0xd8], // pink/magenta
+            Self::Dubious => [0x56, 0xb4, 0xe9],     // light blue
+            Self::OnlyMove => [0xa0, 0x40, 0x48],    // maroon
+            Self::Zugzwang => [0x91, 0x71, 0xf2],    // purple
+        }
+    }
+}
+
 #[serde_as]
 #[derive(Deserialize, Debug)]
 pub struct RequestParams {
@@ -191,6 +263,8 @@ pub struct RequestBody {
     pub piece: PieceSet,
     #[serde(default)]
     pub coordinates: Coordinates,
+    #[serde(default)]
+    pub clocks: Option<Clocks>,
 }
 
 #[serde_as]
@@ -206,6 +280,8 @@ pub struct RequestFrame {
     pub last_move: Option<UciMove>,
     #[serde(default)]
     pub check: CheckSquare,
+    #[serde(default)]
+    pub glyph: Option<MoveGlyph>,
 }
 
 impl RequestBody {
@@ -243,6 +319,7 @@ impl RequestBody {
                 },
                 last_move: Some(UciMove::from_move(m, CastlingMode::Standard)),
                 delay: None,
+                glyph: None,
             })
         }
 
@@ -258,6 +335,7 @@ impl RequestBody {
             theme: BoardTheme::default(),
             piece: PieceSet::default(),
             coordinates: Coordinates::default(),
+            clocks: None,
         }
     }
 }
