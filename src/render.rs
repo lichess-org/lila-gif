@@ -31,10 +31,13 @@ impl PlayerBars {
         black: Option<PlayerName>,
         has_clocks: bool,
     ) -> Option<PlayerBars> {
-        if white.is_some() || black.is_some() || has_clocks {
+        let white_name = white.filter(|s| !s.is_empty());
+        let black_name = black.filter(|s| !s.is_empty());
+
+        if white_name.is_some() || black_name.is_some() || has_clocks {
             Some(PlayerBars {
-                white: white.unwrap_or_default(),
-                black: black.unwrap_or_default(),
+                white: white_name.unwrap_or_default(),
+                black: black_name.unwrap_or_default(),
             })
         } else {
             None
