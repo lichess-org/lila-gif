@@ -159,54 +159,32 @@ pub struct Clocks {
     pub black: Vec<u32>,
 }
 
-#[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, strum::EnumIter, strum::EnumString, strum::IntoStaticStr,
+)]
 #[repr(u8)]
 pub enum MoveGlyph {
-    #[serde(rename = "!")]
+    #[strum(serialize = "!")]
     Good = 1,
-    #[serde(rename = "!!")]
+    #[strum(serialize = "!!")]
     Brilliant,
-    #[serde(rename = "?")]
+    #[strum(serialize = "?")]
     Mistake,
-    #[serde(rename = "??")]
+    #[strum(serialize = "??")]
     Blunder,
-    #[serde(rename = "!?")]
+    #[strum(serialize = "!?")]
     Interesting,
-    #[serde(rename = "?!")]
+    #[strum(serialize = "?!")]
     Dubious,
-    #[serde(rename = "□")]
+    #[strum(serialize = "□")]
     OnlyMove,
-    #[serde(rename = "⨀")]
+    #[strum(serialize = "⨀", to_string = "O")]
     Zugzwang,
 }
 
 impl MoveGlyph {
-    pub const ALL: &[Self] = &[
-        Self::Good,
-        Self::Brilliant,
-        Self::Mistake,
-        Self::Blunder,
-        Self::Interesting,
-        Self::Dubious,
-        Self::OnlyMove,
-        Self::Zugzwang,
-    ];
-
     pub const fn index(self) -> u8 {
         self as u8
-    }
-
-    pub const fn symbol(self) -> &'static str {
-        match self {
-            Self::Good => "!",
-            Self::Brilliant => "!!",
-            Self::Mistake => "?",
-            Self::Blunder => "??",
-            Self::Interesting => "!?",
-            Self::Dubious => "?!",
-            Self::OnlyMove => "□",
-            Self::Zugzwang => "O",
-        }
     }
 
     pub const fn color(self) -> [u8; 3] {
@@ -280,6 +258,7 @@ pub struct RequestFrame {
     pub last_move: Option<UciMove>,
     #[serde(default)]
     pub check: CheckSquare,
+    #[serde_as(as = "Option<DisplayFromStr>")]
     #[serde(default)]
     pub glyph: Option<MoveGlyph>,
 }

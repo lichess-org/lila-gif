@@ -2,6 +2,7 @@ use gift::block::{ColorTableConfig, ColorTableExistence, ColorTableOrdering, Glo
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
 use shakmaty::{Piece, Role};
+use strum::IntoEnumIterator;
 
 use crate::{
     api::MoveGlyph,
@@ -59,14 +60,11 @@ impl Theme {
             .colors()
             .to_vec();
         let extended_color_idx = (colors.len() / 3) as u8;
+
         colors.extend_from_slice(&GLYPH_TEXT_COLOR);
+        colors.extend(MoveGlyph::iter().flat_map(|glyph| glyph.color()));
 
-        for glyph in MoveGlyph::ALL {
-            colors.extend_from_slice(&glyph.color());
-        }
-
-        // GIF requires power-of-2 color table sizes
-        let padded_count = (colors.len() / 3).next_power_of_two().min(256);
+        let padded_count = (colors.len() / 3).next_power_of_two();
         colors.resize(padded_count * 3, 0);
 
         Theme {

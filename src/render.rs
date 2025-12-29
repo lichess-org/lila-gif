@@ -464,7 +464,7 @@ fn render_glyph_badge(
 
     let scale = Scale { x: 32.0, y: 32.0 };
     let glyphs: Vec<_> = font
-        .layout(glyph.symbol(), scale, rusttype::point(0.0, 0.0))
+        .layout(glyph.into(), scale, rusttype::point(0.0, 0.0))
         .collect();
     let (gmin_x, gmax_x, gmin_y, gmax_y) =
         glyphs.iter().filter_map(|g| g.pixel_bounding_box()).fold(
