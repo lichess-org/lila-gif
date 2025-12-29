@@ -135,14 +135,12 @@ impl Render {
                 .into_iter()
                 .enumerate()
                 .map(|(i, frame)| {
-                    let white_idx = if i == 0 { 0 } else { (i - 1) / 2 };
-                    let black_idx = if i <= 1 { 0 } else { (i - 2) / 2 };
                     let white_clock = clocks
                         .as_ref()
-                        .and_then(|c| c.white.get(white_idx).copied());
+                        .and_then(|c| c.white.get(i.saturating_sub(1) / 2).copied());
                     let black_clock = clocks
                         .as_ref()
-                        .and_then(|c| c.black.get(black_idx).copied());
+                        .and_then(|c| c.black.get(i.saturating_sub(2) / 2).copied());
                     RenderFrame {
                         highlighted: highlight_uci(frame.last_move),
                         checked: frame
@@ -214,10 +212,10 @@ impl Iterator for Render {
 
                 let mut board_view = if let Some(ref bars) = self.bars {
                     let bar_height = self.theme.bar_height();
-                    let bottom_bar_top = bar_height + self.theme.width();
+                    let btm_bar_y = bar_height + self.theme.width();
                     let bar_names = self.orientation.fold(
-                        [(&bars.black as &str, 0), (&bars.white, bottom_bar_top)],
-                        [(&bars.white as &str, 0), (&bars.black, bottom_bar_top)],
+                        [(&bars.black as &str, 0), (&bars.white, btm_bar_y)],
+                        [(&bars.white as &str, 0), (&bars.black, btm_bar_y)],
                     );
                     for (name, bar_top) in bar_names {
                         render_bar(
@@ -229,13 +227,10 @@ impl Iterator for Render {
                     }
 
                     let mut clock_buffer = vec![0u8; bar_height * self.theme.width()];
-                    let clock_values = self.orientation.fold(
-                        [(frame.black_clock, 0), (frame.white_clock, bottom_bar_top)],
-                        [(frame.white_clock, 0), (frame.black_clock, bottom_bar_top)],
-                    );
-                    for (clock, bar_top) in clock_values {
+                    for (clock, bar_top, idx) in
+                        clock_positions(&frame, self.orientation, btm_bar_y)
+                    {
                         if let Some(centis) = clock {
-                            let idx = (bar_top > 0) as usize;
                             let region_width = render_clock_region(
                                 &mut clock_buffer,
                                 self.theme,
@@ -300,55 +295,47 @@ impl Iterator for Render {
                 if let Some(frame) = self.frames.next() {
                     if self.bars.is_some() {
                         let bar_height = self.theme.bar_height();
-                        let bottom_bar_top = bar_height + self.theme.width();
-                        let clock_updates = self.orientation.fold(
-                            [
-                                (frame.black_clock, prev.black_clock, 0),
-                                (frame.white_clock, prev.white_clock, bottom_bar_top),
-                            ],
-                            [
-                                (frame.white_clock, prev.white_clock, 0),
-                                (frame.black_clock, prev.black_clock, bottom_bar_top),
-                            ],
-                        );
+                        let btm_bar_y = bar_height + self.theme.width();
+                        let prev_clocks = clock_positions(prev, self.orientation, btm_bar_y);
+                        let curr_clocks = clock_positions(&frame, self.orientation, btm_bar_y);
 
-                        for (clock, prev_clock, bar_top) in clock_updates {
-                            if clock != prev_clock {
-                                if let Some(centis) = clock {
-                                    let mut ctrl = block::GraphicControl::default();
-                                    ctrl.set_disposal_method(block::DisposalMethod::Keep);
-                                    blocks.encode(ctrl).expect("enc clock ctrl");
+                        for ((clock, bar_top, idx), (prev_clock, _, _)) in
+                            curr_clocks.into_iter().zip(prev_clocks)
+                        {
+                            let Some(centis) = clock.filter(|&c| Some(c) != prev_clock) else {
+                                continue;
+                            };
+                            let mut ctrl = block::GraphicControl::default();
+                            ctrl.set_disposal_method(block::DisposalMethod::Keep);
+                            blocks.encode(ctrl).expect("enc clock ctrl");
 
-                                    let idx = (bar_top > 0) as usize;
-                                    let region_width = render_clock_region(
-                                        &mut self.buffer,
-                                        self.theme,
-                                        self.font,
-                                        centis,
-                                        self.clock_widths[idx],
-                                    );
-                                    self.clock_widths[idx] = region_width;
-                                    let region_size = bar_height * region_width;
-                                    let clock_left =
-                                        self.theme.width() - region_width - CLOCK_REGION_PADDING;
+                            let region_width = render_clock_region(
+                                &mut self.buffer,
+                                self.theme,
+                                self.font,
+                                centis,
+                                self.clock_widths[idx],
+                            );
+                            self.clock_widths[idx] = region_width;
+                            let region_size = bar_height * region_width;
+                            let clock_left =
+                                self.theme.width() - region_width - CLOCK_REGION_PADDING;
 
-                                    blocks
-                                        .encode(
-                                            block::ImageDesc::default()
-                                                .with_left(clock_left as u16)
-                                                .with_top(bar_top as u16)
-                                                .with_height(bar_height as u16)
-                                                .with_width(region_width as u16),
-                                        )
-                                        .expect("enc clock desc");
+                            blocks
+                                .encode(
+                                    block::ImageDesc::default()
+                                        .with_left(clock_left as u16)
+                                        .with_top(bar_top as u16)
+                                        .with_height(bar_height as u16)
+                                        .with_width(region_width as u16),
+                                )
+                                .expect("enc clock desc");
 
-                                    let mut image_data = block::ImageData::new(region_size);
-                                    image_data
-                                        .data_mut()
-                                        .extend_from_slice(&self.buffer[..region_size]);
-                                    blocks.encode(image_data).expect("enc clock data");
-                                }
-                            }
+                            let mut image_data = block::ImageData::new(region_size);
+                            image_data
+                                .data_mut()
+                                .extend_from_slice(&self.buffer[..region_size]);
+                            blocks.encode(image_data).expect("enc clock data");
                         }
                     }
 
@@ -803,4 +790,15 @@ fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Them
             false => theme.square_light_color(),
         },
     }
+}
+
+fn clock_positions(
+    frame: &RenderFrame,
+    orientation: Orientation,
+    btm_bar_y: usize,
+) -> [(Option<u32>, usize, usize); 2] {
+    orientation.fold(
+        [(frame.black_clock, 0, 0), (frame.white_clock, btm_bar_y, 1)],
+        [(frame.white_clock, 0, 0), (frame.black_clock, btm_bar_y, 1)],
+    )
 }
