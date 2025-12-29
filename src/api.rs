@@ -151,7 +151,7 @@ impl CheckSquare {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Default)]
+#[derive(Deserialize)]
 pub struct Clocks {
     #[serde(default)]
     pub white: Vec<u32>,
@@ -159,9 +159,7 @@ pub struct Clocks {
     pub black: Vec<u32>,
 }
 
-#[derive(
-    Debug, Copy, Clone, PartialEq, Eq, strum::EnumIter, strum::EnumString, strum::IntoStaticStr,
-)]
+#[derive(Copy, Clone, strum::EnumIter, strum::EnumString, strum::IntoStaticStr)]
 #[repr(u8)]
 pub enum MoveGlyph {
     #[strum(serialize = "!")]
