@@ -12,6 +12,9 @@ use crate::{
 };
 
 const GLYPH_BADGE_RADIUS: f32 = 18.0;
+const GLYPH_FONT_SIZE: f32 = 32.0;
+const BAR_PADDING: f32 = 10.0;
+const CLOCK_FONT_SIZE: f32 = 36.0;
 const CLOCK_REGION_PADDING: usize = 20;
 
 enum RenderState {
@@ -227,11 +230,13 @@ impl Iterator for Render {
                     }
 
                     let mut clock_buffer = vec![0u8; bar_height * self.theme.width()];
-                    for (clock, bar_top, idx) in
+                    for (idx, (clock, bar_top)) in
                         clock_positions(&frame, self.orientation, btm_bar_y)
+                            .into_iter()
+                            .enumerate()
                     {
                         if let Some(centis) = clock {
-                            let region_width = render_clock_region(
+                            let (region_width, clock_left) = render_clock_region(
                                 &mut clock_buffer,
                                 self.theme,
                                 self.font,
@@ -239,8 +244,6 @@ impl Iterator for Render {
                                 self.clock_widths[idx],
                             );
                             self.clock_widths[idx] = region_width;
-                            let clock_left =
-                                self.theme.width() - region_width - CLOCK_REGION_PADDING;
                             let src = ArrayView2::from_shape(
                                 (bar_height, region_width),
                                 &clock_buffer[..bar_height * region_width],
@@ -299,8 +302,8 @@ impl Iterator for Render {
                         let prev_clocks = clock_positions(prev, self.orientation, btm_bar_y);
                         let curr_clocks = clock_positions(&frame, self.orientation, btm_bar_y);
 
-                        for ((clock, bar_top, idx), (prev_clock, _, _)) in
-                            curr_clocks.into_iter().zip(prev_clocks)
+                        for (idx, ((clock, bar_top), (prev_clock, _))) in
+                            curr_clocks.into_iter().zip(prev_clocks).enumerate()
                         {
                             let Some(centis) = clock.filter(|&c| Some(c) != prev_clock) else {
                                 continue;
@@ -309,7 +312,7 @@ impl Iterator for Render {
                             ctrl.set_disposal_method(block::DisposalMethod::Keep);
                             blocks.encode(ctrl).expect("enc clock ctrl");
 
-                            let region_width = render_clock_region(
+                            let (region_width, clock_left) = render_clock_region(
                                 &mut self.buffer,
                                 self.theme,
                                 self.font,
@@ -318,8 +321,6 @@ impl Iterator for Render {
                             );
                             self.clock_widths[idx] = region_width;
                             let region_size = bar_height * region_width;
-                            let clock_left =
-                                self.theme.width() - region_width - CLOCK_REGION_PADDING;
 
                             blocks
                                 .encode(
@@ -433,7 +434,7 @@ fn render_glyph_badge(
     let center_x = square_size as f32 - GLYPH_BADGE_RADIUS;
     let center_y = GLYPH_BADGE_RADIUS;
     let bg_color = theme.move_color(glyph);
-    let inner_radius_sq = (GLYPH_BADGE_RADIUS - 0.5) * (GLYPH_BADGE_RADIUS - 0.5);
+    let inner_radius_sq = (GLYPH_BADGE_RADIUS - 0.5).powi(2);
     let min_x = (center_x - GLYPH_BADGE_RADIUS).max(0.0) as usize;
     let max_x = ((center_x + GLYPH_BADGE_RADIUS).ceil() as usize).min(square_size);
     let min_y = (center_y - GLYPH_BADGE_RADIUS).max(0.0) as usize;
@@ -449,7 +450,10 @@ fn render_glyph_badge(
         }
     }
 
-    let scale = Scale { x: 32.0, y: 32.0 };
+    let scale = Scale {
+        x: GLYPH_FONT_SIZE,
+        y: GLYPH_FONT_SIZE,
+    };
     let glyphs: Vec<_> = font
         .layout(glyph.into(), scale, rusttype::point(0.0, 0.0))
         .collect();
@@ -465,6 +469,11 @@ fn render_glyph_badge(
                 )
             },
         );
+
+    if gmin_x == i32::MAX {
+        return;
+    }
+
     let offset_x = center_x - (gmax_x + gmin_x) as f32 / 2.0;
     let offset_y = center_y - (gmax_y + gmin_y) as f32 / 2.0;
     let text_color = theme.glyph_text_color();
@@ -696,9 +705,12 @@ fn render_clock_region(
     font: &Font,
     centis: u32,
     min_width: usize,
-) -> usize {
+) -> (usize, usize) {
     let bar_height = theme.bar_height();
-    let scale = Scale { x: 36.0, y: 36.0 };
+    let scale = Scale {
+        x: CLOCK_FONT_SIZE,
+        y: CLOCK_FONT_SIZE,
+    };
     let v_metrics = font.v_metrics(scale);
 
     let clock_str = format_clock(centis);
@@ -726,7 +738,7 @@ fn render_clock_region(
         if let Some(bb) = g.pixel_bounding_box() {
             g.draw(|left, top, intensity| {
                 let left = left as i32 + bb.min.x + text_offset;
-                let top = top as i32 + bb.min.y + (10.0 + v_metrics.ascent) as i32;
+                let top = top as i32 + bb.min.y + (BAR_PADDING + v_metrics.ascent) as i32;
                 if left >= 0
                     && left < region_width as i32
                     && top >= 0
@@ -743,7 +755,8 @@ fn render_clock_region(
         }
     }
 
-    region_width
+    let clock_left = theme.width() - region_width - CLOCK_REGION_PADDING;
+    (region_width, clock_left)
 }
 
 fn highlight_uci(uci: Option<UciMove>) -> Bitboard {
@@ -796,9 +809,9 @@ fn clock_positions(
     frame: &RenderFrame,
     orientation: Orientation,
     btm_bar_y: usize,
-) -> [(Option<u32>, usize, usize); 2] {
+) -> [(Option<u32>, usize); 2] {
     orientation.fold(
-        [(frame.black_clock, 0, 0), (frame.white_clock, btm_bar_y, 1)],
-        [(frame.white_clock, 0, 0), (frame.black_clock, btm_bar_y, 1)],
+        [(frame.black_clock, 0), (frame.white_clock, btm_bar_y)],
+        [(frame.white_clock, 0), (frame.black_clock, btm_bar_y)],
     )
 }
