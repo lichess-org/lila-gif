@@ -29,7 +29,7 @@ static GLOBAL: Jemalloc = Jemalloc;
 #[derive(Parser)]
 struct Opt {
     /// Listen on this address.
-    #[arg(long = "bind", default_value = "127.0.0.1:6175")]
+    #[arg(long = "bind", env = "LILA_GIF_BIND", default_value = "127.0.0.1:6175")]
     bind: SocketAddr,
 }
 
