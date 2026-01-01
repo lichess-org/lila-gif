@@ -2,7 +2,7 @@ name: Build and Push Container
 
 on:
   push:
-    branches: [main, lakin/dockerize]
+    branches: [main]
   workflow_dispatch:
     inputs:
       tag:
