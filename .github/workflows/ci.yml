@@ -39,7 +39,7 @@ jobs:
     needs: build
     if: github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v7
         with:
           name: lila-gif
       - name: Configure SSH
