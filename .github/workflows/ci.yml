@@ -19,14 +19,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         with:
           cache-from: type=gha
           cache-to: type=gha
           outputs: type=local,dest=dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: lila-gif
           path: dist/usr/local/bin/lila-gif
@@ -39,7 +39,7 @@ jobs:
     needs: build
     if: github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v7
         with:
           name: lila-gif
       - name: Configure SSH
