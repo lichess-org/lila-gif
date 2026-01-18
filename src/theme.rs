@@ -1,12 +1,17 @@
-use gift::block::{ColorTableConfig, GlobalColorTable};
+use gift::block::{ColorTableConfig, ColorTableExistence, ColorTableOrdering, GlobalColorTable};
 use ndarray::{s, Array2, ArrayView2};
 use rusttype::Font;
 use shakmaty::{Piece, Role};
+use strum::IntoEnumIterator;
 
-use crate::assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet};
+use crate::{
+    api::MoveGlyph,
+    assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet},
+};
 
 const SQUARE: usize = 90;
 const COLOR_WIDTH: usize = 90 * 2 / 3;
+const GLYPH_TEXT_COLOR: [u8; 3] = [0xff, 0xff, 0xff];
 
 pub struct SpriteKey {
     pub piece: Option<Piece>,
@@ -35,6 +40,7 @@ pub struct Theme {
     color_table_config: ColorTableConfig,
     global_color_table: GlobalColorTable,
     sprite: Array2<u8>,
+    extended_color_idx: u8,
 }
 
 impl Theme {
@@ -48,11 +54,28 @@ impl Theme {
         let sprite =
             Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned())
                 .expect("from shape");
+        let mut colors = preamble
+            .global_color_table
+            .expect("color table present")
+            .colors()
+            .to_vec();
+        let extended_color_idx = (colors.len() / 3) as u8;
+
+        colors.extend_from_slice(&GLYPH_TEXT_COLOR);
+        colors.extend(MoveGlyph::iter().flat_map(|glyph| glyph.color()));
+
+        let padded_count = (colors.len() / 3).next_power_of_two();
+        colors.resize(padded_count * 3, 0);
 
         Theme {
-            color_table_config: preamble.logical_screen_desc.color_table_config(),
-            global_color_table: preamble.global_color_table.expect("color table present"),
+            color_table_config: ColorTableConfig::new(
+                ColorTableExistence::Present,
+                ColorTableOrdering::NotSorted,
+                padded_count as u16,
+            ),
+            global_color_table: GlobalColorTable::with_colors(&colors),
             sprite,
+            extended_color_idx,
         }
     }
 
@@ -86,6 +109,14 @@ impl Theme {
 
     pub fn transparent_color(&self) -> u8 {
         self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 5)]
+    }
+
+    pub fn glyph_text_color(&self) -> u8 {
+        self.extended_color_idx
+    }
+
+    pub fn move_color(&self, glyph: MoveGlyph) -> u8 {
+        self.extended_color_idx + glyph.index()
     }
 
     pub fn square(&self) -> usize {

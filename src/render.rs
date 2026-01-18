@@ -2,14 +2,20 @@ use std::{iter::FusedIterator, vec};
 
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{block, Encoder};
-use ndarray::{s, ArrayViewMut2};
+use ndarray::{s, ArrayView2, ArrayViewMut2};
 use rusttype::{Font, LayoutIter, Scale};
 use shakmaty::{uci::UciMove, Bitboard, Board, File, Rank, Square};
 
 use crate::{
-    api::{Comment, Coordinates, Orientation, PlayerName, RequestBody, RequestParams},
+    api::{Comment, Coordinates, MoveGlyph, Orientation, PlayerName, RequestBody, RequestParams},
     theme::{SpriteKey, Theme, Themes},
 };
+
+const GLYPH_BADGE_RADIUS: f32 = 18.0;
+const GLYPH_FONT_SIZE: f32 = 32.0;
+const BAR_PADDING: f32 = 10.0;
+const CLOCK_FONT_SIZE: f32 = 36.0;
+const CLOCK_REGION_PADDING: usize = 20;
 
 enum RenderState {
     Preamble,
@@ -23,11 +29,18 @@ struct PlayerBars {
 }
 
 impl PlayerBars {
-    fn from(white: Option<PlayerName>, black: Option<PlayerName>) -> Option<PlayerBars> {
-        if white.is_some() || black.is_some() {
+    fn from(
+        white: Option<PlayerName>,
+        black: Option<PlayerName>,
+        has_clocks: bool,
+    ) -> Option<PlayerBars> {
+        let white_name = white.filter(|s| !s.is_empty());
+        let black_name = black.filter(|s| !s.is_empty());
+
+        if white_name.is_some() || black_name.is_some() || has_clocks {
             Some(PlayerBars {
-                white: white.unwrap_or_default(),
-                black: black.unwrap_or_default(),
+                white: white_name.unwrap_or_default(),
+                black: black_name.unwrap_or_default(),
             })
         } else {
             None
@@ -41,6 +54,9 @@ struct RenderFrame {
     highlighted: Bitboard,
     checked: Bitboard,
     delay: Option<u16>,
+    glyph: Option<MoveGlyph>,
+    white_clock: Option<u32>,
+    black_clock: Option<u32>,
 }
 
 impl RenderFrame {
@@ -68,11 +84,12 @@ pub struct Render {
     coordinates: Coordinates,
     frames: vec::IntoIter<RenderFrame>,
     kork: bool,
+    clock_widths: [usize; 2],
 }
 
 impl Render {
     pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
-        let bars = PlayerBars::from(params.white, params.black);
+        let bars = PlayerBars::from(params.white, params.black, false);
         let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
@@ -92,14 +109,19 @@ impl Render {
                     .collect(),
                 board: params.fen.into_setup().board,
                 delay: None,
+                glyph: None,
+                white_clock: None,
+                black_clock: None,
             }]
             .into_iter(),
             kork: false,
+            clock_widths: [0; 2],
         }
     }
 
     pub fn new_animation(themes: &'static Themes, params: RequestBody) -> Render {
-        let bars = PlayerBars::from(params.white, params.black);
+        let clocks = params.clocks;
+        let bars = PlayerBars::from(params.white, params.black, clocks.is_some());
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
         Render {
@@ -114,19 +136,32 @@ impl Render {
             frames: params
                 .frames
                 .into_iter()
-                .map(|frame| RenderFrame {
-                    highlighted: highlight_uci(frame.last_move),
-                    checked: frame
-                        .check
-                        .to_square(frame.fen.as_setup())
-                        .into_iter()
-                        .collect(),
-                    board: frame.fen.into_setup().board,
-                    delay: Some(frame.delay.unwrap_or(default_delay)),
+                .enumerate()
+                .map(|(i, frame)| {
+                    let white_clock = clocks
+                        .as_ref()
+                        .and_then(|c| c.white.get(i.saturating_sub(1) / 2).copied());
+                    let black_clock = clocks
+                        .as_ref()
+                        .and_then(|c| c.black.get(i.saturating_sub(2) / 2).copied());
+                    RenderFrame {
+                        highlighted: highlight_uci(frame.last_move),
+                        checked: frame
+                            .check
+                            .to_square(frame.fen.as_setup())
+                            .into_iter()
+                            .collect(),
+                        board: frame.fen.into_setup().board,
+                        delay: Some(frame.delay.unwrap_or(default_delay)),
+                        glyph: frame.glyph,
+                        white_clock,
+                        black_clock,
+                    }
                 })
                 .collect::<Vec<_>>()
                 .into_iter(),
             kork: true,
+            clock_widths: [0; 2],
         }
     }
 }
@@ -171,6 +206,7 @@ impl Iterator for Render {
                     blocks.encode(comments).expect("enc comment");
                 }
 
+                let frame = self.frames.next().unwrap_or_default();
                 let mut view = ArrayViewMut2::from_shape(
                     (self.theme.height(self.bars.is_some()), self.theme.width()),
                     &mut self.buffer,
@@ -178,29 +214,53 @@ impl Iterator for Render {
                 .expect("shape");
 
                 let mut board_view = if let Some(ref bars) = self.bars {
-                    render_bar(
-                        view.slice_mut(s!(..self.theme.bar_height(), ..)),
-                        self.theme,
-                        self.font,
-                        self.orientation.fold(&bars.black, &bars.white),
+                    let bar_height = self.theme.bar_height();
+                    let btm_bar_y = bar_height + self.theme.width();
+                    let bar_names = self.orientation.fold(
+                        [(&bars.black as &str, 0), (&bars.white, btm_bar_y)],
+                        [(&bars.white as &str, 0), (&bars.black, btm_bar_y)],
                     );
+                    for (name, bar_top) in bar_names {
+                        render_bar(
+                            view.slice_mut(s!(bar_top..(bar_top + bar_height), ..)),
+                            self.theme,
+                            self.font,
+                            name,
+                        );
+                    }
 
-                    render_bar(
-                        view.slice_mut(s!((self.theme.bar_height() + self.theme.width()).., ..)),
-                        self.theme,
-                        self.font,
-                        self.orientation.fold(&bars.white, &bars.black),
-                    );
+                    let mut clock_buffer = vec![0u8; bar_height * self.theme.width()];
+                    for (idx, (clock, bar_top)) in
+                        clock_positions(&frame, self.orientation, btm_bar_y)
+                            .into_iter()
+                            .enumerate()
+                    {
+                        if let Some(centis) = clock {
+                            let (region_width, clock_left) = render_clock_region(
+                                &mut clock_buffer,
+                                self.theme,
+                                self.font,
+                                centis,
+                                self.clock_widths[idx],
+                            );
+                            self.clock_widths[idx] = region_width;
+                            let src = ArrayView2::from_shape(
+                                (bar_height, region_width),
+                                &clock_buffer[..bar_height * region_width],
+                            )
+                            .expect("clock src");
+                            view.slice_mut(s!(
+                                bar_top..(bar_top + bar_height),
+                                clock_left..(clock_left + region_width)
+                            ))
+                            .assign(&src);
+                        }
+                    }
 
-                    view.slice_mut(s!(
-                        self.theme.bar_height()..(self.theme.bar_height() + self.theme.width()),
-                        ..
-                    ))
+                    view.slice_mut(s!(bar_height..(bar_height + self.theme.width()), ..))
                 } else {
                     view
                 };
-
-                let frame = self.frames.next().unwrap_or_default();
 
                 if let Some(delay) = frame.delay {
                     let mut ctrl = block::GraphicControl::default();
@@ -236,6 +296,50 @@ impl Iterator for Render {
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
 
                 if let Some(frame) = self.frames.next() {
+                    if self.bars.is_some() {
+                        let bar_height = self.theme.bar_height();
+                        let btm_bar_y = bar_height + self.theme.width();
+                        let prev_clocks = clock_positions(prev, self.orientation, btm_bar_y);
+                        let curr_clocks = clock_positions(&frame, self.orientation, btm_bar_y);
+
+                        for (idx, ((clock, bar_top), (prev_clock, _))) in
+                            curr_clocks.into_iter().zip(prev_clocks).enumerate()
+                        {
+                            let Some(centis) = clock.filter(|&c| Some(c) != prev_clock) else {
+                                continue;
+                            };
+                            let mut ctrl = block::GraphicControl::default();
+                            ctrl.set_disposal_method(block::DisposalMethod::Keep);
+                            blocks.encode(ctrl).expect("enc clock ctrl");
+
+                            let (region_width, clock_left) = render_clock_region(
+                                &mut self.buffer,
+                                self.theme,
+                                self.font,
+                                centis,
+                                self.clock_widths[idx],
+                            );
+                            self.clock_widths[idx] = region_width;
+                            let region_size = bar_height * region_width;
+
+                            blocks
+                                .encode(
+                                    block::ImageDesc::default()
+                                        .with_left(clock_left as u16)
+                                        .with_top(bar_top as u16)
+                                        .with_height(bar_height as u16)
+                                        .with_width(region_width as u16),
+                                )
+                                .expect("enc clock desc");
+
+                            let mut image_data = block::ImageData::new(region_size);
+                            image_data
+                                .data_mut()
+                                .extend_from_slice(&self.buffer[..region_size]);
+                            blocks.encode(image_data).expect("enc clock data");
+                        }
+                    }
+
                     let mut ctrl = block::GraphicControl::default();
                     ctrl.set_disposal_method(block::DisposalMethod::Keep);
                     ctrl.set_transparent_color(Some(self.theme.transparent_color()));
@@ -320,6 +424,78 @@ impl Iterator for Render {
 
 impl FusedIterator for Render {}
 
+fn render_glyph_badge(
+    square_buffer: &mut ArrayViewMut2<u8>,
+    theme: &Theme,
+    font: &Font,
+    glyph: MoveGlyph,
+) {
+    let square_size = theme.square();
+    let center_x = square_size as f32 - GLYPH_BADGE_RADIUS;
+    let center_y = GLYPH_BADGE_RADIUS;
+    let bg_color = theme.move_color(glyph);
+    let inner_radius_sq = (GLYPH_BADGE_RADIUS - 0.5).powi(2);
+    let min_x = (center_x - GLYPH_BADGE_RADIUS).max(0.0) as usize;
+    let max_x = ((center_x + GLYPH_BADGE_RADIUS).ceil() as usize).min(square_size);
+    let min_y = (center_y - GLYPH_BADGE_RADIUS).max(0.0) as usize;
+    let max_y = ((center_y + GLYPH_BADGE_RADIUS).ceil() as usize).min(square_size);
+
+    for y in min_y..max_y {
+        for x in min_x..max_x {
+            let dx = x as f32 + 0.5 - center_x;
+            let dy = y as f32 + 0.5 - center_y;
+            if dx * dx + dy * dy <= inner_radius_sq {
+                square_buffer[(y, x)] = bg_color;
+            }
+        }
+    }
+
+    let scale = Scale {
+        x: GLYPH_FONT_SIZE,
+        y: GLYPH_FONT_SIZE,
+    };
+    let glyphs: Vec<_> = font
+        .layout(glyph.into(), scale, rusttype::point(0.0, 0.0))
+        .collect();
+    let (gmin_x, gmax_x, gmin_y, gmax_y) =
+        glyphs.iter().filter_map(|g| g.pixel_bounding_box()).fold(
+            (i32::MAX, i32::MIN, i32::MAX, i32::MIN),
+            |(min_x, max_x, min_y, max_y), bb| {
+                (
+                    min_x.min(bb.min.x),
+                    max_x.max(bb.max.x),
+                    min_y.min(bb.min.y),
+                    max_y.max(bb.max.y),
+                )
+            },
+        );
+
+    if gmin_x == i32::MAX {
+        return;
+    }
+
+    let offset_x = center_x - (gmax_x + gmin_x) as f32 / 2.0;
+    let offset_y = center_y - (gmax_y + gmin_y) as f32 / 2.0;
+    let text_color = theme.glyph_text_color();
+
+    for g in &glyphs {
+        if let Some(bb) = g.pixel_bounding_box() {
+            g.draw(|left, top, intensity| {
+                let px = (left as i32 + bb.min.x) as f32 + offset_x;
+                let py = (top as i32 + bb.min.y) as f32 + offset_y;
+                if px >= 0.0
+                    && px < square_size as f32
+                    && py >= 0.0
+                    && py < square_size as f32
+                    && intensity >= 0.05
+                {
+                    square_buffer[(py as usize, px as usize)] = text_color;
+                }
+            });
+        }
+    }
+}
+
 fn render_diff(
     buffer: &mut [u8],
     theme: &Theme,
@@ -393,6 +569,12 @@ fn render_diff(
             if sq.file() == coords_file {
                 render_rank(&mut square_buffer, &sq, &key, theme, font, coords_scale)
             };
+        }
+
+        if let Some(glyph) = frame.glyph {
+            if frame.highlighted.contains(sq) && frame.board.piece_at(sq).is_some() {
+                render_glyph_badge(&mut square_buffer, theme, font, glyph);
+            }
         }
     }
 
@@ -501,6 +683,82 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_na
     }
 }
 
+fn format_clock(centis: u32) -> String {
+    let total_secs = centis / 100;
+    let tenths = (centis % 100) / 10;
+    let hours = total_secs / 3600;
+    let mins = (total_secs % 3600) / 60;
+    let secs = total_secs % 60;
+
+    if hours > 0 {
+        format!("{}:{:02}:{:02}", hours, mins, secs)
+    } else if mins > 0 {
+        format!("{}:{:02}", mins, secs)
+    } else {
+        format!("00:{:02}.{}", secs, tenths)
+    }
+}
+
+fn render_clock_region(
+    buffer: &mut [u8],
+    theme: &Theme,
+    font: &Font,
+    centis: u32,
+    min_width: usize,
+) -> (usize, usize) {
+    let bar_height = theme.bar_height();
+    let scale = Scale {
+        x: CLOCK_FONT_SIZE,
+        y: CLOCK_FONT_SIZE,
+    };
+    let v_metrics = font.v_metrics(scale);
+
+    let clock_str = format_clock(centis);
+    let glyphs: Vec<_> = font
+        .layout(&clock_str, scale, rusttype::point(0.0, 0.0))
+        .collect();
+    let text_width = glyphs
+        .iter()
+        .filter_map(|g| g.pixel_bounding_box())
+        .map(|bb| bb.max.x)
+        .max()
+        .unwrap_or(0) as usize;
+
+    let region_width = text_width.max(min_width);
+    let text_offset = (region_width - text_width) as i32;
+    let mut view = ArrayViewMut2::from_shape(
+        (bar_height, region_width),
+        &mut buffer[..bar_height * region_width],
+    )
+    .expect("clock region shape");
+    view.fill(theme.bar_color());
+
+    let clock_color = theme.text_color();
+    for g in &glyphs {
+        if let Some(bb) = g.pixel_bounding_box() {
+            g.draw(|left, top, intensity| {
+                let left = left as i32 + bb.min.x + text_offset;
+                let top = top as i32 + bb.min.y + (BAR_PADDING + v_metrics.ascent) as i32;
+                if left >= 0
+                    && left < region_width as i32
+                    && top >= 0
+                    && top < bar_height as i32
+                    && intensity >= 0.01
+                {
+                    view[(top as usize, left as usize)] = if intensity < 0.5 {
+                        theme.med_text_color()
+                    } else {
+                        clock_color
+                    };
+                }
+            });
+        }
+    }
+
+    let clock_left = theme.width() - region_width - CLOCK_REGION_PADDING;
+    (region_width, clock_left)
+}
+
 fn highlight_uci(uci: Option<UciMove>) -> Bitboard {
     match uci {
         Some(UciMove::Normal { from, to, .. }) => Bitboard::from(from) | Bitboard::from(to),
@@ -545,4 +803,15 @@ fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Them
             false => theme.square_light_color(),
         },
     }
+}
+
+fn clock_positions(
+    frame: &RenderFrame,
+    orientation: Orientation,
+    btm_bar_y: usize,
+) -> [(Option<u32>, usize); 2] {
+    orientation.fold(
+        [(frame.black_clock, 0), (frame.white_clock, btm_bar_y)],
+        [(frame.white_clock, 0), (frame.black_clock, btm_bar_y)],
+    )
 }
