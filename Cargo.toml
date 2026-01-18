@@ -13,11 +13,11 @@ edition = "2021"
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
 rusttype = "0.9"
-serde = { version = "1.0", features = ["derive"] }
-strum = { version = "0.27.2", features = ["derive"] }
-shakmaty = "0.29"
+serde = { version = "1", features = ["derive"] }
+strum = { version = "0.27", features = ["derive"] }
+shakmaty = "0.30"
 serde_with = "3"
-ndarray = "0.16"
+ndarray = "0.17"
 bytes = "1"
 arrayvec = { version = "0.7", features = ["serde"] }
 clap = { version = "4", features = ["derive", "deprecated", "env"] }
