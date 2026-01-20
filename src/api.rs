@@ -151,12 +151,10 @@ impl CheckSquare {
     }
 }
 
-#[derive(Deserialize)]
-pub struct Clocks {
-    #[serde(default)]
-    pub white: Vec<u32>,
-    #[serde(default)]
-    pub black: Vec<u32>,
+#[derive(Deserialize, Default)]
+pub struct FrameClock {
+    pub white: Option<u32>,
+    pub black: Option<u32>,
 }
 
 #[derive(Copy, Clone, strum::EnumIter, strum::EnumString, strum::IntoStaticStr)]
@@ -239,8 +237,6 @@ pub struct RequestBody {
     pub piece: PieceSet,
     #[serde(default)]
     pub coordinates: Coordinates,
-    #[serde(default)]
-    pub clocks: Option<Clocks>,
 }
 
 #[serde_as]
@@ -259,6 +255,8 @@ pub struct RequestFrame {
     #[serde_as(as = "Option<DisplayFromStr>")]
     #[serde(default)]
     pub glyph: Option<MoveGlyph>,
+    #[serde(default)]
+    pub clock: FrameClock,
 }
 
 impl RequestBody {
@@ -297,6 +295,7 @@ impl RequestBody {
                 last_move: Some(UciMove::from_move(m, CastlingMode::Standard)),
                 delay: None,
                 glyph: None,
+                clock: FrameClock::default(),
             })
         }
 
@@ -312,7 +311,6 @@ impl RequestBody {
             theme: BoardTheme::default(),
             piece: PieceSet::default(),
             coordinates: Coordinates::default(),
-            clocks: None,
         }
     }
 }

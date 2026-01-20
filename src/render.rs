@@ -120,8 +120,11 @@ impl Render {
     }
 
     pub fn new_animation(themes: &'static Themes, params: RequestBody) -> Render {
-        let clocks = params.clocks;
-        let bars = PlayerBars::from(params.white, params.black, clocks.is_some());
+        let has_clocks = params
+            .frames
+            .iter()
+            .any(|f| f.clock.white.is_some() || f.clock.black.is_some());
+        let bars = PlayerBars::from(params.white, params.black, has_clocks);
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
         Render {
@@ -136,27 +139,18 @@ impl Render {
             frames: params
                 .frames
                 .into_iter()
-                .enumerate()
-                .map(|(i, frame)| {
-                    let white_clock = clocks
-                        .as_ref()
-                        .and_then(|c| c.white.get(i.saturating_sub(1) / 2).copied());
-                    let black_clock = clocks
-                        .as_ref()
-                        .and_then(|c| c.black.get(i.saturating_sub(2) / 2).copied());
-                    RenderFrame {
-                        highlighted: highlight_uci(frame.last_move),
-                        checked: frame
-                            .check
-                            .to_square(frame.fen.as_setup())
-                            .into_iter()
-                            .collect(),
-                        board: frame.fen.into_setup().board,
-                        delay: Some(frame.delay.unwrap_or(default_delay)),
-                        glyph: frame.glyph,
-                        white_clock,
-                        black_clock,
-                    }
+                .map(|frame| RenderFrame {
+                    highlighted: highlight_uci(frame.last_move),
+                    checked: frame
+                        .check
+                        .to_square(frame.fen.as_setup())
+                        .into_iter()
+                        .collect(),
+                    board: frame.fen.into_setup().board,
+                    delay: Some(frame.delay.unwrap_or(default_delay)),
+                    glyph: frame.glyph,
+                    white_clock: frame.clock.white,
+                    black_clock: frame.clock.black,
                 })
                 .collect::<Vec<_>>()
                 .into_iter(),
