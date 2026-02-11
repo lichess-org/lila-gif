@@ -154,15 +154,15 @@ impl CheckSquare {
 #[derive(Deserialize, Default, Clone, Debug, PartialEq, Eq)]
 pub struct PocketData {
     #[serde(default)]
-    pub p: u8,
+    pub pawn: u8,
     #[serde(default)]
-    pub n: u8,
+    pub knight: u8,
     #[serde(default)]
-    pub b: u8,
+    pub bishop: u8,
     #[serde(default)]
-    pub r: u8,
+    pub rook: u8,
     #[serde(default)]
-    pub q: u8,
+    pub queen: u8,
 }
 
 #[derive(Deserialize, Default, Clone, Debug, PartialEq, Eq)]

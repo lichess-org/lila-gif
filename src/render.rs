@@ -558,11 +558,11 @@ fn render_pockets(
 ) {
     view.fill(theme.bar_color());
     let roles = [
-        (shakmaty::Role::Pawn, pockets.p),
-        (shakmaty::Role::Knight, pockets.n),
-        (shakmaty::Role::Bishop, pockets.b),
-        (shakmaty::Role::Rook, pockets.r),
-        (shakmaty::Role::Queen, pockets.q),
+        (shakmaty::Role::Pawn, pockets.pawn),
+        (shakmaty::Role::Knight, pockets.knight),
+        (shakmaty::Role::Bishop, pockets.bishop),
+        (shakmaty::Role::Rook, pockets.rook),
+        (shakmaty::Role::Queen, pockets.queen),
     ];
 
     let square_size = theme.square();
