@@ -26,7 +26,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha
           outputs: type=local,dest=dist
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: lila-gif
           path: dist/usr/local/bin/lila-gif
@@ -39,7 +39,7 @@ jobs:
     needs: build
     if: github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: lila-gif
       - name: Configure SSH
