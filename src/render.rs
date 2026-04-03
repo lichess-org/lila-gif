@@ -7,7 +7,7 @@ use rusttype::{Font, LayoutIter, Scale};
 use shakmaty::{uci::UciMove, Bitboard, Board, File, Rank, Square};
 
 use crate::{
-    api::{Comment, Coordinates, MoveGlyph, Orientation, PlayerName, RequestBody, RequestParams},
+    api::{Comment, Coordinates, MoveGlyph, Orientation, PlayerName, RequestBody, RequestParams, RequestPockets, PocketData},
     theme::{SpriteKey, Theme, Themes},
 };
 
@@ -48,7 +48,7 @@ impl PlayerBars {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, PartialEq)]
 struct RenderFrame {
     board: Board,
     highlighted: Bitboard,
@@ -57,6 +57,7 @@ struct RenderFrame {
     glyph: Option<MoveGlyph>,
     white_clock: Option<u32>,
     black_clock: Option<u32>,
+    pockets: Option<RequestPockets>,
 }
 
 impl RenderFrame {
@@ -80,6 +81,7 @@ pub struct Render {
     buffer: Vec<u8>,
     comment: Option<Comment>,
     bars: Option<PlayerBars>,
+    has_pockets: bool,
     orientation: Orientation,
     coordinates: Coordinates,
     frames: vec::IntoIter<RenderFrame>,
@@ -91,13 +93,15 @@ impl Render {
     pub fn new_image(themes: &'static Themes, params: RequestParams) -> Render {
         let bars = PlayerBars::from(params.white, params.black, false);
         let theme = themes.get(params.theme, params.piece);
+        let has_pockets = params.pockets.is_some();
         Render {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
+            buffer: vec![0; theme.height(bars.is_some(), has_pockets) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
             bars,
+            has_pockets,
             orientation: params.orientation,
             coordinates: params.coordinates,
             frames: vec![RenderFrame {
@@ -112,6 +116,7 @@ impl Render {
                 glyph: None,
                 white_clock: None,
                 black_clock: None,
+                pockets: params.pockets,
             }]
             .into_iter(),
             kork: false,
@@ -124,16 +129,18 @@ impl Render {
             .frames
             .iter()
             .any(|f| f.clock.white.is_some() || f.clock.black.is_some());
+        let has_pockets = params.frames.iter().any(|f| f.pockets.is_some());
         let bars = PlayerBars::from(params.white, params.black, has_clocks);
         let default_delay = params.delay;
         let theme = themes.get(params.theme, params.piece);
         Render {
             theme,
             font: themes.font(),
-            buffer: vec![0; theme.height(bars.is_some()) * theme.width()],
+            buffer: vec![0; theme.height(bars.is_some(), has_pockets) * theme.width()],
             state: RenderState::Preamble,
             comment: params.comment,
             bars,
+            has_pockets,
             orientation: params.orientation,
             coordinates: params.coordinates,
             frames: params
@@ -151,6 +158,7 @@ impl Render {
                     glyph: frame.glyph,
                     white_clock: frame.clock.white,
                     black_clock: frame.clock.black,
+                    pockets: frame.pockets,
                 })
                 .collect::<Vec<_>>()
                 .into_iter(),
@@ -174,7 +182,7 @@ impl Iterator for Render {
                 blocks
                     .encode(
                         block::LogicalScreenDesc::default()
-                            .with_screen_height(self.theme.height(self.bars.is_some()) as u16)
+                            .with_screen_height(self.theme.height(self.bars.is_some(), self.has_pockets) as u16)
                             .with_screen_width(self.theme.width() as u16)
                             .with_color_table_config(self.theme.color_table_config()),
                     )
@@ -202,14 +210,19 @@ impl Iterator for Render {
 
                 let frame = self.frames.next().unwrap_or_default();
                 let mut view = ArrayViewMut2::from_shape(
-                    (self.theme.height(self.bars.is_some()), self.theme.width()),
+                    (self.theme.height(self.bars.is_some(), self.has_pockets), self.theme.width()),
                     &mut self.buffer,
                 )
                 .expect("shape");
 
-                let mut board_view = if let Some(ref bars) = self.bars {
-                    let bar_height = self.theme.bar_height();
-                    let btm_bar_y = bar_height + self.theme.width();
+                let bar_height = self.theme.bar_height();
+                let pocket_height = self.theme.pocket_height();
+                let board_width = self.theme.width();
+
+                let mut top_offset = 0;
+
+                if let Some(ref bars) = self.bars {
+                    let btm_bar_y = self.theme.height(true, self.has_pockets) - bar_height;
                     let bar_names = self.orientation.fold(
                         [(&bars.black as &str, 0), (&bars.white, btm_bar_y)],
                         [(&bars.white as &str, 0), (&bars.black, btm_bar_y)],
@@ -223,7 +236,7 @@ impl Iterator for Render {
                         );
                     }
 
-                    let mut clock_buffer = vec![0u8; bar_height * self.theme.width()];
+                    let mut clock_buffer = vec![0u8; bar_height * board_width];
                     for (idx, (clock, bar_top)) in
                         clock_positions(&frame, self.orientation, btm_bar_y)
                             .into_iter()
@@ -250,11 +263,18 @@ impl Iterator for Render {
                             .assign(&src);
                         }
                     }
+                    top_offset += bar_height;
+                }
 
-                    view.slice_mut(s!(bar_height..(bar_height + self.theme.width()), ..))
-                } else {
-                    view
-                };
+                if self.has_pockets {
+                    let btm_pocket_y = top_offset + pocket_height + board_width;
+                    let pockets = frame.pockets.clone().unwrap_or_default();
+                    let (top_p, btm_p) = self.orientation.fold((&pockets.black, &pockets.white), (&pockets.white, &pockets.black));
+
+                    render_pockets(view.slice_mut(s!(top_offset..(top_offset + pocket_height), ..)), self.theme, self.font, top_p, self.orientation.fold(shakmaty::Color::Black, shakmaty::Color::White));
+                    render_pockets(view.slice_mut(s!(btm_pocket_y..(btm_pocket_y + pocket_height), ..)), self.theme, self.font, btm_p, self.orientation.fold(shakmaty::Color::White, shakmaty::Color::Black));
+                    top_offset += pocket_height;
+                }
 
                 if let Some(delay) = frame.delay {
                     let mut ctrl = block::GraphicControl::default();
@@ -262,8 +282,9 @@ impl Iterator for Render {
                     blocks.encode(ctrl).expect("enc graphic control");
                 }
 
+                let mut board_view = view.slice_mut(s!(top_offset..(top_offset + board_width), ..));
                 render_diff(
-                    board_view.as_slice_mut().expect("continguous"),
+                    board_view.as_slice_mut().expect("contiguous"),
                     self.theme,
                     self.orientation,
                     self.coordinates,
@@ -275,7 +296,7 @@ impl Iterator for Render {
                 blocks
                     .encode(
                         block::ImageDesc::default()
-                            .with_height(self.theme.height(self.bars.is_some()) as u16)
+                            .with_height(self.theme.height(self.bars.is_some(), self.has_pockets) as u16)
                             .with_width(self.theme.width() as u16),
                     )
                     .expect("enc image desc");
@@ -290,9 +311,12 @@ impl Iterator for Render {
                 let mut blocks = Encoder::new(&mut output).into_block_enc();
 
                 if let Some(frame) = self.frames.next() {
+                    let bar_height = self.theme.bar_height();
+                    let pocket_height = self.theme.pocket_height();
+                    let board_width = self.theme.width();
+
                     if self.bars.is_some() {
-                        let bar_height = self.theme.bar_height();
-                        let btm_bar_y = bar_height + self.theme.width();
+                        let btm_bar_y = self.theme.height(true, self.has_pockets) - bar_height;
                         let prev_clocks = clock_positions(prev, self.orientation, btm_bar_y);
                         let curr_clocks = clock_positions(&frame, self.orientation, btm_bar_y);
 
@@ -334,6 +358,43 @@ impl Iterator for Render {
                         }
                     }
 
+                    if self.has_pockets && frame.pockets != prev.pockets {
+                        let top_pocket_y = if self.bars.is_some() { bar_height } else { 0 };
+                        let btm_pocket_y = top_pocket_y + pocket_height + board_width;
+                        let curr_pockets = frame.pockets.clone().unwrap_or_default();
+                        let prev_pockets = prev.pockets.clone().unwrap_or_default();
+
+                        let (top_color, btm_color) = self.orientation.fold((shakmaty::Color::Black, shakmaty::Color::White), (shakmaty::Color::White, shakmaty::Color::Black));
+                        let (top_curr, btm_curr) = self.orientation.fold((&curr_pockets.black, &curr_pockets.white), (&curr_pockets.white, &curr_pockets.black));
+                        let (top_prev, btm_prev) = self.orientation.fold((&prev_pockets.black, &prev_pockets.white), (&prev_pockets.white, &prev_pockets.black));
+
+                        let pocket_regions = [
+                            (top_pocket_y, top_curr, top_prev, top_color),
+                            (btm_pocket_y, btm_curr, btm_prev, btm_color),
+                        ];
+
+                        for (y, curr, prev_p, color) in pocket_regions {
+                            if curr != prev_p {
+                                let mut ctrl = block::GraphicControl::default();
+                                ctrl.set_disposal_method(block::DisposalMethod::Keep);
+                                blocks.encode(ctrl).expect("enc pocket ctrl");
+
+                                let mut pocket_view = ArrayViewMut2::from_shape((pocket_height, board_width), &mut self.buffer).expect("pocket shape");
+                                render_pockets(pocket_view.view_mut(), self.theme, self.font, curr, color);
+
+                                blocks.encode(block::ImageDesc::default()
+                                    .with_top(y as u16)
+                                    .with_height(pocket_height as u16)
+                                    .with_width(board_width as u16)
+                                ).expect("enc pocket desc");
+
+                                let mut image_data = block::ImageData::new(pocket_height * board_width);
+                                image_data.data_mut().extend_from_slice(&self.buffer[..pocket_height * board_width]);
+                                blocks.encode(image_data).expect("enc pocket data");
+                            }
+                        }
+                    }
+
                     let mut ctrl = block::GraphicControl::default();
                     ctrl.set_disposal_method(block::DisposalMethod::Keep);
                     ctrl.set_transparent_color(Some(self.theme.transparent_color()));
@@ -352,11 +413,9 @@ impl Iterator for Render {
                         self.font,
                     );
 
-                    let top = y + if self.bars.is_some() {
-                        self.theme.bar_height()
-                    } else {
-                        0
-                    };
+                    let mut top = y;
+                    if self.bars.is_some() { top += bar_height; }
+                    if self.has_pockets { top += pocket_height; }
 
                     blocks
                         .encode(
@@ -385,7 +444,7 @@ impl Iterator for Render {
                         ctrl.set_delay_time_cs(1);
                         blocks.encode(ctrl).expect("enc graphic control");
 
-                        let height = self.theme.height(self.bars.is_some());
+                        let height = self.theme.height(self.bars.is_some(), self.has_pockets);
                         let width = self.theme.width();
                         blocks
                             .encode(
@@ -487,6 +546,102 @@ fn render_glyph_badge(
                 }
             });
         }
+    }
+}
+
+fn render_pockets(
+    mut view: ArrayViewMut2<u8>,
+    theme: &Theme,
+    font: &Font,
+    pockets: &PocketData,
+    color: shakmaty::Color,
+) {
+    view.fill(theme.bar_color());
+    let roles = [
+        (shakmaty::Role::Pawn, pockets.pawn),
+        (shakmaty::Role::Knight, pockets.knight),
+        (shakmaty::Role::Bishop, pockets.bishop),
+        (shakmaty::Role::Rook, pockets.rook),
+        (shakmaty::Role::Queen, pockets.queen),
+    ];
+
+    let square_size = theme.square();
+    let pocket_h = theme.pocket_height();
+
+    let mut x_offset = (theme.width().saturating_sub(5 * square_size)) / 2;
+
+    let red_bg = theme.move_color(MoveGlyph::Blunder);
+    let white_text = theme.glyph_text_color();
+
+    for (role, count) in roles {
+        let key = SpriteKey {
+            piece: if count > 0 {
+                Some(shakmaty::Piece { color, role })
+            } else {
+                None
+            },
+            dark_square: false,
+            highlight: false,
+            check: false,
+        };
+        let sprite = theme.sprite(&key);
+
+        // Draw sprite
+        for y in 0..square_size {
+            for x in 0..square_size {
+                let ty = y;
+                let tx = x + x_offset;
+                if ty < pocket_h && tx < theme.width() {
+                    view[(ty, tx)] = sprite[(y, x)];
+                }
+            }
+        }
+
+        // Draw badge and count
+        if count > 1 {
+            let count_str = count.to_string();
+            let font_scale = Scale::uniform(32.0);
+            let v_metrics = font.v_metrics(font_scale);
+
+            let badge_size = 32;
+            let badge_x = x_offset + square_size - badge_size;
+            let badge_y = square_size - badge_size;
+
+            for y in 0..badge_size {
+                for x in 0..badge_size {
+                    let ty = badge_y + y;
+                    let tx = badge_x + x;
+                    if ty < pocket_h && tx < theme.width() {
+                        view[(ty, tx)] = red_bg;
+                    }
+                }
+            }
+
+            let glyphs: Vec<_> = font.layout(&count_str, font_scale, rusttype::point(0.0, 0.0)).collect();
+            let text_width = glyphs.iter()
+                .filter_map(|g| g.pixel_bounding_box())
+                .map(|bb| bb.max.x)
+                .max()
+                .unwrap_or(0) as f32;
+
+            let text_x = badge_x as f32 + (badge_size as f32 - text_width) / 2.0;
+            let text_y = badge_y as f32 + (badge_size as f32 / 2.0) + (v_metrics.ascent / 2.0) - 4.0;
+
+            let centered_glyphs = font.layout(&count_str, font_scale, rusttype::point(text_x, text_y));
+            for g in centered_glyphs {
+                if let Some(bb) = g.pixel_bounding_box() {
+                    g.draw(|px, py, intensity| {
+                        let tx = (px as i32 + bb.min.x) as usize;
+                        let ty = (py as i32 + bb.min.y) as usize;
+                        if intensity > 0.4 && tx < theme.width() && ty < pocket_h {
+                            view[(ty, tx)] = white_text;
+                        }
+                    });
+                }
+            }
+        }
+
+        x_offset += square_size;
     }
 }
 
