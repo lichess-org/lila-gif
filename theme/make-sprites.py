@@ -72,7 +72,7 @@ def make_sprite(light, dark, pieces, check_gradient):
         width = 4 * SQUARE_SIZE / len(NONTHEME_COLORS)
         draw.rectangle((4 * SQUARE_SIZE + i * width, 0, 4 * SQUARE_SIZE + (i + 1) * width - 1, SQUARE_SIZE - 1), fill=color)
 
-    return image.quantize(64, dither=0)
+    return image.quantize(128, dither=0)
 
 def main():
     check_gradient = resvg("check-gradient.svg")
