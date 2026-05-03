@@ -1,2 +1,2 @@
-chess==1.10.0
-Pillow==10.3.0
+chess==1.11.2
+Pillow==12.2.0
