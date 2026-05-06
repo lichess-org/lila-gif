@@ -1,10 +1,10 @@
 use std::{iter::FusedIterator, vec};
 
 use bytes::{BufMut, Bytes, BytesMut};
-use gift::{block, Encoder};
-use ndarray::{s, ArrayView2, ArrayViewMut2};
+use gift::{Encoder, block};
+use ndarray::{ArrayView2, ArrayViewMut2, s};
 use rusttype::{Font, LayoutIter, Scale};
-use shakmaty::{uci::UciMove, Bitboard, Board, File, Rank, Square};
+use shakmaty::{Bitboard, Board, File, Rank, Square, uci::UciMove};
 
 use crate::{
     api::{Comment, Coordinates, MoveGlyph, Orientation, PlayerName, RequestBody, RequestParams},
@@ -565,10 +565,11 @@ fn render_diff(
             };
         }
 
-        if let Some(glyph) = frame.glyph {
-            if frame.highlighted.contains(sq) && frame.board.piece_at(sq).is_some() {
-                render_glyph_badge(&mut square_buffer, theme, font, glyph);
-            }
+        if let Some(glyph) = frame.glyph
+            && frame.highlighted.contains(sq)
+            && frame.board.piece_at(sq).is_some()
+        {
+            render_glyph_badge(&mut square_buffer, theme, font, glyph);
         }
     }
 
