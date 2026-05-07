@@ -8,7 +8,7 @@ use shakmaty::{Bitboard, Board, File, Rank, Square, uci::UciMove};
 
 use crate::{
     api::{Comment, Coordinates, MoveGlyph, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{SpriteKey, Theme, Themes},
+    theme::{Sprite, SpriteKey, Theme, Themes},
 };
 
 const GLYPH_BADGE_RADIUS: f32 = 18.0;
@@ -427,7 +427,7 @@ fn render_glyph_badge(
     let square_size = theme.square();
     let center_x = square_size as f32 - GLYPH_BADGE_RADIUS;
     let center_y = GLYPH_BADGE_RADIUS;
-    let bg_color = theme.move_color(glyph);
+    let bg_color = theme.glyph_background_color(glyph);
     let inner_radius_sq = (GLYPH_BADGE_RADIUS - 0.5).powi(2);
     let min_x = (center_x - GLYPH_BADGE_RADIUS).max(0.0) as usize;
     let max_x = ((center_x + GLYPH_BADGE_RADIUS).ceil() as usize).min(square_size);
@@ -549,7 +549,10 @@ fn render_diff(
             left..(left + theme.square())
         ));
 
-        square_buffer.assign(&theme.sprite(&key));
+        match theme.sprite(&key) {
+            Sprite::Paste(paste) => square_buffer.assign(&paste),
+            Sprite::Fill(fill) => square_buffer.fill(fill),
+        }
 
         if coordinates == Coordinates::Yes {
             let coords_scale: Scale = Scale { x: 30.0, y: 30.0 };

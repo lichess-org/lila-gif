@@ -1,10 +1,11 @@
 use std::fmt;
 
 use arrayvec::ArrayString;
-use serde::{de, Deserialize};
-use serde_with::{serde_as, DisplayFromStr};
+use serde::{Deserialize, de};
+use serde_with::{DisplayFromStr, serde_as};
 use shakmaty::{
-    fen::Fen, san::San, uci::UciMove, CastlingMode, Chess, EnPassantMode, Position, Setup, Square,
+    CastlingMode, Chess, EnPassantMode, Position, Setup, Square, fen::Fen, san::SanPlus,
+    uci::UciMove,
 };
 
 use crate::assets::{BoardTheme, PieceSet};
@@ -161,7 +162,7 @@ pub struct FrameClock {
 #[repr(u8)]
 pub enum MoveGlyph {
     #[strum(serialize = "!")]
-    Good = 1,
+    Good,
     #[strum(serialize = "!!")]
     Brilliant,
     #[strum(serialize = "?")]
@@ -176,25 +177,6 @@ pub enum MoveGlyph {
     OnlyMove,
     #[strum(serialize = "⨀", to_string = "O")]
     Zugzwang,
-}
-
-impl MoveGlyph {
-    pub const fn index(self) -> u8 {
-        self as u8
-    }
-
-    pub const fn color(self) -> [u8; 3] {
-        match self {
-            Self::Good => [0x22, 0xac, 0x38],        // green
-            Self::Brilliant => [0x16, 0x82, 0x26],   // dark green
-            Self::Mistake => [0xe6, 0x9f, 0x00],     // orange
-            Self::Blunder => [0xdf, 0x53, 0x53],     // red
-            Self::Interesting => [0xea, 0x45, 0xd8], // pink/magenta
-            Self::Dubious => [0x56, 0xb4, 0xe9],     // light blue
-            Self::OnlyMove => [0xa0, 0x40, 0x48],    // maroon
-            Self::Zugzwang => [0x91, 0x71, 0xf2],    // purple
-        }
-    }
 }
 
 #[serde_as]
@@ -264,13 +246,13 @@ impl RequestBody {
         let pgn = "\
             1. c4 Nf6 2. Nc3 e5 3. d4 exd4 4. Qxd4 Nc6 5. Qd1 Bb4 6. Bd2 O-O \
             7. e3 Bxc3 8. Bxc3 Ne4 9. Ne2 d6 10. Qc2 Re8 11. Nf4 Bf5 \
-            12. Bd3 Qg5 13. O-O g6 14. Rae1 Nxc3 15. Qxc3 Bxd3 16. Qxd3 Ne5 \
-            17. Qd1 Rad8 18. b3 c6 19. Kh1 Qf5 20. Qa1 h5 21. Rd1 Ng4 \
+            12. Bd3 Qg5 13. O-O g6?! 14. Rae1? Nxc3 15. Qxc3 Bxd3 16. Qxd3 Ne5 \
+            17. Qd1? Rad8?? 18. b3?? c6 19. Kh1 Qf5 20. Qa1 h5 21. Rd1 Ng4 \
             22. h3 Nf6 23. Qd4 a6 24. f3 Qe5 25. Rfe1 Qxd4 26. exd4 Rxe1+ \
-            27. Rxe1 Kf8 28. h4 Re8 29. Rxe8+ Kxe8 30. Kg1 Ng8 31. Kf2 Nh6 \
-            32. g3 Ke7 33. Ng2 Ke6 34. Ne3 a5 35. g4 f6 36. Kg3 d5 37. c5 Nf7 \
-            38. Ng2 hxg4 39. fxg4 Nd8 40. Nf4+ Kf7 41. h5 g5 42. Ne2 Ne6 \
-            43. Kf3 Kg7 44. Ke3 Kh6 45. Ng3 Ng7 46. Nf5+ Nxf5+";
+            27. Rxe1 Kf8 28. h4 Re8?! 29. Rxe8+ Kxe8 30. Kg1 Ng8 31. Kf2 Nh6 \
+            32. g3 Ke7 33. Ng2 Ke6 34. Ne3 a5 35. g4 f6 36. Kg3 d5 37. c5 Nf7? \
+            38. Ng2? hxg4 39. fxg4 Nd8 40. Nf4+ Kf7 41. h5 g5 42. Ne2 Ne6 \
+            43. Kf3 Kg7 44. Ke3 Kh6 45. Ng3 Ng7 46. Nf5+?? Nxf5+";
 
         let mut frames = Vec::with_capacity(46 * 2 + 1);
         frames.push(RequestFrame::default());
@@ -281,8 +263,8 @@ impl RequestBody {
                 continue;
             }
 
-            let san: San = pgn_move.parse().unwrap();
-            let m = san.to_move(&pos).unwrap();
+            let (san_plus, prefix) = SanPlus::from_ascii_prefix(pgn_move.as_bytes()).unwrap();
+            let m = san_plus.san.to_move(&pos).unwrap();
             pos.play_unchecked(m);
 
             frames.push(RequestFrame {
@@ -294,7 +276,12 @@ impl RequestBody {
                 },
                 last_move: Some(UciMove::from_move(m, CastlingMode::Standard)),
                 delay: None,
-                glyph: None,
+                glyph: match &pgn_move.as_bytes()[prefix..] {
+                    b"?!" => Some(MoveGlyph::Dubious),
+                    b"?" => Some(MoveGlyph::Mistake),
+                    b"??" => Some(MoveGlyph::Blunder),
+                    _ => None,
+                },
                 clock: FrameClock::default(),
             })
         }
