@@ -144,10 +144,6 @@ impl Theme {
         self.gradient_color(Gradient::TransparentTransparent, 1.0)
     }
 
-    pub fn glyph_text_color(&self) -> u8 {
-        self.gradient_color(Gradient::GlyphGood, 1.0)
-    }
-
     pub fn glyph_background_color(&self, glyph: MoveGlyph) -> u8 {
         self.gradient_color(Gradient::from(glyph), 0.0)
     }

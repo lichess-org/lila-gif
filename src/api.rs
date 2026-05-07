@@ -158,7 +158,7 @@ pub struct FrameClock {
     pub black: Option<u32>,
 }
 
-#[derive(Copy, Clone, strum::EnumIter, strum::EnumString, strum::IntoStaticStr)]
+#[derive(Debug, Copy, Clone, strum::EnumIter, strum::EnumString, strum::IntoStaticStr)]
 #[repr(u8)]
 pub enum MoveGlyph {
     #[strum(serialize = "!")]

@@ -448,9 +448,11 @@ fn render_glyph_badge(
         x: GLYPH_FONT_SIZE,
         y: GLYPH_FONT_SIZE,
     };
+    let v_metrics = font.v_metrics(scale);
     let glyphs: Vec<_> = font
-        .layout(glyph.into(), scale, rusttype::point(0.0, 0.0))
+        .layout(glyph.into(), scale, rusttype::point(0.0, v_metrics.ascent))
         .collect();
+
     let (gmin_x, gmax_x, gmin_y, gmax_y) =
         glyphs.iter().filter_map(|g| g.pixel_bounding_box()).fold(
             (i32::MAX, i32::MIN, i32::MAX, i32::MIN),
@@ -463,31 +465,19 @@ fn render_glyph_badge(
                 )
             },
         );
-
     if gmin_x == i32::MAX {
         return;
     }
+    let offset_x = (center_x - (gmax_x + gmin_x) as f32 / 2.0).round() as usize;
+    let offset_y = (center_y - (gmax_y + gmin_y) as f32 / 2.0).round() as usize;
 
-    let offset_x = center_x - (gmax_x + gmin_x) as f32 / 2.0;
-    let offset_y = center_y - (gmax_y + gmin_y) as f32 / 2.0;
-    let text_color = theme.glyph_text_color();
-
-    for g in &glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            g.draw(|left, top, intensity| {
-                let px = (left as i32 + bb.min.x) as f32 + offset_x;
-                let py = (top as i32 + bb.min.y) as f32 + offset_y;
-                if px >= 0.0
-                    && px < square_size as f32
-                    && py >= 0.0
-                    && py < square_size as f32
-                    && intensity >= 0.05
-                {
-                    square_buffer[(py as usize, px as usize)] = text_color;
-                }
-            });
-        }
-    }
+    render_text(
+        &mut square_buffer.slice_mut(s!(offset_y.., offset_x..)),
+        glyphs,
+        theme,
+        Gradient::from(glyph),
+        false,
+    );
 }
 
 fn render_diff(
@@ -636,7 +626,6 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_na
     view.fill(theme.bar_color());
 
     let height = 40.0;
-    let padding = 10.0;
     let scale = Scale {
         x: height,
         y: height,
@@ -646,11 +635,11 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_na
     let mut glyphs = font.layout(
         player_name,
         scale,
-        rusttype::point(padding, padding + v_metrics.ascent),
+        rusttype::point(BAR_PADDING, BAR_PADDING + v_metrics.ascent),
     );
 
     let titles = [
-        "GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ", "BOT ",
+        "GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ",
     ];
     let prefix_color = if player_name.starts_with("BOT ") {
         Gradient::BotBar
@@ -775,16 +764,16 @@ fn render_text<'a>(
     invert: bool,
 ) {
     for glyph in glyphs {
-        glyph.draw(|left, top, intensity| {
-            if let Some(bb) = glyph.pixel_bounding_box()
-                && let Some(pixel) = view.get_mut((
+        if let Some(bb) = glyph.pixel_bounding_box() {
+            glyph.draw(|left, top, intensity| {
+                if let Some(pixel) = view.get_mut((
                     (bb.min.y + top as i32) as usize,
                     (bb.min.x + left as i32) as usize,
-                ))
-            {
-                *pixel = theme
-                    .gradient_color(gradient, if invert { 1.0 - intensity } else { intensity });
-            }
-        });
+                )) {
+                    *pixel = theme
+                        .gradient_color(gradient, if invert { 1.0 - intensity } else { intensity });
+                }
+            });
+        }
     }
 }
