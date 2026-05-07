@@ -3,7 +3,7 @@ use std::{iter::FusedIterator, vec};
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{Encoder, block};
 use ndarray::{ArrayView2, ArrayViewMut2, s};
-use rusttype::{Font, LayoutIter, PositionedGlyph, Scale};
+use rusttype::{Font, PositionedGlyph, Scale};
 use shakmaty::{Bitboard, Board, File, Rank, Square, uci::UciMove};
 
 use crate::{
@@ -597,10 +597,14 @@ fn render_file(
         font_scale,
         rusttype::point(5.0, theme.square() as f32 + v_metrics.descent),
     );
-    let text_color = get_square_background_color(sprite_key.highlight, sq.is_light(), theme);
-    let background_color = get_square_background_color(sprite_key.highlight, sq.is_dark(), theme);
 
-    render_coord(square_buffer, glyphs, theme, text_color, background_color)
+    render_text(
+        square_buffer,
+        glyphs,
+        theme,
+        sprite_key.light_dark_gradient(),
+        !sprite_key.dark_square,
+    );
 }
 
 fn render_rank(
@@ -618,10 +622,14 @@ fn render_rank(
         font_scale,
         rusttype::point(theme.square() as f32 - 15.0, v_metrics.ascent),
     );
-    let text_color = get_square_background_color(sprite_key.highlight, sq.is_light(), theme);
-    let background_color = get_square_background_color(sprite_key.highlight, sq.is_dark(), theme);
 
-    render_coord(square_buffer, glyphs, theme, text_color, background_color)
+    render_text(
+        square_buffer,
+        glyphs,
+        theme,
+        sprite_key.light_dark_gradient(),
+        !sprite_key.dark_square,
+    );
 }
 
 fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_name: &str) {
@@ -658,29 +666,10 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_na
             .take_while(|g| g.pixel_bounding_box().is_some()),
         theme,
         prefix_color,
+        false,
     );
 
-    render_text(&mut view, glyphs, theme, Gradient::TextBar);
-}
-
-fn render_text<'a>(
-    view: &mut ArrayViewMut2<'_, u8>,
-    glyphs: impl IntoIterator<Item = PositionedGlyph<'a>>,
-    theme: &Theme,
-    gradient: Gradient,
-) {
-    for glyph in glyphs {
-        glyph.draw(|left, top, intensity| {
-            if let Some(bb) = glyph.pixel_bounding_box()
-                && let Some(pixel) = view.get_mut((
-                    (bb.min.y + top as i32) as usize,
-                    (bb.min.x + left as i32) as usize,
-                ))
-            {
-                *pixel = theme.gradient_color(gradient, intensity);
-            }
-        });
-    }
+    render_text(&mut view, glyphs, theme, Gradient::TextBar, false);
 }
 
 fn format_clock(centis: u32) -> String {
@@ -767,44 +756,6 @@ fn highlight_uci(uci: Option<UciMove>) -> Bitboard {
     }
 }
 
-fn render_coord(
-    square_buffer: &mut ArrayViewMut2<u8>,
-    glyphs: LayoutIter,
-    theme: &Theme,
-    text_color: u8,
-    background_color: u8,
-) {
-    for g in glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            // Poor man's anti-aliasing.
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x;
-                let top = top as i32 + bb.min.y;
-                if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
-                    if intensity < 0.5 {
-                        square_buffer[(top as usize, left as usize)] = background_color;
-                    } else {
-                        square_buffer[(top as usize, left as usize)] = text_color;
-                    }
-                }
-            });
-        };
-    }
-}
-
-fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Theme) -> u8 {
-    match is_highlighted {
-        true => match is_dark {
-            true => theme.square_highlighted_dark_color(),
-            false => theme.square_highlighted_light_color(),
-        },
-        false => match is_dark {
-            true => theme.square_dark_color(),
-            false => theme.square_light_color(),
-        },
-    }
-}
-
 fn clock_positions(
     frame: &RenderFrame,
     orientation: Orientation,
@@ -814,4 +765,26 @@ fn clock_positions(
         [(frame.black_clock, 0), (frame.white_clock, btm_bar_y)],
         [(frame.white_clock, 0), (frame.black_clock, btm_bar_y)],
     )
+}
+
+fn render_text<'a>(
+    view: &mut ArrayViewMut2<'_, u8>,
+    glyphs: impl IntoIterator<Item = PositionedGlyph<'a>>,
+    theme: &Theme,
+    gradient: Gradient,
+    invert: bool,
+) {
+    for glyph in glyphs {
+        glyph.draw(|left, top, intensity| {
+            if let Some(bb) = glyph.pixel_bounding_box()
+                && let Some(pixel) = view.get_mut((
+                    (bb.min.y + top as i32) as usize,
+                    (bb.min.x + left as i32) as usize,
+                ))
+            {
+                *pixel = theme
+                    .gradient_color(gradient, if invert { 1.0 - intensity } else { intensity });
+            }
+        });
+    }
 }

@@ -55,6 +55,16 @@ pub struct SpriteKey {
     pub check: bool,
 }
 
+impl SpriteKey {
+    pub fn light_dark_gradient(&self) -> Gradient {
+        if self.highlight {
+            Gradient::LightHighlightDarkHighlight
+        } else {
+            Gradient::LightDark
+        }
+    }
+}
+
 pub struct Theme {
     color_table_config: ColorTableConfig,
     global_color_table: GlobalColorTable,
@@ -140,22 +150,6 @@ impl Theme {
 
     pub fn glyph_background_color(&self, glyph: MoveGlyph) -> u8 {
         self.gradient_color(Gradient::from(glyph), 0.0)
-    }
-
-    pub fn square_dark_color(&self) -> u8 {
-        self.gradient_color(Gradient::LightDark, 0.0)
-    }
-
-    pub fn square_light_color(&self) -> u8 {
-        self.gradient_color(Gradient::LightDark, 1.0)
-    }
-
-    pub fn square_highlighted_dark_color(&self) -> u8 {
-        self.gradient_color(Gradient::LightHighlightDarkHighlight, 0.0)
-    }
-
-    pub fn square_highlighted_light_color(&self) -> u8 {
-        self.gradient_color(Gradient::LightHighlightDarkHighlight, 1.0)
     }
 
     pub fn sprite<'a>(&'a self, key: &SpriteKey) -> Sprite<'a> {
