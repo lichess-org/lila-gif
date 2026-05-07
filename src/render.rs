@@ -3,12 +3,12 @@ use std::{iter::FusedIterator, vec};
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{Encoder, block};
 use ndarray::{ArrayView2, ArrayViewMut2, s};
-use rusttype::{Font, LayoutIter, Scale};
+use rusttype::{Font, LayoutIter, PositionedGlyph, Scale};
 use shakmaty::{Bitboard, Board, File, Rank, Square, uci::UciMove};
 
 use crate::{
     api::{Comment, Coordinates, MoveGlyph, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{Sprite, SpriteKey, Theme, Themes},
+    theme::{Gradient, Sprite, SpriteKey, Theme, Themes},
 };
 
 const GLYPH_BADGE_RADIUS: f32 = 18.0;
@@ -627,21 +627,6 @@ fn render_rank(
 fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_name: &str) {
     view.fill(theme.bar_color());
 
-    let mut text_color = theme.text_color();
-    if player_name.starts_with("BOT ") {
-        text_color = theme.bot_color();
-    } else {
-        for title in &[
-            "GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ",
-            "BOT ",
-        ] {
-            if player_name.starts_with(title) {
-                text_color = theme.gold_color();
-                break;
-            }
-        }
-    }
-
     let height = 40.0;
     let padding = 10.0;
     let scale = Scale {
@@ -650,34 +635,51 @@ fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_na
     };
 
     let v_metrics = font.v_metrics(scale);
-    let glyphs = font.layout(
+    let mut glyphs = font.layout(
         player_name,
         scale,
         rusttype::point(padding, padding + v_metrics.ascent),
     );
 
-    for g in glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            // Poor man's anti-aliasing.
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x;
-                let top = top as i32 + bb.min.y;
-                if 0 <= left
-                    && left < theme.width() as i32
-                    && 0 <= top
-                    && top < theme.bar_height() as i32
-                    && intensity >= 0.01
-                {
-                    if intensity < 0.5 && text_color == theme.text_color() {
-                        view[(top as usize, left as usize)] = theme.med_text_color();
-                    } else {
-                        view[(top as usize, left as usize)] = text_color;
-                    }
-                }
-            });
-        } else {
-            text_color = theme.text_color();
-        }
+    let titles = [
+        "GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ", "BOT ",
+    ];
+    let prefix_color = if player_name.starts_with("BOT ") {
+        Gradient::BotBar
+    } else if titles.iter().any(|title| player_name.starts_with(title)) {
+        Gradient::GoldBar
+    } else {
+        Gradient::TextBar
+    };
+    render_text(
+        &mut view,
+        glyphs
+            .by_ref()
+            .take_while(|g| g.pixel_bounding_box().is_some()),
+        theme,
+        prefix_color,
+    );
+
+    render_text(&mut view, glyphs, theme, Gradient::TextBar);
+}
+
+fn render_text<'a>(
+    view: &mut ArrayViewMut2<'_, u8>,
+    glyphs: impl IntoIterator<Item = PositionedGlyph<'a>>,
+    theme: &Theme,
+    gradient: Gradient,
+) {
+    for glyph in glyphs {
+        glyph.draw(|left, top, intensity| {
+            if let Some(bb) = glyph.pixel_bounding_box()
+                && let Some(pixel) = view.get_mut((
+                    (bb.min.y + top as i32) as usize,
+                    (bb.min.x + left as i32) as usize,
+                ))
+            {
+                *pixel = theme.gradient_color(gradient, intensity);
+            }
+        });
     }
 }
 

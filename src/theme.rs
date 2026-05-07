@@ -126,14 +126,6 @@ impl Theme {
         self.gradient_color(Gradient::TextBar, 1.0)
     }
 
-    pub fn gold_color(&self) -> u8 {
-        self.gradient_color(Gradient::GoldBar, 1.0)
-    }
-
-    pub fn bot_color(&self) -> u8 {
-        self.gradient_color(Gradient::BotBar, 1.0)
-    }
-
     pub fn med_text_color(&self) -> u8 {
         self.gradient_color(Gradient::TextBar, 0.5)
     }
