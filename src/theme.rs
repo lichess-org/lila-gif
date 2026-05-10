@@ -147,12 +147,19 @@ impl Theme {
         60
     }
 
-    pub fn height(&self, bars: bool) -> usize {
+    pub fn pocket_height(&self) -> usize {
+        self.square()
+    }
+
+    pub fn height(&self, bars: bool, pockets: bool) -> usize {
+        let mut h = self.width();
         if bars {
-            self.width() + 2 * self.bar_height()
-        } else {
-            self.width()
+            h += 2 * self.bar_height();
         }
+        if pockets {
+            h += 2 * self.pocket_height();
+        }
+        h
     }
 
     pub fn sprite(&self, key: &SpriteKey) -> ArrayView2<'_, u8> {

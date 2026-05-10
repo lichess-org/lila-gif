@@ -151,13 +151,33 @@ impl CheckSquare {
     }
 }
 
+#[derive(Deserialize, Default, Clone, Debug, PartialEq, Eq)]
+pub struct PocketData {
+    #[serde(default)]
+    pub pawn: u8,
+    #[serde(default)]
+    pub knight: u8,
+    #[serde(default)]
+    pub bishop: u8,
+    #[serde(default)]
+    pub rook: u8,
+    #[serde(default)]
+    pub queen: u8,
+}
+
+#[derive(Deserialize, Default, Clone, Debug, PartialEq, Eq)]
+pub struct RequestPockets {
+    pub white: PocketData,
+    pub black: PocketData,
+}
+
 #[derive(Deserialize, Default)]
 pub struct FrameClock {
     pub white: Option<u32>,
     pub black: Option<u32>,
 }
 
-#[derive(Copy, Clone, strum::EnumIter, strum::EnumString, strum::IntoStaticStr)]
+#[derive(Copy, Clone, strum::EnumIter, strum::EnumString, strum::IntoStaticStr, PartialEq, Eq)]
 #[repr(u8)]
 pub enum MoveGlyph {
     #[strum(serialize = "!")]
@@ -219,6 +239,8 @@ pub struct RequestParams {
     pub piece: PieceSet,
     #[serde(default)]
     pub coordinates: Coordinates,
+    #[serde(default)]
+    pub pockets: Option<RequestPockets>,
 }
 
 #[derive(Deserialize)]
@@ -257,6 +279,8 @@ pub struct RequestFrame {
     pub glyph: Option<MoveGlyph>,
     #[serde(default)]
     pub clock: FrameClock,
+    #[serde(default)]
+    pub pockets: Option<RequestPockets>,
 }
 
 impl RequestBody {
@@ -296,6 +320,7 @@ impl RequestBody {
                 delay: None,
                 glyph: None,
                 clock: FrameClock::default(),
+                pockets: None,
             })
         }
 
