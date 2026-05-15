@@ -754,10 +754,12 @@ fn render_text<'a>(
     for glyph in glyphs {
         if let Some(bb) = glyph.pixel_bounding_box() {
             glyph.draw(|left, top, intensity| {
-                if let Some(pixel) = view.get_mut((
-                    (bb.min.y + top as i32) as usize,
-                    (bb.min.x + left as i32) as usize,
-                )) {
+                if intensity > 0.0625
+                    && let Some(pixel) = view.get_mut((
+                        (bb.min.y + top as i32) as usize,
+                        (bb.min.x + left as i32) as usize,
+                    ))
+                {
                     *pixel = theme
                         .gradient_color(gradient, if invert { 1.0 - intensity } else { intensity });
                 }
