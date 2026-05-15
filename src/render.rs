@@ -693,7 +693,14 @@ fn render_clock_region(
 
     let clock_str = format_clock(centis);
     let glyphs: Vec<_> = font
-        .layout(&clock_str, scale, rusttype::point(0.0, 0.0))
+        .layout(
+            &clock_str,
+            scale,
+            rusttype::point(
+                0.0,
+                (bar_height as f32 - CLOCK_FONT_SIZE) / 2.0 + v_metrics.ascent,
+            ),
+        )
         .collect();
     let text_width = glyphs
         .iter()
@@ -703,7 +710,6 @@ fn render_clock_region(
         .unwrap_or(0) as usize;
 
     let region_width = text_width.max(min_width);
-    let text_offset = (region_width - text_width) as i32;
     let mut view = ArrayViewMut2::from_shape(
         (bar_height, region_width),
         &mut buffer[..bar_height * region_width],
@@ -711,27 +717,9 @@ fn render_clock_region(
     .expect("clock region shape");
     view.fill(theme.bar_color());
 
-    let clock_color = theme.text_color();
-    for g in &glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x + text_offset;
-                let top = top as i32 + bb.min.y + (BAR_PADDING + v_metrics.ascent) as i32;
-                if left >= 0
-                    && left < region_width as i32
-                    && top >= 0
-                    && top < bar_height as i32
-                    && intensity >= 0.01
-                {
-                    view[(top as usize, left as usize)] = if intensity < 0.5 {
-                        theme.med_text_color()
-                    } else {
-                        clock_color
-                    };
-                }
-            });
-        }
-    }
+    let text_offset = region_width - text_width;
+    let mut text_view = view.slice_mut(s!(.., text_offset as usize..));
+    render_text(&mut text_view, glyphs, theme, Gradient::TextBar, false);
 
     let clock_left = theme.width() - region_width - CLOCK_REGION_PADDING;
     (region_width, clock_left)

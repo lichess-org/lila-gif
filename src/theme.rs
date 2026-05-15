@@ -132,14 +132,6 @@ impl Theme {
         self.gradient_color(Gradient::TextBar, 0.0)
     }
 
-    pub fn text_color(&self) -> u8 {
-        self.gradient_color(Gradient::TextBar, 1.0)
-    }
-
-    pub fn med_text_color(&self) -> u8 {
-        self.gradient_color(Gradient::TextBar, 0.5)
-    }
-
     pub fn transparent_color(&self) -> u8 {
         self.gradient_color(Gradient::TransparentTransparent, 1.0)
     }
