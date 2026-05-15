@@ -3,12 +3,12 @@ use std::{iter::FusedIterator, vec};
 use bytes::{BufMut, Bytes, BytesMut};
 use gift::{Encoder, block};
 use ndarray::{ArrayView2, ArrayViewMut2, s};
-use rusttype::{Font, LayoutIter, Scale};
+use rusttype::{Font, PositionedGlyph, Scale};
 use shakmaty::{Bitboard, Board, File, Rank, Square, uci::UciMove};
 
 use crate::{
     api::{Comment, Coordinates, MoveGlyph, Orientation, PlayerName, RequestBody, RequestParams},
-    theme::{SpriteKey, Theme, Themes},
+    theme::{Gradient, Sprite, SpriteKey, Theme, Themes},
 };
 
 const GLYPH_BADGE_RADIUS: f32 = 18.0;
@@ -427,7 +427,7 @@ fn render_glyph_badge(
     let square_size = theme.square();
     let center_x = square_size as f32 - GLYPH_BADGE_RADIUS;
     let center_y = GLYPH_BADGE_RADIUS;
-    let bg_color = theme.move_color(glyph);
+    let bg_color = theme.glyph_background_color(glyph);
     let inner_radius_sq = (GLYPH_BADGE_RADIUS - 0.5).powi(2);
     let min_x = (center_x - GLYPH_BADGE_RADIUS).max(0.0) as usize;
     let max_x = ((center_x + GLYPH_BADGE_RADIUS).ceil() as usize).min(square_size);
@@ -448,9 +448,11 @@ fn render_glyph_badge(
         x: GLYPH_FONT_SIZE,
         y: GLYPH_FONT_SIZE,
     };
+    let v_metrics = font.v_metrics(scale);
     let glyphs: Vec<_> = font
-        .layout(glyph.into(), scale, rusttype::point(0.0, 0.0))
+        .layout(glyph.into(), scale, rusttype::point(0.0, v_metrics.ascent))
         .collect();
+
     let (gmin_x, gmax_x, gmin_y, gmax_y) =
         glyphs.iter().filter_map(|g| g.pixel_bounding_box()).fold(
             (i32::MAX, i32::MIN, i32::MAX, i32::MIN),
@@ -463,31 +465,19 @@ fn render_glyph_badge(
                 )
             },
         );
-
     if gmin_x == i32::MAX {
         return;
     }
+    let offset_x = (center_x - (gmax_x + gmin_x) as f32 / 2.0).round() as usize;
+    let offset_y = (center_y - (gmax_y + gmin_y) as f32 / 2.0).round() as usize;
 
-    let offset_x = center_x - (gmax_x + gmin_x) as f32 / 2.0;
-    let offset_y = center_y - (gmax_y + gmin_y) as f32 / 2.0;
-    let text_color = theme.glyph_text_color();
-
-    for g in &glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            g.draw(|left, top, intensity| {
-                let px = (left as i32 + bb.min.x) as f32 + offset_x;
-                let py = (top as i32 + bb.min.y) as f32 + offset_y;
-                if px >= 0.0
-                    && px < square_size as f32
-                    && py >= 0.0
-                    && py < square_size as f32
-                    && intensity >= 0.05
-                {
-                    square_buffer[(py as usize, px as usize)] = text_color;
-                }
-            });
-        }
-    }
+    render_text(
+        &mut square_buffer.slice_mut(s!(offset_y.., offset_x..)),
+        glyphs,
+        theme,
+        Gradient::from(glyph),
+        false,
+    );
 }
 
 fn render_diff(
@@ -549,7 +539,10 @@ fn render_diff(
             left..(left + theme.square())
         ));
 
-        square_buffer.assign(&theme.sprite(&key));
+        match theme.sprite(&key) {
+            Sprite::Paste(paste) => square_buffer.assign(&paste),
+            Sprite::Fill(fill) => square_buffer.fill(fill),
+        }
 
         if coordinates == Coordinates::Yes {
             let coords_scale: Scale = Scale { x: 30.0, y: 30.0 };
@@ -594,10 +587,14 @@ fn render_file(
         font_scale,
         rusttype::point(5.0, theme.square() as f32 + v_metrics.descent),
     );
-    let text_color = get_square_background_color(sprite_key.highlight, sq.is_light(), theme);
-    let background_color = get_square_background_color(sprite_key.highlight, sq.is_dark(), theme);
 
-    render_coord(square_buffer, glyphs, theme, text_color, background_color)
+    render_text(
+        square_buffer,
+        glyphs,
+        theme,
+        sprite_key.light_dark_gradient(),
+        !sprite_key.dark_square,
+    );
 }
 
 fn render_rank(
@@ -615,67 +612,53 @@ fn render_rank(
         font_scale,
         rusttype::point(theme.square() as f32 - 15.0, v_metrics.ascent),
     );
-    let text_color = get_square_background_color(sprite_key.highlight, sq.is_light(), theme);
-    let background_color = get_square_background_color(sprite_key.highlight, sq.is_dark(), theme);
 
-    render_coord(square_buffer, glyphs, theme, text_color, background_color)
+    render_text(
+        square_buffer,
+        glyphs,
+        theme,
+        sprite_key.light_dark_gradient(),
+        !sprite_key.dark_square,
+    );
 }
 
 fn render_bar(mut view: ArrayViewMut2<u8>, theme: &Theme, font: &Font, player_name: &str) {
     view.fill(theme.bar_color());
 
-    let mut text_color = theme.text_color();
-    if player_name.starts_with("BOT ") {
-        text_color = theme.bot_color();
-    } else {
-        for title in &[
-            "GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ",
-            "BOT ",
-        ] {
-            if player_name.starts_with(title) {
-                text_color = theme.gold_color();
-                break;
-            }
-        }
-    }
-
     let height = 40.0;
-    let padding = 10.0;
     let scale = Scale {
         x: height,
         y: height,
     };
 
     let v_metrics = font.v_metrics(scale);
-    let glyphs = font.layout(
+    let mut glyphs = font.layout(
         player_name,
         scale,
-        rusttype::point(padding, padding + v_metrics.ascent),
+        rusttype::point(BAR_PADDING, BAR_PADDING + v_metrics.ascent),
     );
 
-    for g in glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            // Poor man's anti-aliasing.
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x;
-                let top = top as i32 + bb.min.y;
-                if 0 <= left
-                    && left < theme.width() as i32
-                    && 0 <= top
-                    && top < theme.bar_height() as i32
-                    && intensity >= 0.01
-                {
-                    if intensity < 0.5 && text_color == theme.text_color() {
-                        view[(top as usize, left as usize)] = theme.med_text_color();
-                    } else {
-                        view[(top as usize, left as usize)] = text_color;
-                    }
-                }
-            });
-        } else {
-            text_color = theme.text_color();
-        }
-    }
+    let titles = [
+        "GM ", "WGM ", "IM ", "WIM ", "FM ", "WFM ", "NM ", "CM ", "WCM ", "WNM ", "LM ",
+    ];
+    let prefix_color = if player_name.starts_with("BOT ") {
+        Gradient::BotBar
+    } else if titles.iter().any(|title| player_name.starts_with(title)) {
+        Gradient::GoldBar
+    } else {
+        Gradient::TextBar
+    };
+    render_text(
+        &mut view,
+        glyphs
+            .by_ref()
+            .take_while(|g| g.pixel_bounding_box().is_some()),
+        theme,
+        prefix_color,
+        false,
+    );
+
+    render_text(&mut view, glyphs, theme, Gradient::TextBar, false);
 }
 
 fn format_clock(centis: u32) -> String {
@@ -710,7 +693,14 @@ fn render_clock_region(
 
     let clock_str = format_clock(centis);
     let glyphs: Vec<_> = font
-        .layout(&clock_str, scale, rusttype::point(0.0, 0.0))
+        .layout(
+            &clock_str,
+            scale,
+            rusttype::point(
+                0.0,
+                (bar_height as f32 - CLOCK_FONT_SIZE) / 2.0 + v_metrics.ascent,
+            ),
+        )
         .collect();
     let text_width = glyphs
         .iter()
@@ -720,7 +710,6 @@ fn render_clock_region(
         .unwrap_or(0) as usize;
 
     let region_width = text_width.max(min_width);
-    let text_offset = (region_width - text_width) as i32;
     let mut view = ArrayViewMut2::from_shape(
         (bar_height, region_width),
         &mut buffer[..bar_height * region_width],
@@ -728,27 +717,9 @@ fn render_clock_region(
     .expect("clock region shape");
     view.fill(theme.bar_color());
 
-    let clock_color = theme.text_color();
-    for g in &glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x + text_offset;
-                let top = top as i32 + bb.min.y + (BAR_PADDING + v_metrics.ascent) as i32;
-                if left >= 0
-                    && left < region_width as i32
-                    && top >= 0
-                    && top < bar_height as i32
-                    && intensity >= 0.01
-                {
-                    view[(top as usize, left as usize)] = if intensity < 0.5 {
-                        theme.med_text_color()
-                    } else {
-                        clock_color
-                    };
-                }
-            });
-        }
-    }
+    let text_offset = region_width - text_width;
+    let mut text_view = view.slice_mut(s!(.., text_offset as usize..));
+    render_text(&mut text_view, glyphs, theme, Gradient::TextBar, false);
 
     let clock_left = theme.width() - region_width - CLOCK_REGION_PADDING;
     (region_width, clock_left)
@@ -762,44 +733,6 @@ fn highlight_uci(uci: Option<UciMove>) -> Bitboard {
     }
 }
 
-fn render_coord(
-    square_buffer: &mut ArrayViewMut2<u8>,
-    glyphs: LayoutIter,
-    theme: &Theme,
-    text_color: u8,
-    background_color: u8,
-) {
-    for g in glyphs {
-        if let Some(bb) = g.pixel_bounding_box() {
-            // Poor man's anti-aliasing.
-            g.draw(|left, top, intensity| {
-                let left = left as i32 + bb.min.x;
-                let top = top as i32 + bb.min.y;
-                if 0 <= left && left < theme.width() as i32 && 0 <= top && intensity >= 0.01 {
-                    if intensity < 0.5 {
-                        square_buffer[(top as usize, left as usize)] = background_color;
-                    } else {
-                        square_buffer[(top as usize, left as usize)] = text_color;
-                    }
-                }
-            });
-        };
-    }
-}
-
-fn get_square_background_color(is_highlighted: bool, is_dark: bool, theme: &Theme) -> u8 {
-    match is_highlighted {
-        true => match is_dark {
-            true => theme.square_highlighted_dark_color(),
-            false => theme.square_highlighted_light_color(),
-        },
-        false => match is_dark {
-            true => theme.square_dark_color(),
-            false => theme.square_light_color(),
-        },
-    }
-}
-
 fn clock_positions(
     frame: &RenderFrame,
     orientation: Orientation,
@@ -809,4 +742,28 @@ fn clock_positions(
         [(frame.black_clock, 0), (frame.white_clock, btm_bar_y)],
         [(frame.white_clock, 0), (frame.black_clock, btm_bar_y)],
     )
+}
+
+fn render_text<'a>(
+    view: &mut ArrayViewMut2<'_, u8>,
+    glyphs: impl IntoIterator<Item = PositionedGlyph<'a>>,
+    theme: &Theme,
+    gradient: Gradient,
+    invert: bool,
+) {
+    for glyph in glyphs {
+        if let Some(bb) = glyph.pixel_bounding_box() {
+            glyph.draw(|left, top, intensity| {
+                if intensity > 0.0625
+                    && let Some(pixel) = view.get_mut((
+                        (bb.min.y + top as i32) as usize,
+                        (bb.min.x + left as i32) as usize,
+                    ))
+                {
+                    *pixel = theme
+                        .gradient_color(gradient, if invert { 1.0 - intensity } else { intensity });
+                }
+            });
+        }
+    }
 }

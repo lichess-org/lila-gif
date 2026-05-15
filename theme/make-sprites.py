@@ -3,12 +3,21 @@
 import os
 import subprocess
 import io
-from PIL import Image, ImageDraw
+
+import numpy as np
+
+from PIL import Image, ImageColor, ImageDraw
 
 
 SQUARE_SIZE = 90
 
+TRANSPARENCY = "#ffffff00"
 HIGHLIGHT = "#9bc70069"
+DARK_BACKGROUND = "#262421"
+TEXT_COLOR = "#bababa"
+TITLE_COLOR = "#bf811d"
+BOT_COLOR = "#b72fc6"
+GLYPH_TEXT_COLOR = "#ffffff"
 
 BOARD_THEMES = {
     "blue":   ("#dee3e6", "#8ca2ad"),
@@ -20,12 +29,18 @@ BOARD_THEMES = {
 }
 
 NONTHEME_COLORS = [
-    "#262421",   # dark background
-    "#bababa",   # text color
-    "#bf811d",   # title color
-    "#b72fc6",   # bot color
-    "#706f6e",   # 50% text color on dark background
-    "#ffffff00", # transparency
+    (TRANSPARENCY, TRANSPARENCY),
+    (TEXT_COLOR, DARK_BACKGROUND), # Clock or player name on bar
+    (TITLE_COLOR, DARK_BACKGROUND), # GM, WGM, ...
+    (BOT_COLOR, DARK_BACKGROUND), # BOT
+    (GLYPH_TEXT_COLOR, "#22ac38"), # !
+    (GLYPH_TEXT_COLOR, "#168226"), # !!
+    (GLYPH_TEXT_COLOR, "#e69f00"), # ?
+    (GLYPH_TEXT_COLOR, "#df5353"), # ??
+    (GLYPH_TEXT_COLOR, "#ea45d8"), # !?
+    (GLYPH_TEXT_COLOR, "#56b4e9"), # ?!
+    (GLYPH_TEXT_COLOR, "#a04048"), # □
+    (GLYPH_TEXT_COLOR, "#9171f2"), # ⨀
 ]
 
 
@@ -37,29 +52,37 @@ def resvg(path):
 
     return Image.open(io.BytesIO(res.stdout), formats=["PNG"])
 
+
 def resvg_pieces(piece_set):
     print(f"Preparing {piece_set} pieces...")
     return {f"{color}{piece}": resvg(f"piece/{piece_set}/{color}{piece}.svg") for color in "wb" for piece in "PNBRQK"}
 
+
+def blend(bottom, top):
+    b = Image.new('RGBA', (1, 1), ImageColor.getrgb(bottom))
+    t = Image.new('RGBA', (1, 1), ImageColor.getrgb(top))
+    r, g, b, _ = Image.alpha_composite(b, t).getpixel((0, 0))
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
 def make_sprite(light, dark, pieces, check_gradient):
-    image = Image.new("RGB", (8 * SQUARE_SIZE, 8 * SQUARE_SIZE))
+    gradients = [(light, dark), (blend(light, HIGHLIGHT), blend(dark, HIGHLIGHT))] + NONTHEME_COLORS
+
+    image = Image.new("RGB", (8 * SQUARE_SIZE, (7 + len(gradients)) * SQUARE_SIZE))
     draw = ImageDraw.Draw(image, "RGBA")
 
     for x in range(8):
         # Background
         fill = light if x % 2 == 0 else dark
         rect = (x * SQUARE_SIZE, 0, (x + 1) * SQUARE_SIZE - 1, SQUARE_SIZE * 8 - 1)
-        draw.rectangle(rect, fill=fill)
-        if x in [2, 3, 6, 7]:
-            draw.rectangle(rect, fill=HIGHLIGHT)
+        draw.rectangle(rect, fill=blend(fill, HIGHLIGHT) if x in [2, 3, 6, 7] else fill)
 
         # Pieces
         color = "b" if x < 4 else "w"
-        for i, piece in enumerate("PNBRQKK"):
-            y = i + 1
+        for y, piece in enumerate("PNBRQKK"):
             pos = (x * SQUARE_SIZE, y * SQUARE_SIZE)
 
-            if y == 7:
+            if y == 6:
                 image.paste(check_gradient, pos, check_gradient)
 
             piece = pieces[f"{color}{piece}"]
@@ -68,11 +91,16 @@ def make_sprite(light, dark, pieces, check_gradient):
     image = image.convert("RGBA")
     draw = ImageDraw.Draw(image, "RGBA")
 
-    for i, color in enumerate(NONTHEME_COLORS):
-        width = 4 * SQUARE_SIZE / len(NONTHEME_COLORS)
-        draw.rectangle((4 * SQUARE_SIZE + i * width, 0, 4 * SQUARE_SIZE + (i + 1) * width - 1, SQUARE_SIZE - 1), fill=color)
+    # Gradients for anti-aliased text
+    for i, (left, right) in enumerate(gradients):
+        left_color = np.array(ImageColor.getrgb(left) + (255, ))[:4]
+        right_color = np.array(ImageColor.getrgb(right) + (255, ))[:4]
+        t = np.linspace(0, 1, 8 * SQUARE_SIZE)[None, :, None]
+        line = (left_color * (1 - t) + right_color * t).astype(np.uint8)
+        rectangle = Image.fromarray(np.broadcast_to(line, (SQUARE_SIZE, 8 * SQUARE_SIZE, 4)), "RGBA")
+        image.paste(rectangle, (0, (7 + i) * SQUARE_SIZE))
 
-    return image.quantize(128, dither=0)
+    return image.quantize(255, dither=0)
 
 def main():
     check_gradient = resvg("check-gradient.svg")
@@ -84,7 +112,7 @@ def main():
         print(f"Generating sprites for {board_theme}...")
         for piece_set, pieces in piece_sets.items():
             image = make_sprite(light=light, dark=dark, pieces=pieces, check_gradient=check_gradient)
-            image.save(f"sprites/{board_theme}-{piece_set}.gif", optimize=True, interlace=False, transparency=image.getpixel((SQUARE_SIZE * 8 - 1, 0)))
+            image.save(f"sprites/{board_theme}-{piece_set}.gif", optimize=True, interlace=False, transparency=image.getpixel((0, SQUARE_SIZE * 9)))
 
     rust_code_updates(piece_dirs)
 

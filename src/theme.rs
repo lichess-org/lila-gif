@@ -1,17 +1,52 @@
-use gift::block::{ColorTableConfig, ColorTableExistence, ColorTableOrdering, GlobalColorTable};
-use ndarray::{s, Array2, ArrayView2};
+use gift::block::{ColorTableConfig, GlobalColorTable};
+use ndarray::{Array2, ArrayView2, s};
 use rusttype::Font;
 use shakmaty::{Piece, Role};
-use strum::IntoEnumIterator;
 
 use crate::{
     api::MoveGlyph,
-    assets::{sprite_data, BoardTheme, ByBoardTheme, ByPieceSet, PieceSet},
+    assets::{BoardTheme, ByBoardTheme, ByPieceSet, PieceSet, sprite_data},
 };
 
 const SQUARE: usize = 90;
-const COLOR_WIDTH: usize = 90 * 2 / 3;
-const GLYPH_TEXT_COLOR: [u8; 3] = [0xff, 0xff, 0xff];
+
+pub enum Sprite<'a> {
+    Paste(ArrayView2<'a, u8>),
+    Fill(u8),
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Gradient {
+    LightDark = 7,
+    LightHighlightDarkHighlight = 8,
+    TransparentTransparent = 9,
+    TextBar = 10,
+    GoldBar = 11,
+    BotBar = 12,
+    GlyphGood = 13,
+    GlyphBrilliant = 14,
+    GlyphMistake = 15,
+    GlyphBlunder = 16,
+    GlyphInteresting = 17,
+    GlyphDubious = 18,
+    GlyphOnlyMove = 19,
+    GlyphZugzwang = 20,
+}
+
+impl From<MoveGlyph> for Gradient {
+    fn from(glyph: MoveGlyph) -> Self {
+        match glyph {
+            MoveGlyph::Good => Gradient::GlyphGood,
+            MoveGlyph::Brilliant => Gradient::GlyphBrilliant,
+            MoveGlyph::Mistake => Gradient::GlyphMistake,
+            MoveGlyph::Blunder => Gradient::GlyphBlunder,
+            MoveGlyph::Interesting => Gradient::GlyphInteresting,
+            MoveGlyph::Dubious => Gradient::GlyphDubious,
+            MoveGlyph::OnlyMove => Gradient::GlyphOnlyMove,
+            MoveGlyph::Zugzwang => Gradient::GlyphZugzwang,
+        }
+    }
+}
 
 pub struct SpriteKey {
     pub piece: Option<Piece>,
@@ -21,17 +56,11 @@ pub struct SpriteKey {
 }
 
 impl SpriteKey {
-    fn x(&self) -> usize {
-        4 * usize::from(self.piece.is_some_and(|p| p.color.is_white()))
-            + 2 * usize::from(self.highlight)
-            + usize::from(self.dark_square)
-    }
-
-    fn y(&self) -> usize {
-        match self.piece {
-            Some(piece) if self.check && piece.role == Role::King => 7,
-            Some(piece) => piece.role as usize,
-            None => 0,
+    pub fn light_dark_gradient(&self) -> Gradient {
+        if self.highlight {
+            Gradient::LightHighlightDarkHighlight
+        } else {
+            Gradient::LightDark
         }
     }
 }
@@ -40,83 +69,28 @@ pub struct Theme {
     color_table_config: ColorTableConfig,
     global_color_table: GlobalColorTable,
     sprite: Array2<u8>,
-    extended_color_idx: u8,
 }
 
 impl Theme {
-    fn new(sprite_data: &[u8]) -> Theme {
-        let mut decoder = gift::Decoder::new(std::io::Cursor::new(sprite_data)).into_frames();
+    fn new(mut sprite_data: &[u8]) -> Theme {
+        let mut decoder = gift::Decoder::new(&mut sprite_data).into_frames();
         let preamble = decoder
             .preamble()
             .expect("decode preamble")
             .expect("preamble");
+
         let frame = decoder.next().expect("frame").expect("decode frame");
-        let sprite =
-            Array2::from_shape_vec((SQUARE * 8, SQUARE * 8), frame.image_data.data().to_owned())
-                .expect("from shape");
-        let mut colors = preamble
-            .global_color_table
-            .expect("color table present")
-            .colors()
-            .to_vec();
-        let extended_color_idx = (colors.len() / 3) as u8;
-
-        colors.extend_from_slice(&GLYPH_TEXT_COLOR);
-        colors.extend(MoveGlyph::iter().flat_map(|glyph| glyph.color()));
-
-        let padded_count = (colors.len() / 3).next_power_of_two();
-        colors.resize(padded_count * 3, 0);
+        let sprite = Array2::from_shape_vec(
+            (SQUARE * (7 + 14), SQUARE * 8),
+            frame.image_data.data().to_owned(),
+        )
+        .expect("from shape");
 
         Theme {
-            color_table_config: ColorTableConfig::new(
-                ColorTableExistence::Present,
-                ColorTableOrdering::NotSorted,
-                padded_count as u16,
-            ),
-            global_color_table: GlobalColorTable::with_colors(&colors),
+            color_table_config: preamble.logical_screen_desc.color_table_config(),
+            global_color_table: preamble.global_color_table.expect("sprite has color table"),
             sprite,
-            extended_color_idx,
         }
-    }
-
-    pub fn color_table_config(&self) -> ColorTableConfig {
-        self.color_table_config
-    }
-
-    pub fn global_color_table(&self) -> &GlobalColorTable {
-        &self.global_color_table
-    }
-
-    pub fn bar_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 4)]
-    }
-
-    pub fn text_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH)]
-    }
-
-    pub fn gold_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 2)]
-    }
-
-    pub fn bot_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 3)]
-    }
-
-    pub fn med_text_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 4)]
-    }
-
-    pub fn transparent_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 4 + COLOR_WIDTH * 5)]
-    }
-
-    pub fn glyph_text_color(&self) -> u8 {
-        self.extended_color_idx
-    }
-
-    pub fn move_color(&self, glyph: MoveGlyph) -> u8 {
-        self.extended_color_idx + glyph.index()
     }
 
     pub fn square(&self) -> usize {
@@ -125,22 +99,6 @@ impl Theme {
 
     pub fn width(&self) -> usize {
         self.square() * 8
-    }
-
-    pub fn square_dark_color(&self) -> u8 {
-        self.sprite[(0, SQUARE)]
-    }
-
-    pub fn square_light_color(&self) -> u8 {
-        self.sprite[(0, 0)]
-    }
-
-    pub fn square_highlighted_dark_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 3)]
-    }
-
-    pub fn square_highlighted_light_color(&self) -> u8 {
-        self.sprite[(0, SQUARE * 2)]
     }
 
     pub fn bar_height(&self) -> usize {
@@ -155,13 +113,68 @@ impl Theme {
         }
     }
 
-    pub fn sprite(&self, key: &SpriteKey) -> ArrayView2<'_, u8> {
-        let y = key.y();
-        let x = key.x();
-        self.sprite.slice(s!(
-            (SQUARE * y)..(SQUARE + SQUARE * y),
-            (SQUARE * x)..(SQUARE + SQUARE * x)
-        ))
+    pub fn color_table_config(&self) -> ColorTableConfig {
+        self.color_table_config
+    }
+
+    pub fn global_color_table(&self) -> &GlobalColorTable {
+        &self.global_color_table
+    }
+
+    pub fn gradient_color(&self, gradient: Gradient, intensity: f32) -> u8 {
+        let max_x = ((SQUARE * 8) - 1) as f32;
+        let x = ((1.0 - intensity.clamp(0.0, 1.0)) * max_x) as usize;
+        let y = (gradient as usize) * SQUARE;
+        self.sprite[(y, x)]
+    }
+
+    pub fn bar_color(&self) -> u8 {
+        self.gradient_color(Gradient::TextBar, 0.0)
+    }
+
+    pub fn transparent_color(&self) -> u8 {
+        self.gradient_color(Gradient::TransparentTransparent, 1.0)
+    }
+
+    pub fn glyph_background_color(&self, glyph: MoveGlyph) -> u8 {
+        self.gradient_color(Gradient::from(glyph), 0.0)
+    }
+
+    pub fn sprite<'a>(&'a self, key: &SpriteKey) -> Sprite<'a> {
+        match *key {
+            SpriteKey {
+                piece: Some(piece),
+                dark_square,
+                highlight,
+                check,
+            } => {
+                let x = 4 * usize::from(piece.color.is_white())
+                    + 2 * usize::from(highlight)
+                    + usize::from(dark_square);
+                let y = if piece.role == Role::King && check {
+                    6
+                } else {
+                    piece.role as usize - 1
+                };
+                Sprite::Paste(self.sprite.slice(s!(
+                    (SQUARE * y)..(SQUARE + SQUARE * y),
+                    (SQUARE * x)..(SQUARE + SQUARE * x)
+                )))
+            }
+            SpriteKey {
+                highlight: false,
+                dark_square,
+                ..
+            } => Sprite::Fill(self.gradient_color(Gradient::LightDark, f32::from(!dark_square))),
+            SpriteKey {
+                highlight: true,
+                dark_square,
+                ..
+            } => Sprite::Fill(self.gradient_color(
+                Gradient::LightHighlightDarkHighlight,
+                f32::from(!dark_square),
+            )),
+        }
     }
 }
 
